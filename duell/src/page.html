@@ -82,13 +82,40 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 .end{text-align:center}.end h1{font-size:40px}.end.win h1{color:#ffe070}.end.lose h1{color:#ff8a6a}
 .crowns{display:flex;justify-content:center;gap:28px;font-size:30px;margin:6px 0}.crowns small{display:block;font-size:12px}.crowns i{font-style:normal;color:#4a3a2a}.crowns i.b{color:#6ab0ff;text-shadow:0 0 8px #3a8cff}.crowns i.r{color:#ff6a4a;text-shadow:0 0 8px #ff3a1a}
 #app.inmenu #hud,#app.inmenu #panel{visibility:hidden}
+#tbox{position:relative;padding:0 10px 2px}
+#plabel{font:700 9px system-ui,sans-serif;letter-spacing:.3px;color:#e8d8b0;text-transform:uppercase;margin-bottom:-2px;white-space:nowrap}
+#plabel.dbl{color:#e8b0ff}#plabel.sd{color:#ff8a6a}
+#timer.last{color:#ff5a3a;animation:tpulse .5s ease-in-out infinite alternate}
+@keyframes tpulse{from{transform:scale(1)}to{transform:scale(1.14)}}
+#pbar{position:relative;width:62px;height:4px;background:#3a2a1a;border-radius:2px;overflow:hidden;margin:1px 0 1px;background:linear-gradient(90deg,#3a2c1a 0 66.6%,#3a1e4a 66.6% 100%)}
+#pfill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#d8a838,#ffd860);width:0}
+#pbar.dbl #pfill{background:linear-gradient(90deg,#d8a838 0,#ffd860 60%,#c070ff 100%)}#pbar.sd{background:#3a120c}#pbar.sd #pfill{background:#ff5a3a}
+#pmark{position:absolute;left:66.6%;top:-1px;bottom:-1px;width:2px;background:#e0a0ff}
+#x2{position:absolute;right:-13px;top:-5px;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font:900 13px system-ui,sans-serif;color:#fff;background:radial-gradient(circle at 40% 35%,#d080ff,#6a1aa8);border:2px solid #f0d0ff;box-shadow:0 0 10px #b050ff,0 2px 0 #000;text-shadow:0 1px 0 #000;animation:x2p 1s ease-in-out infinite alternate;z-index:2}
+@keyframes x2p{from{box-shadow:0 0 6px #b050ff,0 2px 0 #000}to{box-shadow:0 0 16px #e090ff,0 2px 0 #000}}
+#tstrip{flex:0 0 auto;display:flex;align-items:center;gap:5px;padding:2px 6px;background:linear-gradient(#2a1810,#1a0f08);border-bottom:2px solid #6a4a1a;font:700 10px system-ui,sans-serif;z-index:2}
+#tstrip .tl{color:#ffb0a0;white-space:nowrap;font-size:9px;text-transform:uppercase}
+.tb{position:relative;flex:1;height:14px;max-width:70px;background:#4a1410;border:1px solid #ff8a70;border-radius:3px;overflow:hidden}
+.tb.k{max-width:84px;border-color:#ffd860}.tb.k::before{content:'♛';position:absolute;left:2px;top:-1px;z-index:2;color:#ffd860;font-size:11px;text-shadow:0 1px 0 #000}
+.tb i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#ff6a50,#c02a1a);width:100%}
+.tb b{position:relative;z-index:1;display:block;text-align:center;line-height:13px;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
+.tb.low i{background:linear-gradient(#ffb050,#e05a10);animation:lowb .5s infinite alternate}@keyframes lowb{to{opacity:.6}}
+.tb.dead{background:#2a2222;border-color:#665}.tb.dead b{color:#aa9}
+.tb.k.sleep::after{content:'💤';position:absolute;right:1px;top:-1px;font-size:9px;z-index:2}
+#score{white-space:nowrap;color:#ffd860;background:#120c07;border:1px solid #8a6a26;border-radius:4px;padding:0 5px;line-height:14px}
+#cdown{position:absolute;left:0;right:0;top:24%;text-align:center;font:900 64px system-ui,sans-serif;color:#ffe9a0;text-shadow:0 4px 0 #000,0 0 22px #a06010;pointer-events:none;opacity:0}
+#cdown.go{animation:cdn .95s ease-out forwards}#cdown.hot{color:#ff6a4a;text-shadow:0 4px 0 #000,0 0 24px #ff2a10}
+@keyframes cdn{0%{opacity:0;transform:scale(1.6)}15%{opacity:.95;transform:scale(1)}70%{opacity:.75}100%{opacity:0;transform:scale(.85)}}
+#app.inmenu #tstrip{visibility:hidden}
+
 @media (max-height:760px){.cd.h{min-height:64px}.cd img{max-width:48px}#hud{padding:3px 5px}.who img{width:30px;height:30px}#abil{width:60px;height:60px}}
 </style></head><body>
 <div id="app" class="inmenu">
  <div id="hud"><div class="who"><img id="oppImg" alt=""><div><b id="oppName">Gegner</b><div class="cr" id="crE"></div></div></div>
-  <div id="tbox"><span id="timer">3:00</span><span id="x2" style="display:none">×2 Mana</span></div>
+  <div id="tbox"><span id="plabel">×2 Mana in</span><span id="timer">2:00</span><div id="pbar"><i id="pfill"></i><b id="pmark"></b></div><span id="x2" style="display:none">×2</span></div>
   <div style="flex:1;display:flex;gap:4px;justify-content:flex-end"><button class="hb2" id="bMus" aria-label="Musik">🎵</button><button class="hb2" id="bSfx" aria-label="Effekte">🔊</button><button class="hb2" id="bPause" aria-label="Pause">⏸</button></div></div>
- <div id="stage"><canvas id="cv"></canvas><div id="crPbox">Du <span class="cr" id="crP"></span></div><div id="banner"></div><button id="abil" style="display:none"><img id="abilImg" alt=""><span id="abilName"></span></button><div id="toast"></div></div>
+ <div id="tstrip"><span class="tl">Gegner-Türme</span><div class="tb" id="tsE0"><i></i><b>1500</b></div><div class="tb k" id="tsEk"><i></i><b>2600</b></div><div class="tb" id="tsE1"><i></i><b>1500</b></div><div id="score" title="Kronen Du : Gegner">♛ <span id="scoreN">0 : 0</span></div></div>
+ <div id="stage"><canvas id="cv"></canvas><div id="crPbox">Du <span class="cr" id="crP"></span></div><div id="banner"></div><div id="cdown"></div><button id="abil" style="display:none"><img id="abilImg" alt=""><span id="abilName"></span></button><div id="toast"></div></div>
  <div id="panel"><div id="cards"><div id="next"><img id="nextImg" alt=""><span>Nächste</span></div><div id="hand"></div></div><div id="mana"><div id="manaFill"></div><span id="manaNum">5</span></div></div>
  <div id="ov" class="ov"></div>
 </div>

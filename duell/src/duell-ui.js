@@ -22,10 +22,32 @@ function sfxEvents(evs){if(!audioOn)return;for(const e of evs){try{switch(e.k){
  case 'nova':SFX.hero('frost');break;case 'leap':SFX.hero('blade');break;case 'slam':SFX.slam();break;case 'cloud':SFX.hero('poison');break;
  case 'summon':SFX.bones();break;case 'bomb':SFX.bomb(e.big);break;case 'drop':SFX.drop();break;case 'throw':SFX.shot('catapult');break;case 'land':SFX.grunt();break;
  case 'death':if(e.cls==='unit'&&/skel|giant|lich/.test(e.card))SFX.bones();else if(e.big)SFX.death(false);break;
- case 'tower':SFX.bomb(true);setTimeout(()=>{try{SFX.horn();}catch(_){}},400);break;
  case 'play':if(e.side===0&&/orcs|giant|ogre/.test(e.card))SFX.grunt();break;
- case 'start':SFX.horn();break;case 'double':SFX.level();break;case 'sudden':SFX.boss();break;
+ case 'start':SFX.horn();break;
  case 'mana':if(e.side===0)SFX.drop();break;}}catch(_){}}}
+// Phasen-Klänge (0.3): alles über den Effekt-Schalter stummschaltbar; G.sndLog protokolliert gespielte Signale (für Tests)
+G.sndLog=[];
+function snd(name,arg){if(!SFX.on.sfx)return false;G.sndLog.push({n:name,t:G.S?+G.S.t.toFixed(2):0});if(G.sndLog.length>400)G.sndLog.shift();if(audioOn){try{SFX[name](arg);}catch(_){}}return true;}
+G.snd=snd;
+const PW={tick:null,keep:[false,false],endSnd:false};
+function phaseReset(){PW.tick=null;PW.keep=[false,false];PW.endSnd=false;PW.wakeAt=0;$('cdown').className='';}
+function phaseWatch(S,ev){let fell=false;
+ for(const e of ev){
+  if(e.k==='start')banner('Kampf!',1);
+  else if(e.k==='double'){banner('Doppel-Mana!<small>Mana lädt doppelt so schnell · noch 1:00</small>',2);snd('warhorn');}
+  else if(e.k==='sudden'){banner('Sudden Death!<small>Der nächste zerstörte Turm entscheidet · 1:00</small>',2.4);snd('suddenBell');}
+  else if(e.k==='tower'){fell=true;banner(e.side===1?'Turm zerstört! 👑':'Dein Turm ist gefallen!',1.4);snd('towerFall');}
+  else if(e.k==='end'){const w=e.winner;banner(w===0?'Sieg! 🏆':w<0?'Unentschieden':'Niederlage',1.6);PW.endSnd=true;snd(w===0?'fanfare':'darkHorn');$('cdown').className='';}}
+ // Bergfried erwacht (getroffen oder Wachturm gefallen) – reine Anzeige
+ for(const side of[0,1]){const k=Sim.tower(S,side,'keep');if(k&&k.active&&!PW.keep[side]){PW.keep[side]=true;if(!S.over&&k.hp>0){DR.onEvents([{k:'keepwake',x:k.x,y:k.y,side}],S);
+   if(fell)PW.wakeAt=S.t+.9;else snd('keepWake');toast(side?'Gegnerischer Bergfried ist erwacht!':'Dein Bergfried ist erwacht!');}}}
+ if(PW.wakeAt&&S.t>=PW.wakeAt){PW.wakeAt=0;if(!S.over)snd('keepWake');}// verzögert nach Turmsturz-Klang (Spielzeit, auch im Schnellvorlauf)
+ // Letzte 10 Sekunden (regulär und im Sudden Death): Banner + Tick pro Sekunde + großer Countdown
+ const rem=S.phase==='play'?S.matchT:S.phase==='sudden'?S.suddenT:null;
+ if(rem!=null&&rem>0&&rem<=10+1e-9){const sec=Math.ceil(rem-1e-9),key=S.phase+':'+sec;
+  if(PW.tick!==key){const first=!PW.tick||PW.tick.split(':')[0]!==S.phase;PW.tick=key;
+   if(first)banner(S.phase==='sudden'?'Letzte 10 Sekunden<small>Sudden Death endet – dann zählen die Turm-Lebenspunkte</small>':'Letzte 10 Sekunden',1.4);
+   snd('tick',sec<=3);const c=$('cdown');c.textContent=sec;c.className='';void c.offsetWidth;c.className='go'+(sec<=3?' hot':'');}}}
 // ---------- Bildschirme ----------
 const ov=$('ov');
 function show(html,cls){ov.className='ov show '+(cls||'');ov.innerHTML=html;ov.scrollTop=0;}
@@ -39,7 +61,7 @@ function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onc
 function menu(){G.paused=true;$('app').classList.add('inmenu');
  show(`<div class="box menu"><div class="logo"><img src="${DR.icon('keep0',96)}" alt=""><div><h1>Turmwacht Duell</h1><p class="sub">Kartenduell am Schattenpass</p></div></div>
   <button class="big" id="bCamp">⚔️ Kampagne</button><button class="big" id="bFree">🎲 Freies Gefecht</button><button class="big" id="bDeck">🃏 Deck bearbeiten</button>
-  ${soundRow()}<p class="foot">Offline-Testversion 0.2 · Fortschritt wird im Browser gespeichert</p></div>`,'m');
+  ${soundRow()}<p class="foot">Offline-Testversion 0.3 · Fortschritt wird im Browser gespeichert</p></div>`,'m');
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=()=>{audio();deckEditor(menu);};bindSound(ov,menu);}
 function campaign(){const P=prog();
  show(`<div class="box"><h2>Kampagne</h2><p class="sub">Der Schattenpass ruft. Besiege die Anführer der Feinde.</p>
@@ -86,10 +108,11 @@ function deckEditor(back){let d=G.deck.slice(),info=null;
 function start(o){const seed=(Date.now()%1e9)|0||7;G.mode=o.mode;G.scen=o.scen||null;const oppKey=o.opp||DUELL_SCEN.find(s=>s.id===o.scen).opp,O=DUELL_OPP[oppKey];G.opp=oppKey;
  const err=Sim.validateDeck(G.deck);if(err){toast(err);deckEditor(menu);return;}
  G.S=Sim.create({seed:o.seed||seed,decks:[G.deck,O.deck],mods:[{},O.mods]});G.ai=DuellAI.create(O.ai,1,(o.seed||seed)*7+3);G.auto=o.auto?DuellAI.create('bot',0,(o.seed||seed)*3+1):(G.auto?DuellAI.create('bot',0,(o.seed||seed)*3+1):null);
- G.endShown=false;G.sel=null;G.aim=false;G.acc=0;DR.reset();hide();$('app').classList.remove('inmenu');
+ G.endShown=false;G.sel=null;G.aim=false;G.acc=0;DR.reset();phaseReset();hide();$('app').classList.remove('inmenu');
  $('oppName').textContent=O.name;$('oppImg').src=DR.icon(O.portrait,48);G.paused=false;G.last=performance.now();buildHand(true);banner('Bereit …',1.2);}
-function step1(){const S=G.S;if(G.ai){const c=DuellAI.think(G.ai,S);if(c)Sim.issue(S,c);}if(G.auto){const c=DuellAI.think(G.auto,S);if(c)Sim.issue(S,c);}
- Sim.step(S);const ev=S.ev;if(ev.length){DR.onEvents(ev,S);sfxEvents(ev);for(const e of ev){if(e.k==='start')banner('Kampf!',1);else if(e.k==='double')banner('Doppeltes Mana!',1.8);else if(e.k==='sudden')banner('Sudden Death!<small>Der nächste zerstörte Turm entscheidet</small>',2.4);else if(e.k==='tower')banner(e.side===1?'Turm zerstört! 👑':'Dein Turm ist gefallen!',1.4);}}}
+function step1(){const S=G.S;if(S.over)return;// nach Spielende keine alten Ereignisse erneut auswerten
+ if(G.ai){const c=DuellAI.think(G.ai,S);if(c)Sim.issue(S,c);}if(G.auto){const c=DuellAI.think(G.auto,S);if(c)Sim.issue(S,c);}
+ Sim.step(S);const ev=S.ev;if(ev.length){DR.onEvents(ev,S);sfxEvents(ev);}phaseWatch(S,ev);}
 G.fast=(sec)=>{const n=Math.round(sec/Sim.TICK);for(let i=0;i<n&&!G.S.over;i++)step1();return{t:G.S.t,over:G.S.over,winner:G.S.winner,crowns:[G.S.p[0].crowns,G.S.p[1].crowns]};};
 G.autopilot=on=>{G.auto=on?DuellAI.create('bot',0,12345):null;return !!G.auto;};
 G.start=start;G.menu=menu;G.campaign=campaign;G.story=story;G.deckEditor=()=>deckEditor(menu);G.free=free;G.prog=prog;
@@ -109,9 +132,25 @@ function buildHand(force){const S=G.S,p=S.p[0],key=p.hand.join(',')+'|'+p.queue[
  $('hand').innerHTML=p.hand.map((id,i)=>cardHTML(id,{i,cls:'h'})).join('');$('nextImg').src=DR.icon(CARDS[p.queue[0]].art==='fire'?'firerain':CARDS[p.queue[0]].art,40);
  $('hand').querySelectorAll('.cd').forEach(c=>{c.addEventListener('pointerdown',ev=>cardDown(ev,+c.dataset.i));});G.sel=null;G.aim=false;DR.st.ghost=null;}
 function fmt(t){t=Math.max(0,Math.ceil(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
+function phaseHud(S){const D=Sim.DOUBLE,M=Sim.MATCH;let lab,t,cls='',fill,mark=true;
+ if(S.phase==='count'){lab='×2 Mana in';t=M-D;fill=0;}
+ else if(S.phase==='play'&&!S.dbl){lab='×2 Mana in';t=S.matchT-D;fill=(M-S.matchT)/M;}
+ else if(S.phase==='play'){lab='Spielende in';t=S.matchT;cls='dbl';fill=(M-S.matchT)/M;}
+ else if(S.phase==='sudden'){lab='Sudden Death';t=S.suddenT;cls='sd';fill=S.suddenT/Sim.SUDDEN;mark=false;}
+ else{lab='Ende';t=0;fill=1;cls=S.winner===0?'win':'';}
+ const last=(S.phase==='play'||S.phase==='sudden')&&t<=10&&(S.phase==='sudden'||S.dbl);
+ const tm=fmt(t);if($('timer').textContent!==tm)$('timer').textContent=tm;$('timer').className=cls+(last?' last':'');
+ if($('plabel').textContent!==lab)$('plabel').textContent=lab;$('plabel').className=cls;
+ $('pfill').style.width=(Math.max(0,Math.min(1,fill))*100).toFixed(1)+'%';$('pbar').className=cls;$('pmark').style.display=mark?'':'none';
+ $('x2').style.display=(S.dbl||S.phase==='sudden')&&S.phase!=='over'?'':'none';
+ $('tbox').dataset.phase=S.phase==='play'?(S.dbl?'double':'normal'):S.phase;}
+function towerHud(S){const parts=[['tsE0','guard',0],['tsEk','keep',-1],['tsE1','guard',1]];
+ for(const[id,sub,lane]of parts){const t=sub==='keep'?Sim.tower(S,1,'keep'):Sim.tower(S,1,'guard',lane),el=$(id);const hp=t&&t.hp>0?Math.ceil(t.hp):0,mx=t?t.maxhp:1;
+  const txt=hp>0?String(hp):'✖';if(el.dataset.v!==txt){el.dataset.v=txt;el.querySelector('b').textContent=txt;}el.querySelector('i').style.width=(hp/mx*100).toFixed(1)+'%';
+  el.classList.toggle('dead',hp<=0);el.classList.toggle('low',hp>0&&hp/mx<.33);if(sub==='keep')el.classList.toggle('sleep',!!(t&&hp>0&&!t.active));}
+ const sc=S.p[0].crowns+' : '+S.p[1].crowns;if($('score').dataset.v!==sc){$('score').dataset.v=sc;$('scoreN').textContent=sc;}}
 function hud(){const S=G.S,p=S.p[0];buildHand();
- const tm=S.phase==='count'?fmt(Sim.MATCH):S.phase==='sudden'?fmt(S.suddenT):fmt(S.matchT);$('timer').textContent=tm;$('timer').className=S.phase==='sudden'?'sd':S.dbl?'dbl':'';
- $('x2').style.display=(S.dbl||S.phase==='sudden')?'':'none';
+ phaseHud(S);towerHud(S);
  $('crE').innerHTML=[0,1,2].map(i=>`<i class="${i<S.p[1].crowns?'on':''}">♛</i>`).join('');$('crP').innerHTML=[0,1,2].map(i=>`<i class="${i<p.crowns?'on':''}">♛</i>`).join('');
  const m=p.mana;$('manaFill').style.width=(m/10*100)+'%';$('manaNum').textContent=Math.floor(m+1e-9);
  $('hand').querySelectorAll('.cd').forEach(c=>{const i=+c.dataset.i,C=CARDS[p.hand[i]];const heroBusy=C.type==='hero'&&p.heroId&&Sim.byId(S,p.heroId);
@@ -170,7 +209,7 @@ function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let
  if(G.mode==='camp'){const sc=DUELL_SCEN.find(s=>s.id===G.scen);if(win){const fresh=markWon(sc.id);extra=`<p class="story">${esc(sc.win)}</p>`;
    const nx=DUELL_SCEN.find(s=>s.id===sc.id+1);if(nx&&fresh)extra+=`<p class="unlock">🔓 Szenario ${nx.id} „${esc(nx.title)}“ freigeschaltet!</p>`;}
   else extra=`<p class="story">${esc(sc.lose)}</p>`;}
- try{audio();win?SFX.level():SFX.over();}catch(_){}
+ try{audio();if(!PW.endSnd){PW.endSnd=true;snd(win?'fanfare':'darkHorn');}}catch(_){}
  const nx=G.mode==='camp'&&win&&DUELL_SCEN.find(s=>s.id===G.scen+1);
  show(`<div class="box end ${win?'win':draw?'draw':'lose'}"><h1>${win?'Sieg!':draw?'Unentschieden':'Niederlage'}</h1>
   <div class="crowns"><div><small>Du</small>${[0,1,2].map(i=>`<i class="${i<S.p[0].crowns?'on b':''}">♛</i>`).join('')}</div><div><small>${esc(DUELL_OPP[G.opp].name)}</small>${[0,1,2].map(i=>`<i class="${i<S.p[1].crowns?'on r':''}">♛</i>`).join('')}</div></div>
@@ -183,6 +222,8 @@ $('bMus').onclick=()=>{audio();SFX.toggle('music');hudBtns();};$('bSfx').onclick
 // ---------- Start ----------
 function fit(){DR.resize();}
 window.addEventListener('resize',()=>{fit();});
+// Canvas-Größe ändert sich auch ohne Fenster-Resize (Menü ↔ Spiel, Turm-Leiste) → neu einpassen, sonst wird das Bild gestaucht
+if(window.ResizeObserver)new ResizeObserver(()=>fit()).observe($('cv'));
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&G.S&&!G.paused&&!G.S.over)pause();});
 measureArt();DR.init(cv);hudBtns();menu();requestAnimationFrame(t=>{G.last=t;loop(t);});
 })();

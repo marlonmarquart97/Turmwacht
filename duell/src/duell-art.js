@@ -37,21 +37,43 @@ function drawChief(g){drawGoblin(g);
  P(g,[[-7,-29],[-8,-37],[-4,-33],[0,-39],[4,-33],[8,-37],[7,-29]]);F(g,LG(g,0,-39,0,-29,'#ffe070','#c08a20'),1.2);
  E(g,0,-31.5,1.4);F(g,'#e02020',.6);
  L(g,-9,-30,-15,-44,OL,2.4);L(g,-9,-30,-15,-44,'#e04020',1.2);}
-function drawKeepTeam(g,team){
- // Bergfried: Burg aus Turmwacht, Dächer/Fahnen in Teamfarbe
+function drawKeepTeam(g,team,sleep){
+ // Bergfried: Burg aus Turmwacht, Dächer/Fahnen in Teamfarbe; sleep = ruht noch (dunkle Fenster, Fallgitter unten)
  const C=team?['#6a1410','#d0402c','#b02a1a']:['#1a3270','#3a68c8','#2a58c0'];
  const sv=g.createLinearGradient;g.createLinearGradient=function(...a){const gr=sv.apply(this,a),ad=gr.addColorStop.bind(gr);
   gr.addColorStop=(o,c)=>ad(o,c==='#1a3270'?C[0]:c==='#3a68c8'?C[1]:c);return gr;};
- const fs=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'fillStyle');
- Object.defineProperty(g,'fillStyle',{configurable:true,get(){return fs.get.call(this);},set(v){fs.set.call(this,v==='#2a58c0'?C[2]:v);}});
- try{drawCastle(g);}finally{delete g.fillStyle;g.createLinearGradient=sv;}}
-function drawCrownTower(g,team){
- const h=22;L(g,17,-h+3,17,-h-48,OL,3.4);L(g,17,-h+3,17,-h-48,'#7a5028',2);
- P(g,[[16,-h-46],[2,-h-42],[6,-h-35],[2,-h-28],[16,-h-30]]);F(g,LG(g,16,0,2,0,team?'#7a1410':'#1a3a80',team?'#e04a30':'#3a7ae0'),1.3);
- P(g,[[10,-h-42],[13,-h-38],[10,-h-33],[7,-h-38]]);F(g,'#ffd860',.8);
- base(g,25,h,'stone');
- for(const s of[-1,1]){P(g,[[s*15,-h-4],[s*15,-h-10],[s*21,-h-9],[s*21,-h-2]]);F(g,'#c8ccd6',1.2);}
- g.save();g.translate(0,-h+2);drawElf(g);g.restore();}
+ const fs=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'fillStyle'),sc=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'shadowColor');
+ Object.defineProperty(g,'fillStyle',{configurable:true,get(){return fs.get.call(this);},set(v){fs.set.call(this,v==='#2a58c0'?C[2]:(sleep&&v==='#ffd060')?'#2a2620':v);}});
+ if(sleep)Object.defineProperty(g,'shadowColor',{configurable:true,get(){return sc.get.call(this);},set(v){sc.set.call(this,'rgba(0,0,0,0)');}});
+ try{drawCastle(g);}finally{delete g.fillStyle;delete g.shadowColor;g.createLinearGradient=sv;}
+ // Wappenschild über dem Tor
+ P(g,[[-8,-36],[8,-36],[8,-27],[0,-21],[-8,-27]]);F(g,LG(g,-8,-36,8,-21,C[1],C[0]),1.4);
+ P(g,[[-8,-36],[8,-36],[8,-27],[0,-21],[-8,-27]]);g.strokeStyle='#ffd860';g.lineWidth=1;g.stroke();
+ if(team){P(g,[[-4,-33],[4,-25]]);L(g,-4,-33,4,-25,'#ffd860',1.6);L(g,4,-33,-4,-25,'#ffd860',1.6);}else{P(g,[[-4.5,-27],[-5,-33],[-2.5,-30.5],[0,-34],[2.5,-30.5],[5,-33],[4.5,-27]]);F(g,'#ffd860',.8);}
+ // Zinnen-Banner an den Seitentürmen
+ for(const s of[-1,1]){P(g,[[s*30,-48],[s*38,-48],[s*38,-30],[s*34,-33],[s*30,-30]]);F(g,LG(g,s*30,0,s*38,0,C[0],C[1]),1.1);E(g,s*34,-42,1.6);F(g,'#ffd860',.6);}
+ if(sleep){// geschlossene Läden + Ketten am Tor
+  for(const s of[-1,1]){P(g,[[s*3.4,-56.6],[s*8.6,-56.6],[s*8.6,-47.4],[s*3.4,-47.4]]);F(g,'#4a3018',1);L(g,s*6,-56.6,s*6,-47.4,'#2a1808',.8);}
+  for(const s of[-1,1])L(g,s*10,-20,s*3,-9,'#8a8a94',1.4);}}
+function drawGuardTeam(g,team){
+ // Wachturm: hoher Steinturm mit Zinnen, Teambanner & Schütze (eigener Turm = Schütze von hinten)
+ const h=34,r=23,ry=r*.42,C=team?['#7a1410','#e04a30','#b02a1a']:['#1a3a80','#3a7ae0','#2a58c0'];
+ L(g,16,-h-2,16,-h-52,OL,3.4);L(g,16,-h-2,16,-h-52,'#7a5028',2);
+ P(g,[[15,-h-50],[1,-h-46],[5,-h-39],[1,-h-32],[15,-h-34]]);F(g,LG(g,15,0,1,0,C[0],C[1]),1.3);
+ P(g,[[9,-h-46],[12,-h-42],[9,-h-37],[6,-h-42]]);F(g,'#ffd860',.8);
+ base(g,r,h,'stone');
+ // Steinring oben + Plattform
+ E(g,0,-h,r+2,ry+1.4);F(g,LG(g,0,-h-ry,0,-h+ry,'#9a9488','#5a564e'),1.6);E(g,0,-h,r-4,ry-2);F(g,'#4a3a2a',1);
+ // hintere Zinnen
+ for(const a of[3.6,4.2,4.8,5.4,6.0]){const x=Math.cos(a)*(r+1),y=-h+Math.sin(a)*(ry+.6);P(g,[[x-3,y],[x-3,y-6],[x+3,y-6],[x+3,y]]);F(g,LG(g,x-3,0,x+3,0,'#6a665e','#a8a296'),1.1);}
+ // Schütze
+ g.save();g.translate(0,-h+3);g.scale(.85,.85);if(team){drawElf(g);drawElfBow(g);}else drawElfBack(g);g.restore();
+ // vordere Zinnen
+ for(const a of[.35,.95,1.57,2.19,2.79]){const x=Math.cos(a)*(r+1),y=-h+Math.sin(a)*(ry+.6);P(g,[[x-3.4,y+2],[x-3.4,y-6],[x+3.4,y-6],[x+3.4,y+2]]);F(g,LG(g,x-3.4,0,x+3.4,0,'#7a766c','#c8c2b4'),1.2);}
+ // Teambanner vorne
+ P(g,[[-6.5,-h+ry+1],[6.5,-h+ry+1],[6.5,-3],[0,1],[-6.5,-3]]);F(g,LG(g,-6.5,0,6.5,0,C[0],C[1],C[0]),1.3);
+ L(g,-7.5,-h+ry+1,7.5,-h+ry+1,'#5a3a1a',2);P(g,[[0,-h+ry+6],[3.4,-h+ry+10],[0,-h+ry+14],[-3.4,-h+ry+10]]);F(g,'#ffd860',.8);
+ for(const s of[-1,1]){P(g,[[s*14-1.2,-h+ry+3],[s*14+1.2,-h+ry+3],[s*14+1.2,-h+ry+11],[s*14-1.2,-h+ry+11]]);F(g,'#0a0604',.8);}}
 function drawRuin(g){base(g,22,6,'stone');
  for(const[x,y,s]of[[-10,-6,.55],[9,-4,.5],[0,-9,.45]]){g.save();g.translate(x,y);drawRock(g,s);g.restore();}
  L(g,-4,-8,-10,-22,OL,3.4);L(g,-4,-8,-10,-22,'#5a3a1c',2);}
@@ -67,7 +89,7 @@ const DART={
  zepp:{fn:drawZepp,m:.72},giant:{fn:drawGiant,m:.92},shaman:{fn:drawShaman,m:.8},bat:{fn:drawBat,m:.78},
  skel:{fn:drawSkel,m:.88},skelarch:{fn:drawSkelArch,m:.88},knight:{fn:drawKnight,m:.86},wolf:{fn:drawWolf,m:.82},ogre:{fn:drawOgre,m:.82},lich:{fn:drawLich,m:.62},
  firerain:{fn:drawFireIcon,m:1,spell:1},fire:{fn:drawFireIcon,m:1,spell:1},lichP:{fn:drawLich,m:1},frost:{fn:drawFrostIcon,m:1,spell:1},
- keep0:{fn:g=>drawKeepTeam(g,0),m:.78},keep1:{fn:g=>drawKeepTeam(g,1),m:.78},guard0:{fn:g=>drawCrownTower(g,0),m:.92},guard1:{fn:g=>drawCrownTower(g,1),m:.92},
+ keep0:{fn:g=>drawKeepTeam(g,0),m:.78},keep1:{fn:g=>drawKeepTeam(g,1),m:.78},keep0s:{fn:g=>drawKeepTeam(g,0,1),m:.78},keep1s:{fn:g=>drawKeepTeam(g,1,1),m:.78},guard0:{fn:g=>drawGuardTeam(g,0),m:.88},guard1:{fn:g=>drawGuardTeam(g,1),m:.88},
  ruin:{fn:drawRuin,m:1},chief:{fn:drawChief,m:1},mana:{fn:drawManaIcon,m:1},
  pine:{fn:g=>drawPine(g,1),m:1},oak:{fn:g=>drawOak(g,1),m:1},rock:{fn:g=>drawRock(g,1),m:1}};
 // Begrenzungsrahmen automatisch messen (einmalig, Ursprung = Fußpunkt)

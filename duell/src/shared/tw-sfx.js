@@ -22,6 +22,7 @@ const SFX=(()=>{let A=null,master,mus,fx,noiseBuf,on={music:LS.get('music',true)
   const g2=A.createGain();g2.gain.value=.12;o2.connect(g2);g2.connect(g);o.connect(g);
   g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.05);g.gain.setValueAtTime(v*.85,t+Math.max(.06,dur-.08));g.gain.exponentialRampToValueAtTime(.0001,t+dur+.06);g.connect(mus);
   for(const x of[o,o2,lfo]){x.start(t);x.stop(t+dur+.1);}noise(t,.06,.05,mus,'bandpass',f*2,2);}
+ function fdrum(t,v=.7){const o=A.createOscillator(),g=A.createGain();o.type='sine';o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(48,t+.18);env(g,t,.002,v,.28);o.connect(g);g.connect(fx);o.start(t);o.stop(t+.35);noise(t,.04,v*.25,fx,'lowpass',900);}
  function drum(t,v=.7){const o=A.createOscillator(),g=A.createGain();o.type='sine';o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(48,t+.18);env(g,t,.002,v,.28);o.connect(g);g.connect(mus);o.start(t);o.stop(t+.35);noise(t,.04,v*.25,mus,'lowpass',900);}
  function tamb(t,v=.12){noise(t,.07,v,mus,'highpass',7000,.7);noise(t+.012,.05,v*.6,mus,'bandpass',9500,6);}
  // Melodie: D-dorisch, 100 bpm, Achtel
@@ -82,6 +83,17 @@ const SFX=(()=>{let A=null,master,mus,fx,noiseBuf,on={music:LS.get('music',true)
   bones(){if(!ok('bones',.3))return;const t=T();for(let i=0;i<7;i++)osc('square',500+Math.random()*900,t+i*.045+Math.random()*.02,.04,.06,fx,.001,200);noise(t,.35,.15,fx,'bandpass',1800,3);},
   slam(){if(!A||!on.sfx||A.state!=='running')return;const t=T();osc('sine',120,t,.5,.7,fx,.003,35);noise(t,.5,.45,fx,'lowpass',1000,1,100);},
   hit(){if(!ok('hit',.1))return;const t=T();noise(t,.06,.15,fx,'bandpass',2500,4);osc('square',880+Math.random()*200,t,.05,.04,fx);},
+  // --- Phasen-Klänge (Duell 0.3): keine Tempoänderung der Musik, nur eigene Signale ---
+  warhorn(){if(!ok('warhorn',1.5))return;api.hornNotes([[45,0,.55],[45,.6,.25],[52,.9,1.5]],.26);const t=T();fdrum(t,.8);fdrum(t+.6,.6);fdrum(t+.9,.9);},
+  suddenBell(){if(!ok('sbell',1.5))return;const t=T();
+   for(let i=0;i<3;i++){const t0=t+i*.75,f=mtof(57-(i===2?5:0));for(const[m,v,d]of[[1,.22,2.2],[2.01,.12,1.6],[2.76,.09,1.2],[5.4,.05,.6]])osc('sine',f*m,t0,d,v,fx,.004);}
+   for(let i=0;i<18;i++){const k=i/18,tt=t+2.2+i*(.075-.03*k);noise(tt,.06,.08+.25*k,fx,'bandpass',900,1.2);}fdrum(t+3.35,1);noise(t+3.35,.5,.3,fx,'lowpass',1400,1,200);},
+  tick(final){if(!ok('tick10',.25))return;const t=T();osc('square',final?1650:1150,t,.05,final?.16:.11,fx,.002);noise(t,.03,.12,fx,'highpass',3000,1);osc('sine',final?820:560,t,.09,.12,fx,.002);},
+  fanfare(){if(!ok('fanfare',2))return;api.hornNotes([[60,0,.16],[64,.18,.16],[67,.36,.16],[72,.56,.5],[67,1.1,.18],[72,1.3,1.3]],.17);const t=T();[72,76,79,84].forEach((m,i)=>osc('triangle',mtof(m),t+1.3+i*.06,.6,.07,fx,.01));fdrum(t,.6);fdrum(t+.56,.7);fdrum(t+1.3,.9);},
+  darkHorn(){if(!ok('darkhorn',2))return;api.hornNotes([[41,0,1],[40,1.05,.6],[36,1.7,1.8]],.24);const t=T();fdrum(t,.9);fdrum(t+1.7,1);noise(t+1.7,1.4,.18,fx,'lowpass',500,1,90);},
+  towerFall(){if(!ok('tfall',.6))return;const t=T();noise(t,1.1,.7,fx,'lowpass',2200,1,80);osc('sine',70,t,.9,.7,fx,.004,26);
+   for(let i=0;i<14;i++)noise(t+.15+i*.07+Math.random()*.05,.08,.18*(1-i/16),fx,'bandpass',600+Math.random()*1400,3);noise(t+.3,1.6,.25,fx,'lowpass',380,1,60,.2);},
+  keepWake(){if(!ok('kwake',1))return;api.hornNotes([[50,0,.3],[55,.32,.7]],.18);const t=T();fdrum(t,.7);fdrum(t+.32,.8);},
   level(){if(!ok('level',.3))return;const t=A.currentTime+.02;[62,66,69,74,78].forEach((m,i)=>osc('triangle',mtof(m),t+i*.08,.35,.18,fx,.005));},
   life(){if(!ok('life',.25))return;const t=T();osc('square',220,t,.18,.1,fx,.005,110);osc('sine',110,t+.1,.3,.25,fx,.005,70);},
   over(){if(!A)return;const t=A.currentTime+.05;if(on.music){mus.gain.setTargetAtTime(0,t,.15);mus.gain.setTargetAtTime(.25,t+6,.8);}if(!on.sfx)return;[[62,0],[60,.4],[58,.8],[57,1.2],[50,1.7]].forEach(([m,d])=>osc('triangle',mtof(m),t+d,d>1.5?1.6:.45,.2,fx,.02));}};
