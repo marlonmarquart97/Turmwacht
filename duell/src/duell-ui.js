@@ -39,7 +39,7 @@ function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onc
 function menu(){G.paused=true;$('app').classList.add('inmenu');
  show(`<div class="box menu"><div class="logo"><img src="${DR.icon('keep0',96)}" alt=""><div><h1>Turmwacht Duell</h1><p class="sub">Kartenduell am Schattenpass</p></div></div>
   <button class="big" id="bCamp">⚔️ Kampagne</button><button class="big" id="bFree">🎲 Freies Gefecht</button><button class="big" id="bDeck">🃏 Deck bearbeiten</button>
-  ${soundRow()}<p class="foot">Offline-Testversion 0.1 · Fortschritt wird im Browser gespeichert</p></div>`,'m');
+  ${soundRow()}<p class="foot">Offline-Testversion 0.2 · Fortschritt wird im Browser gespeichert</p></div>`,'m');
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=()=>{audio();deckEditor(menu);};bindSound(ov,menu);}
 function campaign(){const P=prog();
  show(`<div class="box"><h2>Kampagne</h2><p class="sub">Der Schattenpass ruft. Besiege die Anführer der Feinde.</p>
@@ -95,6 +95,7 @@ G.autopilot=on=>{G.auto=on?DuellAI.create('bot',0,12345):null;return !!G.auto;};
 G.start=start;G.menu=menu;G.campaign=campaign;G.story=story;G.deckEditor=()=>deckEditor(menu);G.free=free;G.prog=prog;
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.1,(now-G.last)/1000||0);G.last=now;
  if(G.S&&!G.paused){G.acc+=dt*G.speed;let n=0;while(G.acc>=Sim.TICK&&n<20){step1();G.acc-=Sim.TICK;n++;}if(G.S.over&&!G.endShown){G.endShown=true;setTimeout(endScreen,1500);}}
+ if(G.S&&G.drag&&G.drag.moved&&G.ptr&&!G.paused&&G.S.p[0].hand[G.drag.i]!=null)ghostAt(G.drag.i,G.ptr.cx,G.ptr.cy,G.ptr.touch);
  if(G.S){DR.draw(G.S,G.paused?1:Math.min(1,G.acc/Sim.TICK),G.paused?0:dt);hud();}
  else{if(!G.demo)G.demo=Sim.create({seed:1});DR.draw(G.demo,1,dt);}
  if(G.toastT>0){G.toastT-=dt;if(G.toastT<=0)$('toast').classList.remove('show');}
@@ -122,25 +123,36 @@ function hudBtns(){$('bMus').textContent=SFX.on.music?'🎵':'🔇';$('bSfx').te
 // ---------- Eingabe ----------
 const stage=$('stage'),cv=$('cv');
 function inStage(x,y){const r=cv.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;}
-function worldAt(cx,cy,touch){const r=cv.getBoundingClientRect();return DR.toWorld(cx-r.left,cy-r.top-(touch?26:0));}
-function ghostAt(i,cx,cy,touch){const S=G.S,id=S.p[0].hand[i],C=CARDS[id];if(!inStage(cx,cy)){DR.st.ghost={card:id,zone:C.type!=='spell'};return;}
- const[x,y]=worldAt(cx,cy,touch);const err=Sim.canPlay(S,0,i,x,y);DR.st.ghost={card:id,x,y,ok:!err||err==='Nicht genug Mana'&&false,zone:C.type!=='spell',err};}
+// Vorschau sitzt bei Touch deutlich über dem Finger, damit er sie nicht verdeckt
+const TOUCH_OFF=48;
+function worldAt(cx,cy,touch){const r=cv.getBoundingClientRect();return DR.toWorld(cx-r.left,cy-r.top-(touch?TOUCH_OFF:0));}
+function overHand(cx,cy){const r=$('panel').getBoundingClientRect();return cy>=r.top&&cx>=r.left&&cx<=r.right;}
+function ghostAt(i,cx,cy,touch){G.ptr={cx,cy,touch};const S=G.S,id=S.p[0].hand[i],C=CARDS[id];
+ if(!inStage(cx,cy)||overHand(cx,cy)){DR.st.ghost={card:id,zone:C.type!=='spell',x:null,cancel:overHand(cx,cy)};return;}
+ const[x,y]=worldAt(cx,cy,touch),[fx,fy]=worldAt(cx,cy,false);const err=Sim.canPlay(S,0,i,x,y);
+ DR.st.ghost={card:id,x,y,fx:touch?fx:null,fy:touch?fy:null,ok:!err,zone:C.type!=='spell',err,lane:Sim.laneOf(x)};}
+function cancelSel(){G.sel=null;DR.st.ghost=null;}
 function tryPlay(i,cx,cy,touch){const S=G.S;const[x,y]=worldAt(cx,cy,touch);const err=Sim.canPlay(S,0,i,x,y);
- if(err){toast(err==='Hier nicht erlaubt'?'Hier nicht erlaubt – nur auf deiner Hälfte (rot = gesperrt)':err);return false;}
- Sim.issue(S,{side:0,a:'play',i,x:Math.round(x),y:Math.round(y)});G.sel=null;DR.st.ghost=null;return true;}
+ if(err){toast((err==='Hier nicht erlaubt'?'Hier nicht erlaubt – nur auf deiner Hälfte (rot = gesperrt)':err)+' · abgebrochen');cancelSel();return false;}
+ Sim.issue(S,{side:0,a:'play',i,x:Math.round(x),y:Math.round(y)});cancelSel();return true;}
 function cardDown(ev,i){ev.preventDefault();audio();if(!G.S||G.paused||G.S.over)return;G.aim=false;DR.st.aim=null;
  const wasSel=G.sel===i;G.sel=i;G.drag={i,sx:ev.clientX,sy:ev.clientY,moved:false,touch:ev.pointerType!=='mouse',wasSel};ghostAt(i,ev.clientX,ev.clientY,G.drag.touch);DR.st.ghost.x=null;}
 window.addEventListener('pointermove',ev=>{if(!G.S||G.paused)return;const D=G.drag;
  if(D){if(Math.hypot(ev.clientX-D.sx,ev.clientY-D.sy)>10)D.moved=true;if(D.moved)ghostAt(D.i,ev.clientX,ev.clientY,D.touch);return;}
  if(G.sel!=null&&ev.pointerType==='mouse')ghostAt(G.sel,ev.clientX,ev.clientY,false);
- if(G.aim&&ev.pointerType==='mouse'&&inStage(ev.clientX,ev.clientY)){const[x,y]=worldAt(ev.clientX,ev.clientY,false);DR.st.aim={x,y};}});
-window.addEventListener('pointerup',ev=>{const D=G.drag;if(!D)return;G.drag=null;
- if(D.moved){if(inStage(ev.clientX,ev.clientY))tryPlay(D.i,ev.clientX,ev.clientY,D.touch);else{G.sel=null;DR.st.ghost=null;}}
- else if(D.wasSel){G.sel=null;DR.st.ghost=null;}
- else{const S=G.S,id=S.p[0].hand[D.i],C=CARDS[id];DR.st.ghost={card:id,zone:C.type!=='spell'};}});
+ if(G.aim&&ev.pointerType==='mouse'&&inStage(ev.clientX,ev.clientY)){const[x,y]=worldAt(ev.clientX,ev.clientY,false);DR.st.aim={x,y};}},{passive:true});
+function dragEnd(ev,cancel){const D=G.drag;if(!D)return;G.drag=null;if(!G.S||G.S.over){cancelSel();return;}
+ if(cancel){cancelSel();return;}
+ if(D.moved){// Loslassen: auf gültigem Feld setzen, sonst (ungültig / zurück auf die Hand) abbrechen
+  if(inStage(ev.clientX,ev.clientY)&&!overHand(ev.clientX,ev.clientY))tryPlay(D.i,ev.clientX,ev.clientY,D.touch);else cancelSel();}
+ else if(D.wasSel)cancelSel();
+ else{const S=G.S,id=S.p[0].hand[D.i],C=CARDS[id];DR.st.ghost={card:id,zone:C.type!=='spell',x:null};}}
+window.addEventListener('pointerup',ev=>dragEnd(ev,false));
+window.addEventListener('pointercancel',ev=>dragEnd(ev,true));
 cv.addEventListener('pointerdown',ev=>{if(!G.S||G.paused||G.S.over||G.drag)return;audio();
  if(G.aim){const[x,y]=worldAt(ev.clientX,ev.clientY,false);Sim.issue(G.S,{side:0,a:'abil',x:Math.round(x),y:Math.round(y)});G.aim=false;DR.st.aim=null;return;}
- if(G.sel!=null)tryPlay(G.sel,ev.clientX,ev.clientY,false);});
+ // Karte gewählt: Finger/Maus auf dem Feld startet die Live-Vorschau, gesetzt wird beim Loslassen
+ if(G.sel!=null){ev.preventDefault();const touch=ev.pointerType!=='mouse';G.drag={i:G.sel,sx:ev.clientX,sy:ev.clientY,moved:true,field:true,touch,wasSel:true};ghostAt(G.sel,ev.clientX,ev.clientY,touch);}});
 $('abil').addEventListener('pointerdown',ev=>{ev.preventDefault();audio();const S=G.S;if(!S||G.paused)return;const p=S.p[0],h=Sim.byId(S,p.heroId);if(!h)return;
  if(p.heroCharge<1){toast('Fähigkeit lädt noch …');return;}const A=CARDS[h.card].abil;G.sel=null;DR.st.ghost=null;
  if(A.self){Sim.issue(S,{side:0,a:'abil',x:Math.round(h.x),y:Math.round(h.y)});return;}

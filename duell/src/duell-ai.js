@@ -4,9 +4,9 @@ const DuellAI=(()=>{
 const Sim=(typeof DuellSim!=='undefined')?DuellSim:require('./duell-sim.js');
 const{CARDS,FW,FH,MIDY,RY0,RY1,BRIDGES,d2,clamp}=Sim;
 const PROFILES={
- grimm:{name:'Grimmzahn',react:1.6,think:.7,pushAt:9.5,smart:.3,jitter:45,spellMin:3,abil:.45,well:.15},
- morvath:{name:'Morvath',react:.6,think:.3,pushAt:8,smart:.85,jitter:12,spellMin:2,abil:1,well:.6},
- bot:{name:'Autopilot',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:.5}};
+ grimm:{name:'Grimmzahn',react:1.6,think:.7,pushAt:9.5,smart:.3,jitter:45,spellMin:3,abil:.45,well:.15,split:.1},
+ morvath:{name:'Morvath',react:.6,think:.3,pushAt:8,smart:.85,jitter:12,spellMin:2,abil:1,well:.6,split:.3},
+ bot:{name:'Autopilot',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:.5,split:.25}};
 function create(profile,side,seed){return{P:typeof profile==='string'?PROFILES[profile]:profile,side,seen:{},next:0,rs:(seed|0)||99,push:null};}
 function R(ai){let a=ai.rs=(ai.rs+0x6D2B79F5)|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
 const isTank=id=>{const C=CARDS[id];return C.u&&(C.u.hp>=1000)&&C.u.range<40;};
@@ -25,12 +25,12 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
  const thr=[];
  for(const e of S.ents){if(e.side===side||e.cls!=='unit'||e.hp<=0)continue;const depth=side===0?e.y-(MIDY-70):(MIDY+70)-e.y;if(depth<0)continue;
   if(ai.seen[e.id]==null)ai.seen[e.id]=S.tick;if((S.tick-ai.seen[e.id])*Sim.TICK<P.react)continue;thr.push(e);}
- const lanes=[0,1].map(l=>{const T=thr.filter(e=>(e.x<FW/2?0:1)===l);if(!T.length)return null;let hp=0,air=0,small=0,tank=null,lead=T[0],cx=0,cy=0,d=0;
+ const lanes=[0,1].map(l=>{const T=thr.filter(e=>Sim.laneOf(e.x)===l);if(!T.length)return null;let hp=0,air=0,small=0,tank=null,lead=T[0],cx=0,cy=0,d=0;
   for(const e of T){hp+=e.hp;if(e.air)air+=e.hp;if(e.maxhp<300)small++;if(!tank||e.hp>tank.hp)tank=e;const dd=side===0?e.y:FH-e.y;if(dd>(side===0?lead.y:FH-lead.y))lead=e;cx+=e.x;cy+=e.y;d+=dps(e);}
   let def=0;for(const o of S.ents)if(o.side===side&&o.cls==='unit'&&o.hp>0&&d2(o.x,o.y,cx/T.length,cy/T.length)<140)def+=o.hp*.5+dps(o)*8;
   return{l,T,hp,air,small,tank,lead,cx:cx/T.length,cy:cy/T.length,dps:d,def,need:hp+d*6-def-(my(lead.y)?500:250)};}).filter(Boolean).sort((a,b)=>b.need-a.need);
  const hand=me.hand.map((id,i)=>({id,i,C:CARDS[id]})).filter(o=>o.C.cost<=me.mana+1e-9&&Sim.canPlay(S,side,o.i,FW/2,toMy(560))!=='Dein Held kämpft bereits');
- const tryPlay=(o,x,y)=>{x=clamp(x,12,FW-12);y=clamp(y,12,FH-12);for(let k=0;k<6;k++){if(!Sim.canPlay(S,side,o.i,x,y))return{a:'play',side,i:o.i,x,y};y-=fwd*14;if(!Sim.zoneOK(S,side,x,y)&&o.C.type!=='spell')y=clamp(side===0?Math.max(y,RY1+8):Math.min(y,RY0-8),12,FH-12);x+=(x<FW/2?8:-8);}return null;};
+ const tryPlay=(o,x,y,ln)=>{if(ln==null)ln=Sim.laneOf(x);const LX=Sim.LANE_X[ln];x=clamp(x,Math.max(12,LX[0]+4),Math.min(FW-12,LX[1]-4));y=clamp(y,12,FH-12);for(let k=0;k<6;k++){if(!Sim.canPlay(S,side,o.i,x,y))return{a:'play',side,i:o.i,x,y};y-=fwd*14;if(!Sim.zoneOK(S,side,x,y)&&o.C.type!=='spell')y=clamp(side===0?Math.max(y,RY1+8):Math.min(y,RY0-8),12,FH-12);x=clamp(x+(ln?-8:8),Math.max(12,LX[0]+4),Math.min(FW-12,LX[1]-4));}return null;};
  const jit=()=>(R(ai)*2-1)*P.jitter;
  // --- Verteidigung ---
  const L=lanes[0];
@@ -52,15 +52,15 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
    if(C.type==='bld'){x=FW/2+(L.l?30:-30);y=toMy(430);}
    else if(my(L.lead.y)){y=L.lead.y-fwd*(isRanged(best.id)?85:35);}
    else y=bankY-fwd*(isRanged(best.id)?90:30);
-   y+=jit()*.5;const c=tryPlay(best,x,y);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
+   y+=jit()*.5;const c=tryPlay(best,x,y,C.type==='bld'?null:L.l);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
   if(L.need>800)return null;}
  // --- Angriff / Druck ---
  const myTanks=S.ents.filter(e=>e.side===side&&e.cls==='unit'&&e.hp>0&&isTank(e.card));
  if(ai.push&&S.tick-ai.push.t>Math.round(14/Sim.TICK))ai.push=null;
  if(ai.push){// Unterstützung hinter dem Tank
-  const t=myTanks.find(e=>(e.x<FW/2?0:1)===ai.push.l)||myTanks[0];
+  const t=myTanks.find(e=>e.lane===ai.push.l)||myTanks[0];
   if(t&&(side===0?t.y<470:t.y>FH-470)){let best=null;for(const o of hand){if(o.C.type==='bld'||isTank(o.id))continue;if(o.C.type==='spell')continue;if(!best||(isRanged(o.id)&&!isRanged(best.id)))best=o;}
-   if(best&&me.mana>=best.C.cost+(P.smart>.5?0:1)){const c=tryPlay(best,t.x+jit()*.4,t.y-fwd*45);if(c)return c;}}
+   if(best&&me.mana>=best.C.cost+(P.smart>.5?0:1)){const c=tryPlay(best,t.x+jit()*.4,t.y-fwd*45,t.lane);if(c)return c;}}
   // Zauber auf Verteidiger am Turm
   for(const o of hand){if(o.C.type!=='spell'||o.id!=='firerain')continue;const foes=S.ents.filter(e=>e.side!==side&&e.cls==='unit'&&e.hp>0&&!my(e.y));const b=clusterAt(S,side,foes,o.C.s.r,true);if(b&&b.n>=P.spellMin&&b.val>=380){const c=tryPlay(o,b.x,b.y);if(c)return c;}}}
  // Zauber zum Turm-Abschluss
@@ -76,11 +76,12 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
   // sonst günstigste sinnvolle Einheit an die Brücke
   const opts=hand.filter(o=>o.C.type==='unit'||o.C.type==='hero').sort((a,b)=>a.C.cost-b.C.cost);
   const pick=opts.find(o=>isSwarm(o.id))||opts.find(o=>o.C.type==='hero')||opts[0];
-  if(pick){ai.push={l:lane,t:S.tick};const c=tryPlay(pick,lx+jit()*.4,isRanged(pick.id)?bankY-fwd*70:bankY-fwd*10);if(c)return c;}
+  const split=myTanks.length&&R(ai)<(P.split||0),pl=split?1-lane:lane,plx=BRIDGES[pl];
+  if(pick){if(!split)ai.push={l:lane,t:S.tick};const c=tryPlay(pick,plx+jit()*.4,isRanged(pick.id)?bankY-fwd*70:bankY-fwd*10);if(c)return c;}
   if(me.mana>=9.9){const any=hand.find(o=>o.C.type!=='spell');if(any){const c=tryPlay(any,lx,toMy(600));if(c)return c;}}}
  return null;}
 function chooseLane(S,side,ai){const g0=Sim.tower(S,1-side,'guard',0),g1=Sim.tower(S,1-side,'guard',1);
- const v=l=>{const g=l?g1:g0;let s=g&&g.hp>0?g.hp/g.maxhp:-.5;for(const e of S.ents)if(e.side!==side&&e.cls==='unit'&&(e.x<FW/2?0:1)===l)s+=e.hp/3000;return s;};
+ const v=l=>{const g=l?g1:g0;let s=g&&g.hp>0?g.hp/g.maxhp:-.5;for(const e of S.ents)if(e.cls==='unit'&&e.lane===l)s+=(e.side!==side?1:-.6)*e.hp/3000;return s;};
  if(ai.push&&ai.push.counter)return ai.push.l;
  const a=v(0),b=v(1);if(Math.abs(a-b)<.08)return R(ai)<.5?0:1;return a<b?0:1;}
 function clusterAt(S,side,list,r,incTower){let best=null;for(const c of list){let n=0,val=0,sx=0,sy=0;for(const e of list){if(d2(e.x,e.y,c.x,c.y)<=r*.9){n++;val+=Math.min(e.hp,360);sx+=e.x;sy+=e.y;}}

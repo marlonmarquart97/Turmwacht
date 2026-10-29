@@ -51,13 +51,16 @@ function exec(S,c){const p=S.p[c.side];
  if(c.a==='play'){if(p.hand[c.i]!==c.card||canPlay(S,c.side,c.i,c.x,c.y))return;const C=CARDS[c.card];p.mana-=C.cost;p.spent+=C.cost;p.plays++;
   p.queue.push(c.card);p.hand[c.i]=p.queue.shift();deploy(S,c.side,c.card,c.x,c.y);ev(S,'play',{side:c.side,card:c.card,x:c.x,y:c.y});}
  else if(c.a==='abil')ability(S,c.side,c.x,c.y);}
+const laneOf=x=>x<FW/2?0:1,LANE_X=[[8,FW/2-7],[FW/2+7,FW-8]];
+function laneClamp(x,l){return clamp(x,LANE_X[l][0],LANE_X[l][1]);}
 function deploy(S,side,id,x,y){const C=CARDS[id];
  if(C.type==='spell'){castSpell(S,side,id,x,y);return;}
  if(C.type==='bld'){const b=C.b;addEnt(S,{side,cls:'bld',card:id,x,y,r:b.r,hp:b.hp,maxhp:b.hp,st:b,dep:1,life:b.life,tmr:b.spawn?b.spawn.every*.5:(b.mana?b.mana.every:0),mass:1e9});return;}
- const f=FORM[C.count||1]||FORM[1];
- for(const[dx,dy]of f){const e=spawnUnit(S,side,id,clamp(x+dx,8,FW-8),y+(side?-dy:dy),.9);if(C.type==='hero'){S.p[side].heroId=e.id;S.p[side].heroCharge=.4;e.hero=true;}}}
-function spawnUnit(S,side,id,x,y,dep){const C=CARDS[id],u=C.u;if(!C.air&&inRiver(x,y))y=(side===0)?RY1+3:RY0-3;
- return addEnt(S,{side,cls:'unit',card:id,x,y,r:u.r,hp:u.hp,maxhp:u.hp,st:u,air:!!C.air,mass:u.mass||1,dep:dep==null?.9:dep});}
+ const f=FORM[C.count||1]||FORM[1],ln=laneOf(x);
+ for(const[dx,dy]of f){const e=spawnUnit(S,side,id,laneClamp(x+dx,ln),y+(side?-dy:dy),.9,ln);if(C.type==='hero'){S.p[side].heroId=e.id;S.p[side].heroCharge=.4;e.hero=true;}}}
+function spawnUnit(S,side,id,x,y,dep,lane){const C=CARDS[id],u=C.u;if(!C.air&&inRiver(x,y))y=(side===0)?RY1+3:RY0-3;
+ if(lane==null)lane=laneOf(x);x=laneClamp(x,lane);
+ return addEnt(S,{side,cls:'unit',card:id,lane,x,y,r:u.r,hp:u.hp,maxhp:u.hp,st:u,air:!!C.air,mass:u.mass||1,dep:dep==null?.9:dep});}
 // ---------- Zauber & Fähigkeiten ----------
 function enemiesIn(S,side,x,y,r,o){o=o||{};const out=[];for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap)continue;if(o.noAir&&e.air)continue;if(o.unitsOnly&&e.cls!=='unit')continue;if(d2(e.x,e.y,x,y)<=r+e.r*.5)out.push(e);}return out;}
 function castSpell(S,side,id,x,y){const s=CARDS[id].s;
@@ -69,7 +72,7 @@ function ability(S,side,x,y){const p=S.p[side],h=byId(S,p.heroId);if(!h||p.heroC
  if(A.key==='leap'){if(inRiver(tx,ty)&&!onBridge(tx))ty=(ty>MIDY)?RY1+4:RY0-4;h.leap={t:0,max:.5,x0:h.x,y0:h.y,x1:tx,y1:ty};h.tgt=0;h.lock=false;ev(S,'leap',{side,x:tx,y:ty});}
  else if(A.key==='nova'){for(const e of enemiesIn(S,side,h.x,h.y,A.r)){hurt(S,e,e.cls==='unit'?A.dmg:A.dmg*.4,side);e.frz=Math.max(e.frz,e.cls==='tower'?A.freeze*.5:A.freeze);}ev(S,'nova',{side,x:h.x,y:h.y,r:A.r});}
  else if(A.key==='cloud'){S.zones.push({k:'cloud',side,x:tx,y:ty,r:A.r,t:A.t,max:A.t,dps:A.dps,slow:A.slow,air:true});ev(S,'cloud',{side,x:tx,y:ty,r:A.r});}
- else if(A.key==='summon'){if(inRiver(tx,ty))ty=(ty>MIDY)?RY1+4:RY0-4;const f=FORM[4];for(const[dx,dy]of f)spawnUnit(S,side,A.summon.card,clamp(tx+dx*1.3,8,FW-8),ty+dy*1.3,.35);ev(S,'summon',{side,x:tx,y:ty});}
+ else if(A.key==='summon'){if(inRiver(tx,ty))ty=(ty>MIDY)?RY1+4:RY0-4;const f=FORM[4];for(const[dx,dy]of f)spawnUnit(S,side,A.summon.card,tx+dx*1.3,ty+dy*1.3,.35,laneOf(tx));ev(S,'summon',{side,x:tx,y:ty});}
  p.heroCharge=0;ev(S,'abil',{side,key:A.key,hero:h.card});return true;}
 // ---------- Schaden ----------
 function hurt(S,e,amt,srcSide){if(!e||e.hp<=0||amt<=0)return;e.hp-=amt;e.hurtT=S.tick;
@@ -83,23 +86,27 @@ function splashAt(S,side,x,y,r,dmg,o){o=o||{};let n=0;for(const e of S.ents){if(
 function onBridge(x){for(const bx of BRIDGES)if(Math.abs(x-bx)<=BW/2)return bx;return null;}
 function needCross(y1,y2){return(y1>MIDY)!==(y2>MIDY);}
 function pickBridge(x1,x2){let best=BRIDGES[0],bd=1e9;for(const bx of BRIDGES){const d=Math.abs(x1-bx)+Math.abs(x2-bx);if(d<bd){bd=d;best=bx;}}return best;}
-function navDist(e,x,y){if(e.air||!needCross(e.y,y))return d2(e.x,e.y,x,y);const bx=pickBridge(e.x,x);return d2(e.x,e.y,bx,MIDY)+d2(bx,MIDY,x,y);}
-function fixPos(e,prevY){e.x=clamp(e.x,5,FW-5);e.y=clamp(e.y,5,FH-5);if(e.air)return;
+function laneBridge(e,x){return e.lane!=null?BRIDGES[e.lane]:pickBridge(e.x,x);}
+function navDist(e,x,y){if(e.air||!needCross(e.y,y))return d2(e.x,e.y,x,y);const bx=laneBridge(e,x);return d2(e.x,e.y,bx,MIDY)+d2(bx,MIDY,x,y);}
+function fixPos(e,prevY){e.x=e.lane!=null?laneClamp(e.x,e.lane):clamp(e.x,5,FW-5);e.y=clamp(e.y,5,FH-5);if(e.air)return;
  if(e.y>RY0&&e.y<RY1){const bx=onBridge(e.x);if(bx!=null)e.x=clamp(e.x,bx-BW/2+3,bx+BW/2-3);else e.y=(prevY>MIDY)?RY1:RY0;}}
 function moveTo(e,tx,ty,spd){let gx=tx,gy=ty;
- if(!e.air&&needCross(e.y,ty)){const bx=pickBridge(e.x,tx);
+ if(!e.air&&needCross(e.y,ty)){const bx=laneBridge(e,tx);
   if(Math.abs(e.x-bx)>7&&!(e.y>RY0-1&&e.y<RY1+1)){gx=bx;gy=e.y>MIDY?RY1+6:RY0-6;}else{gx=bx;gy=e.y>MIDY?RY0-8:RY1+8;}}
  const dx=gx-e.x,dy=gy-e.y,d=Math.sqrt(dx*dx+dy*dy),s=spd*TICK;
  if(d<=s){e.x=gx;e.y=gy;}else{e.x+=dx/d*s;e.y+=dy/d*s;}if(Math.abs(dx)>.5)e.face=dx<0?-1:1;e.mv=true;}
 // ---------- Zielwahl ----------
 function canHit(st,o){if(o.thrown||o.leap||o.hp<=0)return false;if(st.tg==='bld'&&o.cls==='unit')return false;if(o.air&&st.tg!=='any')return false;return true;}
 function edge(e,o){return d2(e.x,e.y,o.x,o.y)-e.r-o.r;}
+const CLOSE=14;
+function inLane(o,l){if(o.cls==='unit')return(o.lane!=null?o.lane:laneOf(o.x))===l;if(o.cls==='tower')return o.lane<0||o.lane===l;return laneOf(o.x)===l;}
 function acquire(S,e){const st=e.st,sight=st.sight||st.range+60;let best=null,bd=1e9;
  for(const o of S.ents){if(o.side===e.side||!canHit(st,o))continue;
   const ed=edge(e,o);if(st.tg!=='bld'&&ed>sight)continue;
+  if(e.lane!=null&&!inLane(o,e.lane)&&!(ed<=CLOSE&&st.tg!=='bld'))continue;// Spurtreue: fremde Spur nur im Nahkontakt
   let d=e.cls==='unit'?navDist(e,o.x,o.y):ed;if(o.cls==='unit')d-=8;if(d<bd){bd=d;best=o;}}
  if(!best&&e.cls==='unit'){// Lane-Ziel: Wachturm der eigenen Seite des Feldes, sonst Bergfried
-  const lane=e.x<FW/2?0:1;let g=tower(S,1-e.side,'guard',lane);if(!alive(g)){g=tower(S,1-e.side,'guard',1-lane);const k=tower(S,1-e.side,'keep');if(alive(k)&&(!alive(g)||navDist(e,k.x,k.y)<navDist(e,g.x,g.y)+40))g=k;}
+  const lane=e.lane!=null?e.lane:laneOf(e.x);let g=tower(S,1-e.side,'guard',lane);if(!alive(g))g=tower(S,1-e.side,'keep');
   if(alive(g))best=g;}
  return best;}
 function inRange(e,t){return edge(e,t)<=e.st.range+(t.cls!=='unit'?2:0);}
@@ -108,19 +115,19 @@ function attack(S,e,t){const st=e.st;e.atk++;e.atkT=S.tick;if(t.x!==e.x)e.face=t
  if(st.bomb){S.bombs.push({side:e.side,x:t.cls==='unit'?t.x:e.x,y:t.cls==='unit'?t.y:e.y+(t.y>e.y?6:-6),t:.45,max:.45,dmg:st.dmg,r:st.splash,tower:1,small:true});ev(S,'drop',{x:e.x,y:e.y});return;}
  if(st.proj){const P=B.projectiles[st.proj];S.proj.push({id:S.nid++,side:e.side,kind:st.proj,x:e.x,y:e.y,z:e.air?34:(e.cls==='tower'?(e.sub==='keep'?70:58):(e.cls==='bld'?50:18)),ox:e.x,oy:e.y,tid:t.id,tx:t.x,ty:t.y,tz:t.air?30:12,spd:P.spd,arc:P.arc||0,dmg:st.dmg,splash:st.splash||0,src:e.card,st,
   d0:Math.max(1,d2(e.x,e.y,t.x,t.y)),air:t.air});ev(S,'shot',{kind:st.proj,x:e.x,y:e.y,side:e.side});return;}
- hurt(S,t,st.dmg,e.side);ev(S,'hit',{x:t.x,y:t.y,air:t.air,melee:1,card:e.card,tx:e.x,ty:e.y});}
+ hurt(S,t,st.dmg,e.side);ev(S,'hit',{x:t.x,y:t.y,air:t.air,melee:1,card:e.card,tx:e.x,ty:e.y,id:t.id,dmg:st.dmg});}
 function impact(S,p,t){const st=p.st;
  if(p.splash){splashAt(S,p.side,p.tx,p.ty,p.splash,p.dmg,{air:!!p.air});ev(S,'boom',{x:p.tx,y:p.ty,r:p.splash,kind:p.kind,air:p.air});}
  else if(t)hurt(S,t,p.dmg,p.side);
  if(t&&t.hp>0&&t.cls==='unit'){if(st.slow){t.slowT=Math.max(t.slowT,st.slow.t);t.slowF=Math.max(t.slowF,st.slow.f);}if(st.dot){t.dot=st.dot.dps;t.dotT=st.dot.t;t.dotSide=p.side;}}
  if(st.puddle){S.zones.push({k:'puddle',side:p.side,x:p.tx,y:p.ty,r:st.puddle.r,t:st.puddle.t,max:st.puddle.t,dps:st.puddle.dps,slow:st.puddle.slow});ev(S,'splash',{x:p.tx,y:p.ty});}
- ev(S,'impact',{x:p.tx,y:p.ty,kind:p.kind,air:p.air});}
+ ev(S,'impact',{x:p.tx,y:p.ty,kind:p.kind,air:p.air,id:t?t.id:0});}
 // ---------- Update ----------
 function updUnit(S,e){
  if(e.dep>0){e.dep-=TICK;return;}
  if(e.thrown){const T=e.thrown;T.t+=TICK;const k=Math.min(1,T.t/T.max);e.x=T.x0+(T.x1-T.x0)*k;e.y=T.y0+(T.y1-T.y0)*k;if(k>=1){e.thrown=null;ev(S,'land',{x:e.x,y:e.y});fixPos(e,e.y);}return;}
  if(e.leap){const L=e.leap;L.t+=TICK;const k=Math.min(1,L.t/L.max);e.x=L.x0+(L.x1-L.x0)*k;e.y=L.y0+(L.y1-L.y0)*k;
-  if(k>=1){e.leap=null;const A=CARDS[e.card].abil;splashAt(S,e.side,e.x,e.y,A.r,A.dmg,{tower:.5,stun:A.stun});ev(S,'slam',{x:e.x,y:e.y,r:A.r,side:e.side});fixPos(e,e.y);}return;}
+  if(k>=1){e.leap=null;e.lane=laneOf(e.x);const A=CARDS[e.card].abil;splashAt(S,e.side,e.x,e.y,A.r,A.dmg,{tower:.5,stun:A.stun});ev(S,'slam',{x:e.x,y:e.y,r:A.r,side:e.side});fixPos(e,e.y);}return;}
  const st=e.st;e.mv=false;
  if(e.dotT>0){e.dotT-=TICK;hurt(S,e,e.dot*TICK,e.dotSide);}
  if(e.slowT>0){e.slowT-=TICK;if(e.slowT<=0)e.slowF=0;}
@@ -139,7 +146,7 @@ function updStatic(S,e){// Türme & Gebäude
  if(e.cls==='bld'){e.hp-=e.maxhp/e.life*TICK;if(e.hp<=0){e.hp=0;e.expired=true;return;}
   const b=e.st;if(b.spawn){e.tmr-=TICK;if(e.tmr<=0&&!fr){e.tmr=b.spawn.every;e.atkT=S.tick;e.atk++;const fwd=e.side===0?-1:1;
     let lx=e.x,ly=e.y+fwd*b.spawn.throw;ly=e.side===0?Math.min(ly,RY0-26):Math.max(ly,RY1+26);
-    const u=spawnUnit(S,e.side,b.spawn.card,e.x,e.y-(e.side===0?6:-6),0);u.thrown={t:0,max:1.1,x0:e.x,y0:e.y,x1:lx,y1:ly};ev(S,'throw',{x:e.x,y:e.y,side:e.side});}}
+    const u=spawnUnit(S,e.side,b.spawn.card,e.x,e.y-(e.side===0?6:-6),0,laneOf(e.x));u.thrown={t:0,max:1.1,x0:e.x,y0:e.y,x1:lx,y1:ly};ev(S,'throw',{x:e.x,y:e.y,side:e.side});}}
   if(b.mana){e.tmr-=TICK;if(e.tmr<=0){e.tmr=b.mana.every;const p=S.p[e.side];p.mana=Math.min(MAXM,p.mana+b.mana.amt);ev(S,'mana',{x:e.x,y:e.y,side:e.side});}}
   if(!b.dmg)return;}
  if(e.cls==='tower'&&!e.active)return;
@@ -184,6 +191,6 @@ function step(S){if(S.over)return;S.ev.length=0;
  updProj(S);updZones(S);updBombs(S);separate(S);cleanup(S);
  S.tick++;S.t+=TICK;}
 function hash(S){let h=2166136261;const mix=v=>{h^=(v|0);h=Math.imul(h,16777619);};mix(S.tick);for(const e of S.ents){mix(e.id);mix(Math.round(e.x*100));mix(Math.round(e.y*100));mix(Math.round(e.hp*10));}for(const p of S.p){mix(Math.round(p.mana*1000));mix(p.crowns);}return(h>>>0).toString(16);}
-return{TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
+return{laneOf,LANE_X,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
 })();
 if(typeof module!=='undefined')module.exports=DuellSim;
