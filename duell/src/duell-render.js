@@ -107,8 +107,11 @@ function draw(S,alpha,dt){lastS=S;st.time+=dt;if(!bg)buildBg();
   for(const lane of[0,1]){const g=Sim.tower(S,1,'guard',lane);if(!g||g.hp<=0){ctx.clearRect(0,0,0,0);ctx.fillStyle='rgba(80,180,255,.18)';ctx.fillRect(lane?FW/2:0,160,FW/2,Sim.RY0-4-160);}}
   ctx.save();ctx.beginPath();ctx.rect(0,0,FW,Sim.RY1+4);ctx.clip();ctx.strokeStyle='rgba(255,70,50,.16)';ctx.lineWidth=5;ctx.beginPath();for(let k=-Sim.RY1;k<FW;k+=22){ctx.moveTo(k,Sim.RY1+4);ctx.lineTo(k+Sim.RY1+4,0);}ctx.stroke();ctx.restore();
   ctx.strokeStyle='rgba(255,255,255,.5)';ctx.setLineDash([5,5]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,Sim.RY1+4);ctx.lineTo(FW,Sim.RY1+4);ctx.stroke();
-  // Spurgrenze: links gesetzt = linke Spur, rechts = rechte Spur
-  ctx.strokeStyle='rgba(255,255,255,.28)';ctx.beginPath();ctx.moveTo(FW/2,Sim.RY1+4);ctx.lineTo(FW/2,FH);ctx.stroke();ctx.setLineDash([]);}
+  // 0.5: Mittelzone – Gruppen teilen sich hier auf beide Spuren auf
+  ctx.setLineDash([]);const C0=CARDS[st.ghost.card],grp=(C0.count||1)>1&&C0.type!=='bld',mw=Sim.MIDW,hot=st.ghost.x!=null&&Sim.inMid(st.ghost.x)&&grp;
+  ctx.fillStyle=hot?'rgba(255,215,90,.2)':'rgba(255,215,90,.08)';ctx.fillRect(FW/2-mw/2,Sim.RY1+4,mw,FH-Sim.RY1-4);
+  ctx.strokeStyle=hot?'rgba(255,220,110,.75)':'rgba(255,220,110,.3)';ctx.lineWidth=1.2;ctx.setLineDash([4,5]);ctx.beginPath();ctx.moveTo(FW/2-mw/2,Sim.RY1+4);ctx.lineTo(FW/2-mw/2,FH);ctx.moveTo(FW/2+mw/2,Sim.RY1+4);ctx.lineTo(FW/2+mw/2,FH);ctx.stroke();ctx.setLineDash([]);
+  if(grp){ctx.font='bold 8px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.75)';ctx.fillStyle=hot?'#ffe9a0':'rgba(255,233,160,.7)';ctx.strokeText('⇆ teilt sich',FW/2,Sim.RY1+16);ctx.fillText('⇆ teilt sich',FW/2,Sim.RY1+16);}}
  // Einheiten sammeln
  const list=[];for(const e of S.ents){if(e.hp<=0)continue;let x=lerp(e.ox,e.x,alpha),y=lerp(e.oy,e.y,alpha),z=e.air?24+Math.sin(T*3+e.id)*2.5:0;
   if(e.thrown){const k=Math.min(1,e.thrown.t/e.thrown.max);z=Math.sin(Math.PI*k)*70;}
@@ -148,20 +151,29 @@ function draw(S,alpha,dt){lastS=S;st.time+=dt;if(!bg)buildBg();
   if(g.fx!=null){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(g.fx,g.fy);ctx.lineTo(g.x,g.y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.arc(g.fx,g.fy,2.6,0,7);ctx.fill();}
   if(C.type==='spell'){const r=C.s.r;ctx.fillStyle=colF;ctx.strokeStyle=colS;ctx.lineWidth=2+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,r,r*.6,0,0,7);ctx.fill();ctx.stroke();
    ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(g.x-6,g.y);ctx.lineTo(g.x+6,g.y);ctx.moveTo(g.x,g.y-4);ctx.lineTo(g.x,g.y+4);ctx.stroke();}
-  else{const l=Sim.laneOf(g.x),LX=Sim.LANE_X[l];
-   if(ok&&C.type!=='bld'){// Weg-Vorschau entlang der festen Spur
-    const bx=Sim.BRIDGES[l],gt=Sim.tower(S,1,'guard',l),tg=gt&&gt.hp>0?gt:Sim.tower(S,1,'keep');
-    ctx.strokeStyle='rgba(130,205,255,.6)';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.lineDashOffset=-T*24;ctx.beginPath();ctx.moveTo(g.x,g.y);
-    if(!C.air&&g.y>Sim.RY0){ctx.lineTo(bx,Sim.RY1+6);ctx.lineTo(bx,Sim.RY0-8);}
-    if(tg)ctx.lineTo(tg.x,tg.y+12);ctx.stroke();ctx.setLineDash([]);ctx.lineDashOffset=0;}
-   const n=C.count||1,f={1:[[0,0]],2:[[-11,0],[11,0]],3:[[0,-10],[-12,8],[12,8]],4:[[-11,-11],[11,-11],[-11,11],[11,11]],5:[[0,0],[-16,-9],[16,-9],[-16,10],[16,10]]}[n]||[[0,0]];
+  else{const FORM={1:[[0,0]],2:[[-11,0],[11,0]],3:[[0,-10],[-12,8],[12,8]],4:[[-11,-11],[11,-11],[-11,11],[11,11]],5:[[0,0],[-16,-9],[16,-9],[-16,10],[16,10]]};
+   const n=C.count||1,sp=C.type==='bld'?null:Sim.splitCount(S,0,g.x,n),l1=Sim.inMid(g.x)?Sim.midLane(S,0,g.x):Sim.laneOf(g.x);
+   // Positionen wie in der Logik (Aufteilung: links/rechts versetzt)
+   let f=[];if(sp){for(let l=0;l<2;l++)if(sp[l])for(const[dx,dy]of FORM[sp[l]])f.push([(l?9:-9)+dx*.7,dy,l]);}else f=(FORM[n]||FORM[1]).map(([dx,dy])=>[dx,dy,l1]);
+   const labs=[];
+   if(ok&&C.type!=='bld'){// Weg-Vorschau: Pfadlinie je Spur (bei Aufteilung zwei Pfeile)
+    const lanes=sp?[0,1].filter(l=>sp[l]):[l1];
+    for(const l of lanes){const bx=Sim.BRIDGES[l],gt=Sim.tower(S,1,'guard',l),tg=gt&&gt.hp>0?gt:Sim.tower(S,1,'keep');const sx=g.x+(sp?(l?9:-9):0);
+     const pts=[[sx,g.y]];if(!C.air&&g.y>Sim.RY0){pts.push([bx,Sim.RY1+6],[bx,Sim.RY0-8]);}if(tg)pts.push([tg.x,tg.y+14]);
+     const col=sp?(l?'rgba(255,200,90,.85)':'rgba(130,215,255,.85)'):'rgba(130,205,255,.6)';
+     ctx.strokeStyle=col;ctx.lineWidth=sp?2.6:2;ctx.setLineDash([6,5]);ctx.lineDashOffset=-T*24;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(const p of pts.slice(1))ctx.lineTo(p[0],p[1]);ctx.stroke();ctx.setLineDash([]);ctx.lineDashOffset=0;
+     // Pfeilspitze auf dem ersten Abschnitt
+     const [ax,ay]=pts[0],[bx2,by2]=pts[1]||pts[0],dd=Math.hypot(bx2-ax,by2-ay)||1,ux=(bx2-ax)/dd,uy=(by2-ay)/dd,m=Math.min(30,dd*.6),hx=ax+ux*m,hy=ay+uy*m;
+     ctx.fillStyle=col;ctx.strokeStyle=OL;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(hx+ux*8,hy+uy*8);ctx.lineTo(hx-uy*5.5,hy+ux*5.5);ctx.lineTo(hx+uy*5.5,hy-ux*5.5);ctx.closePath();ctx.fill();ctx.stroke();
+     if(sp)labs.push(['×'+sp[l]+(l?' →':''),(l?'← ':'')&&0,hx+ux*14+(l?16:-16),hy+uy*14,l]);}}
    const b0=C.u||C.b,R0=b0.r*1.4+(n>1?12:0);
    ctx.fillStyle=colF;ctx.strokeStyle=OL;ctx.lineWidth=4.5+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,R0,R0*.6,0,0,7);ctx.stroke();ctx.strokeStyle=colS;ctx.lineWidth=2.2+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,R0,R0*.6,0,0,7);ctx.fill();ctx.stroke();
    if(C.type==='bld'&&b0.range){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.ellipse(g.x,g.y,b0.range,b0.range*.75,0,0,7);ctx.stroke();ctx.setLineDash([]);}
    const c=spr(vk(C.art==='fire'?'firerain':C.art,0));
-   if(c)for(const[dx,dy]of f){const x=C.type==='bld'?g.x:Math.max(LX[0],Math.min(LX[1],g.x+dx)),y=g.y+dy-(C.air?24:0);
+   if(c)for(const[dx,dy]of f){const x=C.type==='bld'?g.x:Math.max(8,Math.min(FW-8,g.x+dx)),y=g.y+dy-(C.air?24:0);
     ctx.globalAlpha=ok?.85:.55;blit(c,x,y,false);ctx.globalAlpha=ok?.16+.14*pul:.5;blit(tint(c,ok?'#b0ffe8':'#ff2a18'),x,y,false);}
-   ctx.globalAlpha=1;}
+   ctx.globalAlpha=1;
+   for(const[t,,lx,ly,l]of labs){const tx=(l?'':'← ')+t.replace(' →','')+(l?' →':'');ctx.font='bold 11px system-ui,sans-serif';ctx.textAlign='center';const w=ctx.measureText(tx).width+8;ctx.fillStyle='rgba(20,12,4,.8)';ctx.strokeStyle=l?'rgba(255,200,90,.9)':'rgba(130,215,255,.9)';ctx.lineWidth=1.2;ctx.beginPath();ctx.roundRect?ctx.roundRect(lx-w/2,ly-8,w,15,5):ctx.rect(lx-w/2,ly-8,w,15);ctx.fill();ctx.stroke();ctx.fillStyle='#fff3c0';ctx.fillText(tx,lx,ly+3.5);}}
   if(!ok){const yy=g.y-(C.type==='spell'?0:14);ctx.strokeStyle=OL;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(g.x-6,yy-6);ctx.lineTo(g.x+6,yy+6);ctx.moveTo(g.x+6,yy-6);ctx.lineTo(g.x-6,yy+6);ctx.stroke();ctx.strokeStyle='#ff4a3a';ctx.lineWidth=2.6;ctx.stroke();
    const msg=g.err==='Hier nicht erlaubt'?'Gesperrt':g.err||'';if(msg){ctx.font='bold 9px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.9)';const ty=g.y-(C.type==='spell'?C.s.r*.6+6:46);ctx.strokeText(msg,g.x,ty);ctx.fillStyle='#ffb0a0';ctx.fillText(msg,g.x,ty);}}}
 }

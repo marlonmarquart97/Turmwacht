@@ -51,15 +51,26 @@ function exec(S,c){const p=S.p[c.side];
  if(c.a==='play'){if(p.hand[c.i]!==c.card||canPlay(S,c.side,c.i,c.x,c.y))return;const C=CARDS[c.card];p.mana-=C.cost;p.spent+=C.cost;p.plays++;
   p.queue.push(c.card);p.hand[c.i]=p.queue.shift();deploy(S,c.side,c.card,c.x,c.y);ev(S,'play',{side:c.side,card:c.card,x:c.x,y:c.y});}
  else if(c.a==='abil')ability(S,c.side,c.x,c.y);}
-const laneOf=x=>x<FW/2?0:1,LANE_X=[[8,FW/2-7],[FW/2+7,FW-8]];
-function laneClamp(x,l){return clamp(x,LANE_X[l][0],LANE_X[l][1]);}
+// 0.5: freie Bewegung (Clash-Royale-Verhalten). e.lane = bevorzugte Spur/Brücke, wenn kein Gegner in Sicht.
+const laneOf=x=>x<FW/2?0:1,LANE_X=[[8,FW-8],[8,FW-8]],MIDW=60;// Mittelzone ≈17 % der Feldbreite
+const inMid=x=>Math.abs(x-FW/2)<=MIDW/2;
+function laneClamp(x){return clamp(x,8,FW-8);}
+// Spurwahl für Einzeleinheiten in der Mitte: schwächerer Turm, sonst nähere Seite
+function laneScore(S,side,l){const g=tower(S,1-side,'guard',l),k=tower(S,1-side,'keep');const t=alive(g)?g:k;return t?t.hp/t.maxhp+(alive(g)?0:-.15):1;}
+function midLane(S,side,x){const a=laneScore(S,side,0),b=laneScore(S,side,1);if(Math.abs(a-b)>.04)return a<b?0:1;return x<FW/2?0:x>FW/2?1:(side?1:0);}
+// Aufteilung einer Gruppe: [Anzahl links, Anzahl rechts]
+function splitCount(S,side,x,n){if(n<2||!inMid(x))return null;const h=Math.floor(n/2),near=x<FW/2?0:x>FW/2?1:midLane(S,side,x);return near===0?[n-h,h]:[h,n-h];}
 function deploy(S,side,id,x,y){const C=CARDS[id];
  if(C.type==='spell'){castSpell(S,side,id,x,y);return;}
  if(C.type==='bld'){const b=C.b;addEnt(S,{side,cls:'bld',card:id,x,y,r:b.r,hp:b.hp,maxhp:b.hp,st:b,dep:1,life:b.life,tmr:b.spawn?b.spawn.every*.5:(b.mana?b.mana.every:0),mass:1e9});return;}
- const f=FORM[C.count||1]||FORM[1],ln=laneOf(x);
- for(const[dx,dy]of f){const e=spawnUnit(S,side,id,laneClamp(x+dx,ln),y+(side?-dy:dy),.9,ln);if(C.type==='hero'){S.p[side].heroId=e.id;S.p[side].heroCharge=.4;e.hero=true;}}}
+ const n=C.count||1,sp=splitCount(S,side,x,n);
+ if(sp){// Mitte: Gruppe teilt sich auf beide Spuren auf
+  for(let l=0;l<2;l++){const k=sp[l];if(!k)continue;const f=FORM[k]||FORM[1];for(const[dx,dy]of f)spawnUnit(S,side,id,x+(l?9:-9)+dx*.7,y+(side?-dy:dy),.9,l);}
+  ev(S,'split',{side,x,y,n:sp});return;}
+ const f=FORM[n]||FORM[1],ln=inMid(x)?midLane(S,side,x):laneOf(x);
+ for(const[dx,dy]of f){const e=spawnUnit(S,side,id,x+dx,y+(side?-dy:dy),.9,ln);if(C.type==='hero'){S.p[side].heroId=e.id;S.p[side].heroCharge=.4;e.hero=true;}}}
 function spawnUnit(S,side,id,x,y,dep,lane){const C=CARDS[id],u=C.u;if(!C.air&&inRiver(x,y))y=(side===0)?RY1+3:RY0-3;
- if(lane==null)lane=laneOf(x);x=laneClamp(x,lane);
+ if(lane==null)lane=laneOf(x);x=laneClamp(x);
  return addEnt(S,{side,cls:'unit',card:id,lane,x,y,r:u.r,hp:u.hp,maxhp:u.hp,st:u,air:!!C.air,mass:u.mass||1,dep:dep==null?.9:dep});}
 // ---------- Zauber & Fähigkeiten ----------
 function enemiesIn(S,side,x,y,r,o){o=o||{};const out=[];for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap)continue;if(o.noAir&&e.air)continue;if(o.unitsOnly&&e.cls!=='unit')continue;if(d2(e.x,e.y,x,y)<=r+e.r*.5)out.push(e);}return out;}
@@ -86,12 +97,12 @@ function splashAt(S,side,x,y,r,dmg,o){o=o||{};let n=0;for(const e of S.ents){if(
 function onBridge(x){for(const bx of BRIDGES)if(Math.abs(x-bx)<=BW/2)return bx;return null;}
 function needCross(y1,y2){return(y1>MIDY)!==(y2>MIDY);}
 function pickBridge(x1,x2){let best=BRIDGES[0],bd=1e9;for(const bx of BRIDGES){const d=Math.abs(x1-bx)+Math.abs(x2-bx);if(d<bd){bd=d;best=bx;}}return best;}
-function laneBridge(e,x){return e.lane!=null?BRIDGES[e.lane]:pickBridge(e.x,x);}
-function navDist(e,x,y){if(e.air||!needCross(e.y,y))return d2(e.x,e.y,x,y);const bx=laneBridge(e,x);return d2(e.x,e.y,bx,MIDY)+d2(bx,MIDY,x,y);}
-function fixPos(e,prevY){e.x=e.lane!=null?laneClamp(e.x,e.lane):clamp(e.x,5,FW-5);e.y=clamp(e.y,5,FH-5);if(e.air)return;
+function laneBridge(e,x,chase){return(!chase&&e.lane!=null)?BRIDGES[e.lane]:pickBridge(e.x,x);}
+function navDist(e,x,y){if(e.air||!needCross(e.y,y))return d2(e.x,e.y,x,y);const bx=laneBridge(e,x,true);return d2(e.x,e.y,bx,MIDY)+d2(bx,MIDY,x,y);}
+function fixPos(e,prevY){e.x=clamp(e.x,5,FW-5);e.y=clamp(e.y,5,FH-5);if(e.air)return;
  if(e.y>RY0&&e.y<RY1){const bx=onBridge(e.x);if(bx!=null)e.x=clamp(e.x,bx-BW/2+3,bx+BW/2-3);else e.y=(prevY>MIDY)?RY1:RY0;}}
-function moveTo(e,tx,ty,spd){let gx=tx,gy=ty;
- if(!e.air&&needCross(e.y,ty)){const bx=laneBridge(e,tx);
+function moveTo(e,tx,ty,spd,chase){let gx=tx,gy=ty;
+ if(!e.air&&needCross(e.y,ty)){const bx=laneBridge(e,tx,chase);
   if(Math.abs(e.x-bx)>7&&!(e.y>RY0-1&&e.y<RY1+1)){gx=bx;gy=e.y>MIDY?RY1+6:RY0-6;}else{gx=bx;gy=e.y>MIDY?RY0-8:RY1+8;}}
  const dx=gx-e.x,dy=gy-e.y,d=Math.sqrt(dx*dx+dy*dy),s=spd*TICK;
  if(d<=s){e.x=gx;e.y=gy;}else{e.x+=dx/d*s;e.y+=dy/d*s;}if(Math.abs(dx)>.5)e.face=dx<0?-1:1;e.mv=true;}
@@ -103,10 +114,10 @@ function inLane(o,l){if(o.cls==='unit')return(o.lane!=null?o.lane:laneOf(o.x))==
 function acquire(S,e){const st=e.st,sight=st.sight||st.range+60;let best=null,bd=1e9;
  for(const o of S.ents){if(o.side===e.side||!canHit(st,o))continue;
   const ed=edge(e,o);if(st.tg!=='bld'&&ed>sight)continue;
-  if(e.lane!=null&&!inLane(o,e.lane)&&!(ed<=CLOSE&&st.tg!=='bld'))continue;// Spurtreue: fremde Spur nur im Nahkontakt
+  if(st.tg!=='bld'&&o.cls==='tower'&&ed>st.range+2)continue;// Türme nur als Lauf-Ziel (unten), nicht per Sicht über die Spur
   let d=e.cls==='unit'?navDist(e,o.x,o.y):ed;if(o.cls==='unit')d-=8;if(d<bd){bd=d;best=o;}}
- if(!best&&e.cls==='unit'){// Lane-Ziel: Wachturm der eigenen Seite des Feldes, sonst Bergfried
-  const lane=e.lane!=null?e.lane:laneOf(e.x);let g=tower(S,1-e.side,'guard',lane);if(!alive(g))g=tower(S,1-e.side,'keep');
+ if(!best&&e.cls==='unit'){// Lauf-Ziel: Wachturm der Spur, sonst Bergfried. Wer (z.B. nach Abfangen) klar auf der anderen Seite steht, nimmt diese Spur.
+  if(e.lane==null||Math.abs(e.x-FW/2)>MIDW/2+6)e.lane=laneOf(e.x);const lane=e.lane;let g=tower(S,1-e.side,'guard',lane);if(!alive(g))g=tower(S,1-e.side,'keep');
   if(alive(g))best=g;}
  return best;}
 function inRange(e,t){return edge(e,t)<=e.st.range+(t.cls!=='unit'?2:0);}
@@ -139,7 +150,7 @@ function updUnit(S,e){
  if(!t||(!e.lock&&e.retg<=0)||(e.lock&&!inRange(e,t))){const n=acquire(S,e);if(n!==t){t=n;e.lock=false;}e.tgt=t?t.id:0;e.retg=.4;}
  if(!t)return;
  if(inRange(e,t)){e.lock=true;e.cd-=TICK*sm;if(e.cd<=0){attack(S,e,t);e.cd=st.hit;}}
- else{e.lock=false;e.cd=Math.max(e.cd-TICK,st.hit*.35);moveTo(e,t.x,t.y,st.spd*sm);fixPos(e,e.oy);}}
+ else{e.lock=false;e.cd=Math.max(e.cd-TICK,st.hit*.35);moveTo(e,t.x,t.y,st.spd*sm,t.cls!=='tower');fixPos(e,e.oy);}}
 function updStatic(S,e){// Türme & Gebäude
  if(e.dep>0){e.dep-=TICK;return;}
  const fr=e.frz>0;if(fr)e.frz-=TICK;
@@ -191,6 +202,6 @@ function step(S){if(S.over)return;S.ev.length=0;
  updProj(S);updZones(S);updBombs(S);separate(S);cleanup(S);
  S.tick++;S.t+=TICK;}
 function hash(S){let h=2166136261;const mix=v=>{h^=(v|0);h=Math.imul(h,16777619);};mix(S.tick);for(const e of S.ents){mix(e.id);mix(Math.round(e.x*100));mix(Math.round(e.y*100));mix(Math.round(e.hp*10));}for(const p of S.p){mix(Math.round(p.mana*1000));mix(p.crowns);}return(h>>>0).toString(16);}
-return{laneOf,LANE_X,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
+return{laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
 })();
 if(typeof module!=='undefined')module.exports=DuellSim;

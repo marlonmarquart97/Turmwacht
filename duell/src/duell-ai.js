@@ -4,9 +4,11 @@ const DuellAI=(()=>{
 const Sim=(typeof DuellSim!=='undefined')?DuellSim:require('./duell-sim.js');
 const{CARDS,FW,FH,MIDY,RY0,RY1,BRIDGES,d2,clamp}=Sim;
 const PROFILES={
- grimm:{name:'Grimmzahn',react:1.6,think:.7,pushAt:9.5,smart:.3,jitter:45,spellMin:3,abil:.45,well:.15,split:.1},
- morvath:{name:'Morvath',react:.6,think:.3,pushAt:8,smart:.85,jitter:12,spellMin:2,abil:1,well:.6,split:.3},
- bot:{name:'Autopilot',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:.5,split:.25}};
+ grimm:{name:'Grimmzahn',react:1.6,think:.7,pushAt:9.5,smart:.3,jitter:45,spellMin:3,abil:.45,well:.15,split:.1,mid:.2},
+ morvath:{name:'Morvath',react:.6,think:.3,pushAt:8,smart:.85,jitter:12,spellMin:2,abil:1,well:.6,split:.3,mid:.45},
+ bot:{name:'Autopilot',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:.5,split:.25,mid:.4}};
+// Spurgrenzen für die KI-Platzierung (ohne Mittelzone, die ist fürs bewusste Aufteilen reserviert)
+const HM=Sim.MIDW/2+3,LXA=[[12,FW/2-HM],[FW/2+HM,FW-12]];
 function create(profile,side,seed){return{P:typeof profile==='string'?PROFILES[profile]:profile,side,seen:{},next:0,rs:(seed|0)||99,push:null};}
 function R(ai){let a=ai.rs=(ai.rs+0x6D2B79F5)|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
 const isTank=id=>{const C=CARDS[id];return C.u&&(C.u.hp>=1000)&&C.u.range<40;};
@@ -30,7 +32,8 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
   let def=0;for(const o of S.ents)if(o.side===side&&o.cls==='unit'&&o.hp>0&&d2(o.x,o.y,cx/T.length,cy/T.length)<140)def+=o.hp*.5+dps(o)*8;
   return{l,T,hp,air,small,tank,lead,cx:cx/T.length,cy:cy/T.length,dps:d,def,need:hp+d*6-def-(my(lead.y)?500:250)};}).filter(Boolean).sort((a,b)=>b.need-a.need);
  const hand=me.hand.map((id,i)=>({id,i,C:CARDS[id]})).filter(o=>o.C.cost<=me.mana+1e-9&&Sim.canPlay(S,side,o.i,FW/2,toMy(560))!=='Dein Held kämpft bereits');
- const tryPlay=(o,x,y,ln)=>{if(ln==null)ln=Sim.laneOf(x);const LX=Sim.LANE_X[ln];x=clamp(x,Math.max(12,LX[0]+4),Math.min(FW-12,LX[1]-4));y=clamp(y,12,FH-12);for(let k=0;k<6;k++){if(!Sim.canPlay(S,side,o.i,x,y))return{a:'play',side,i:o.i,x,y};y-=fwd*14;if(!Sim.zoneOK(S,side,x,y)&&o.C.type!=='spell')y=clamp(side===0?Math.max(y,RY1+8):Math.min(y,RY0-8),12,FH-12);x=clamp(x+(ln?-8:8),Math.max(12,LX[0]+4),Math.min(FW-12,LX[1]-4));}return null;};
+ const tryPlay=(o,x,y,ln,mid)=>{if(ln==null)ln=Sim.laneOf(x);const LX=mid||o.C.type==='spell'?[12,FW-12]:LXA[ln];if(mid)x=FW/2+(ln?4:-4);x=clamp(x,LX[0],LX[1]);y=clamp(y,12,FH-12);for(let k=0;k<6;k++){if(!Sim.canPlay(S,side,o.i,x,y))return{a:'play',side,i:o.i,x,y};y-=fwd*14;if(!Sim.zoneOK(S,side,x,y)&&o.C.type!=='spell')y=clamp(side===0?Math.max(y,RY1+8):Math.min(y,RY0-8),12,FH-12);if(!mid)x=clamp(x+(ln?-8:8),LX[0],LX[1]);}return null;};
+ const canSplit=o=>(o.C.count||1)>1&&o.C.type!=='spell';
  const jit=()=>(R(ai)*2-1)*P.jitter;
  // --- Verteidigung ---
  const L=lanes[0];
@@ -52,7 +55,9 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
    if(C.type==='bld'){x=FW/2+(L.l?30:-30);y=toMy(430);}
    else if(my(L.lead.y)){y=L.lead.y-fwd*(isRanged(best.id)?85:35);}
    else y=bankY-fwd*(isRanged(best.id)?90:30);
-   y+=jit()*.5;const c=tryPlay(best,x,y,C.type==='bld'?null:L.l);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
+   y+=jit()*.5;const both=lanes.length>1&&lanes[1].need>0,midT=Math.abs(L.lead.x-FW/2)<Sim.MIDW*.8;
+   if(canSplit(best)&&(both||midT)&&R(ai)<P.smart+.1){const c=tryPlay(best,FW/2,y,L.l,true);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
+   const c=tryPlay(best,x,y,C.type==='bld'?null:L.l);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
   if(L.need>800)return null;}
  // --- Angriff / Druck ---
  const myTanks=S.ents.filter(e=>e.side===side&&e.cls==='unit'&&e.hp>0&&isTank(e.card));
@@ -76,6 +81,7 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
   // sonst günstigste sinnvolle Einheit an die Brücke
   const opts=hand.filter(o=>o.C.type==='unit'||o.C.type==='hero').sort((a,b)=>a.C.cost-b.C.cost);
   const pick=opts.find(o=>isSwarm(o.id))||opts.find(o=>o.C.type==='hero')||opts[0];
+  if(pick&&canSplit(pick)&&!myTanks.length&&R(ai)<(P.mid||0)){const c=tryPlay(pick,FW/2,isRanged(pick.id)?bankY-fwd*70:bankY-fwd*24,lane,true);if(c)return c;}
   const split=myTanks.length&&R(ai)<(P.split||0),pl=split?1-lane:lane,plx=BRIDGES[pl];
   if(pick){if(!split)ai.push={l:lane,t:S.tick};const c=tryPlay(pick,plx+jit()*.4,isRanged(pick.id)?bankY-fwd*70:bankY-fwd*10);if(c)return c;}
   if(me.mana>=9.9){const any=hand.find(o=>o.C.type!=='spell');if(any){const c=tryPlay(any,lx,toMy(600));if(c)return c;}}}

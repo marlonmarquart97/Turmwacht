@@ -1,4 +1,4 @@
-# Turmwacht Duell (Offline-Testversion 0.4)
+# Turmwacht Duell (Offline-Testversion 0.5)
 
 Kartenduell am Schattenpass – Einzelspieler-Kampagne gegen Computergegner.
 Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfade → später unter `/duell/` im Turmwacht-Repo).
@@ -16,6 +16,15 @@ Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfa
 - `headless-match.js` – KI-gegen-KI in Node (`node src/headless-match.js 30 morvath`)
 
 Bauen: `python3 src/build.py` → `index.html`.
+
+## Neu in 0.5
+- Freie Bewegung wie bei Clash Royale (ersetzt die feste Spurtreue aus 0.2): Kreaturen laufen zum Turm ihrer Spur, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur oder über die Mitte – und fangen Angreifer vom Turm weg ab. Nach einem Kill suchen sie das nächste Ziel; wer dabei auf die andere Seite gewechselt ist, läuft dort weiter. Ohne Gegner in Sicht geht es geradeaus. Gefallener Außenturm → weiter zum Bergfried.
+- Gebäude-Zieler (Oger, Zeppelin) bleiben bei Gebäuden. Über den Fluss nur an den Brücken (bei Verfolgung die günstigere Brücke), Türme und Gebäude sind Hindernisse.
+- Mittelzone (60 px ≈ 17 % der Feldbreite, gold markiert): Gruppenkarten (Anzahl > 1) teilen sich dort auf beide Spuren auf, bei ungerader Anzahl bekommt die nähere Seite den Rest. Einzeleinheiten wählen dort die Spur mit dem schwächeren Turm (bei Gleichstand die nähere Seite).
+- Drag-Vorschau zeigt beim Aufteilen zwei Pfeile/Pfadlinien mit „← ×2“ / „×1 →“.
+- KI setzt Gruppen gezielt mittig (Druck auf beide Spuren, Verteidigung bei Angriffen auf beiden Seiten oder in der Mitte).
+- Logik weiterhin deterministisch (20 Ticks/s, getrennt vom Renderer). Balance geprüft, unverändert im Zielbereich.
+- Tests: `lanes.js` neu (Abfangen, Aufteilen, Geradeaus, Brücken, Gebäude-Zieler, Heldensprung, Determinismus); alter Test als `lanes-v04.js`. `balance.js` misst die Siegquoten.
 
 ## Neu in 0.4
 - Neues Hauptmenü: Wappen, aktives Deck (8 Symbole, Ø-Mana, Held) und große Kacheln für Kampagne, Freier Kampf, Deck & Sammlung, Einstellungen.

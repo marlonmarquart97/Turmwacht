@@ -59,7 +59,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.4',I=DUELL_INFO;
+const VERSION='0.5',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
@@ -78,7 +78,7 @@ function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
 function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
   <div class="parch"><h3>Klang</h3>${soundRow()}</div>
-  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p></div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p></div>
   <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
 // ----- Kampagne -----
 function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';

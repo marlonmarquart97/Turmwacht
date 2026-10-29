@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#24160b"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>Turmwacht Duell – Kartenduell am Schattenpass</title>
-<!-- Turmwacht Duell 0.4 -->
+<!-- Turmwacht Duell 0.5 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 html,body{height:100%;overflow:hidden;background:#0c0804;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;color:#f3e2b0;overscroll-behavior:none}
@@ -1202,15 +1202,26 @@ function exec(S,c){const p=S.p[c.side];
  if(c.a==='play'){if(p.hand[c.i]!==c.card||canPlay(S,c.side,c.i,c.x,c.y))return;const C=CARDS[c.card];p.mana-=C.cost;p.spent+=C.cost;p.plays++;
   p.queue.push(c.card);p.hand[c.i]=p.queue.shift();deploy(S,c.side,c.card,c.x,c.y);ev(S,'play',{side:c.side,card:c.card,x:c.x,y:c.y});}
  else if(c.a==='abil')ability(S,c.side,c.x,c.y);}
-const laneOf=x=>x<FW/2?0:1,LANE_X=[[8,FW/2-7],[FW/2+7,FW-8]];
-function laneClamp(x,l){return clamp(x,LANE_X[l][0],LANE_X[l][1]);}
+// 0.5: freie Bewegung (Clash-Royale-Verhalten). e.lane = bevorzugte Spur/Brücke, wenn kein Gegner in Sicht.
+const laneOf=x=>x<FW/2?0:1,LANE_X=[[8,FW-8],[8,FW-8]],MIDW=60;// Mittelzone ≈17 % der Feldbreite
+const inMid=x=>Math.abs(x-FW/2)<=MIDW/2;
+function laneClamp(x){return clamp(x,8,FW-8);}
+// Spurwahl für Einzeleinheiten in der Mitte: schwächerer Turm, sonst nähere Seite
+function laneScore(S,side,l){const g=tower(S,1-side,'guard',l),k=tower(S,1-side,'keep');const t=alive(g)?g:k;return t?t.hp/t.maxhp+(alive(g)?0:-.15):1;}
+function midLane(S,side,x){const a=laneScore(S,side,0),b=laneScore(S,side,1);if(Math.abs(a-b)>.04)return a<b?0:1;return x<FW/2?0:x>FW/2?1:(side?1:0);}
+// Aufteilung einer Gruppe: [Anzahl links, Anzahl rechts]
+function splitCount(S,side,x,n){if(n<2||!inMid(x))return null;const h=Math.floor(n/2),near=x<FW/2?0:x>FW/2?1:midLane(S,side,x);return near===0?[n-h,h]:[h,n-h];}
 function deploy(S,side,id,x,y){const C=CARDS[id];
  if(C.type==='spell'){castSpell(S,side,id,x,y);return;}
  if(C.type==='bld'){const b=C.b;addEnt(S,{side,cls:'bld',card:id,x,y,r:b.r,hp:b.hp,maxhp:b.hp,st:b,dep:1,life:b.life,tmr:b.spawn?b.spawn.every*.5:(b.mana?b.mana.every:0),mass:1e9});return;}
- const f=FORM[C.count||1]||FORM[1],ln=laneOf(x);
- for(const[dx,dy]of f){const e=spawnUnit(S,side,id,laneClamp(x+dx,ln),y+(side?-dy:dy),.9,ln);if(C.type==='hero'){S.p[side].heroId=e.id;S.p[side].heroCharge=.4;e.hero=true;}}}
+ const n=C.count||1,sp=splitCount(S,side,x,n);
+ if(sp){// Mitte: Gruppe teilt sich auf beide Spuren auf
+  for(let l=0;l<2;l++){const k=sp[l];if(!k)continue;const f=FORM[k]||FORM[1];for(const[dx,dy]of f)spawnUnit(S,side,id,x+(l?9:-9)+dx*.7,y+(side?-dy:dy),.9,l);}
+  ev(S,'split',{side,x,y,n:sp});return;}
+ const f=FORM[n]||FORM[1],ln=inMid(x)?midLane(S,side,x):laneOf(x);
+ for(const[dx,dy]of f){const e=spawnUnit(S,side,id,x+dx,y+(side?-dy:dy),.9,ln);if(C.type==='hero'){S.p[side].heroId=e.id;S.p[side].heroCharge=.4;e.hero=true;}}}
 function spawnUnit(S,side,id,x,y,dep,lane){const C=CARDS[id],u=C.u;if(!C.air&&inRiver(x,y))y=(side===0)?RY1+3:RY0-3;
- if(lane==null)lane=laneOf(x);x=laneClamp(x,lane);
+ if(lane==null)lane=laneOf(x);x=laneClamp(x);
  return addEnt(S,{side,cls:'unit',card:id,lane,x,y,r:u.r,hp:u.hp,maxhp:u.hp,st:u,air:!!C.air,mass:u.mass||1,dep:dep==null?.9:dep});}
 // ---------- Zauber & Fähigkeiten ----------
 function enemiesIn(S,side,x,y,r,o){o=o||{};const out=[];for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap)continue;if(o.noAir&&e.air)continue;if(o.unitsOnly&&e.cls!=='unit')continue;if(d2(e.x,e.y,x,y)<=r+e.r*.5)out.push(e);}return out;}
@@ -1237,12 +1248,12 @@ function splashAt(S,side,x,y,r,dmg,o){o=o||{};let n=0;for(const e of S.ents){if(
 function onBridge(x){for(const bx of BRIDGES)if(Math.abs(x-bx)<=BW/2)return bx;return null;}
 function needCross(y1,y2){return(y1>MIDY)!==(y2>MIDY);}
 function pickBridge(x1,x2){let best=BRIDGES[0],bd=1e9;for(const bx of BRIDGES){const d=Math.abs(x1-bx)+Math.abs(x2-bx);if(d<bd){bd=d;best=bx;}}return best;}
-function laneBridge(e,x){return e.lane!=null?BRIDGES[e.lane]:pickBridge(e.x,x);}
-function navDist(e,x,y){if(e.air||!needCross(e.y,y))return d2(e.x,e.y,x,y);const bx=laneBridge(e,x);return d2(e.x,e.y,bx,MIDY)+d2(bx,MIDY,x,y);}
-function fixPos(e,prevY){e.x=e.lane!=null?laneClamp(e.x,e.lane):clamp(e.x,5,FW-5);e.y=clamp(e.y,5,FH-5);if(e.air)return;
+function laneBridge(e,x,chase){return(!chase&&e.lane!=null)?BRIDGES[e.lane]:pickBridge(e.x,x);}
+function navDist(e,x,y){if(e.air||!needCross(e.y,y))return d2(e.x,e.y,x,y);const bx=laneBridge(e,x,true);return d2(e.x,e.y,bx,MIDY)+d2(bx,MIDY,x,y);}
+function fixPos(e,prevY){e.x=clamp(e.x,5,FW-5);e.y=clamp(e.y,5,FH-5);if(e.air)return;
  if(e.y>RY0&&e.y<RY1){const bx=onBridge(e.x);if(bx!=null)e.x=clamp(e.x,bx-BW/2+3,bx+BW/2-3);else e.y=(prevY>MIDY)?RY1:RY0;}}
-function moveTo(e,tx,ty,spd){let gx=tx,gy=ty;
- if(!e.air&&needCross(e.y,ty)){const bx=laneBridge(e,tx);
+function moveTo(e,tx,ty,spd,chase){let gx=tx,gy=ty;
+ if(!e.air&&needCross(e.y,ty)){const bx=laneBridge(e,tx,chase);
   if(Math.abs(e.x-bx)>7&&!(e.y>RY0-1&&e.y<RY1+1)){gx=bx;gy=e.y>MIDY?RY1+6:RY0-6;}else{gx=bx;gy=e.y>MIDY?RY0-8:RY1+8;}}
  const dx=gx-e.x,dy=gy-e.y,d=Math.sqrt(dx*dx+dy*dy),s=spd*TICK;
  if(d<=s){e.x=gx;e.y=gy;}else{e.x+=dx/d*s;e.y+=dy/d*s;}if(Math.abs(dx)>.5)e.face=dx<0?-1:1;e.mv=true;}
@@ -1254,10 +1265,10 @@ function inLane(o,l){if(o.cls==='unit')return(o.lane!=null?o.lane:laneOf(o.x))==
 function acquire(S,e){const st=e.st,sight=st.sight||st.range+60;let best=null,bd=1e9;
  for(const o of S.ents){if(o.side===e.side||!canHit(st,o))continue;
   const ed=edge(e,o);if(st.tg!=='bld'&&ed>sight)continue;
-  if(e.lane!=null&&!inLane(o,e.lane)&&!(ed<=CLOSE&&st.tg!=='bld'))continue;// Spurtreue: fremde Spur nur im Nahkontakt
+  if(st.tg!=='bld'&&o.cls==='tower'&&ed>st.range+2)continue;// Türme nur als Lauf-Ziel (unten), nicht per Sicht über die Spur
   let d=e.cls==='unit'?navDist(e,o.x,o.y):ed;if(o.cls==='unit')d-=8;if(d<bd){bd=d;best=o;}}
- if(!best&&e.cls==='unit'){// Lane-Ziel: Wachturm der eigenen Seite des Feldes, sonst Bergfried
-  const lane=e.lane!=null?e.lane:laneOf(e.x);let g=tower(S,1-e.side,'guard',lane);if(!alive(g))g=tower(S,1-e.side,'keep');
+ if(!best&&e.cls==='unit'){// Lauf-Ziel: Wachturm der Spur, sonst Bergfried. Wer (z.B. nach Abfangen) klar auf der anderen Seite steht, nimmt diese Spur.
+  if(e.lane==null||Math.abs(e.x-FW/2)>MIDW/2+6)e.lane=laneOf(e.x);const lane=e.lane;let g=tower(S,1-e.side,'guard',lane);if(!alive(g))g=tower(S,1-e.side,'keep');
   if(alive(g))best=g;}
  return best;}
 function inRange(e,t){return edge(e,t)<=e.st.range+(t.cls!=='unit'?2:0);}
@@ -1290,7 +1301,7 @@ function updUnit(S,e){
  if(!t||(!e.lock&&e.retg<=0)||(e.lock&&!inRange(e,t))){const n=acquire(S,e);if(n!==t){t=n;e.lock=false;}e.tgt=t?t.id:0;e.retg=.4;}
  if(!t)return;
  if(inRange(e,t)){e.lock=true;e.cd-=TICK*sm;if(e.cd<=0){attack(S,e,t);e.cd=st.hit;}}
- else{e.lock=false;e.cd=Math.max(e.cd-TICK,st.hit*.35);moveTo(e,t.x,t.y,st.spd*sm);fixPos(e,e.oy);}}
+ else{e.lock=false;e.cd=Math.max(e.cd-TICK,st.hit*.35);moveTo(e,t.x,t.y,st.spd*sm,t.cls!=='tower');fixPos(e,e.oy);}}
 function updStatic(S,e){// Türme & Gebäude
  if(e.dep>0){e.dep-=TICK;return;}
  const fr=e.frz>0;if(fr)e.frz-=TICK;
@@ -1342,7 +1353,7 @@ function step(S){if(S.over)return;S.ev.length=0;
  updProj(S);updZones(S);updBombs(S);separate(S);cleanup(S);
  S.tick++;S.t+=TICK;}
 function hash(S){let h=2166136261;const mix=v=>{h^=(v|0);h=Math.imul(h,16777619);};mix(S.tick);for(const e of S.ents){mix(e.id);mix(Math.round(e.x*100));mix(Math.round(e.y*100));mix(Math.round(e.hp*10));}for(const p of S.p){mix(Math.round(p.mana*1000));mix(p.crowns);}return(h>>>0).toString(16);}
-return{laneOf,LANE_X,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
+return{laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
 })();
 
 
@@ -1353,9 +1364,11 @@ const DuellAI=(()=>{
 const Sim=(typeof DuellSim!=='undefined')?DuellSim:require('./duell-sim.js');
 const{CARDS,FW,FH,MIDY,RY0,RY1,BRIDGES,d2,clamp}=Sim;
 const PROFILES={
- grimm:{name:'Grimmzahn',react:1.6,think:.7,pushAt:9.5,smart:.3,jitter:45,spellMin:3,abil:.45,well:.15,split:.1},
- morvath:{name:'Morvath',react:.6,think:.3,pushAt:8,smart:.85,jitter:12,spellMin:2,abil:1,well:.6,split:.3},
- bot:{name:'Autopilot',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:.5,split:.25}};
+ grimm:{name:'Grimmzahn',react:1.6,think:.7,pushAt:9.5,smart:.3,jitter:45,spellMin:3,abil:.45,well:.15,split:.1,mid:.2},
+ morvath:{name:'Morvath',react:.6,think:.3,pushAt:8,smart:.85,jitter:12,spellMin:2,abil:1,well:.6,split:.3,mid:.45},
+ bot:{name:'Autopilot',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:.5,split:.25,mid:.4}};
+// Spurgrenzen für die KI-Platzierung (ohne Mittelzone, die ist fürs bewusste Aufteilen reserviert)
+const HM=Sim.MIDW/2+3,LXA=[[12,FW/2-HM],[FW/2+HM,FW-12]];
 function create(profile,side,seed){return{P:typeof profile==='string'?PROFILES[profile]:profile,side,seen:{},next:0,rs:(seed|0)||99,push:null};}
 function R(ai){let a=ai.rs=(ai.rs+0x6D2B79F5)|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
 const isTank=id=>{const C=CARDS[id];return C.u&&(C.u.hp>=1000)&&C.u.range<40;};
@@ -1379,7 +1392,8 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
   let def=0;for(const o of S.ents)if(o.side===side&&o.cls==='unit'&&o.hp>0&&d2(o.x,o.y,cx/T.length,cy/T.length)<140)def+=o.hp*.5+dps(o)*8;
   return{l,T,hp,air,small,tank,lead,cx:cx/T.length,cy:cy/T.length,dps:d,def,need:hp+d*6-def-(my(lead.y)?500:250)};}).filter(Boolean).sort((a,b)=>b.need-a.need);
  const hand=me.hand.map((id,i)=>({id,i,C:CARDS[id]})).filter(o=>o.C.cost<=me.mana+1e-9&&Sim.canPlay(S,side,o.i,FW/2,toMy(560))!=='Dein Held kämpft bereits');
- const tryPlay=(o,x,y,ln)=>{if(ln==null)ln=Sim.laneOf(x);const LX=Sim.LANE_X[ln];x=clamp(x,Math.max(12,LX[0]+4),Math.min(FW-12,LX[1]-4));y=clamp(y,12,FH-12);for(let k=0;k<6;k++){if(!Sim.canPlay(S,side,o.i,x,y))return{a:'play',side,i:o.i,x,y};y-=fwd*14;if(!Sim.zoneOK(S,side,x,y)&&o.C.type!=='spell')y=clamp(side===0?Math.max(y,RY1+8):Math.min(y,RY0-8),12,FH-12);x=clamp(x+(ln?-8:8),Math.max(12,LX[0]+4),Math.min(FW-12,LX[1]-4));}return null;};
+ const tryPlay=(o,x,y,ln,mid)=>{if(ln==null)ln=Sim.laneOf(x);const LX=mid||o.C.type==='spell'?[12,FW-12]:LXA[ln];if(mid)x=FW/2+(ln?4:-4);x=clamp(x,LX[0],LX[1]);y=clamp(y,12,FH-12);for(let k=0;k<6;k++){if(!Sim.canPlay(S,side,o.i,x,y))return{a:'play',side,i:o.i,x,y};y-=fwd*14;if(!Sim.zoneOK(S,side,x,y)&&o.C.type!=='spell')y=clamp(side===0?Math.max(y,RY1+8):Math.min(y,RY0-8),12,FH-12);if(!mid)x=clamp(x+(ln?-8:8),LX[0],LX[1]);}return null;};
+ const canSplit=o=>(o.C.count||1)>1&&o.C.type!=='spell';
  const jit=()=>(R(ai)*2-1)*P.jitter;
  // --- Verteidigung ---
  const L=lanes[0];
@@ -1401,7 +1415,9 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
    if(C.type==='bld'){x=FW/2+(L.l?30:-30);y=toMy(430);}
    else if(my(L.lead.y)){y=L.lead.y-fwd*(isRanged(best.id)?85:35);}
    else y=bankY-fwd*(isRanged(best.id)?90:30);
-   y+=jit()*.5;const c=tryPlay(best,x,y,C.type==='bld'?null:L.l);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
+   y+=jit()*.5;const both=lanes.length>1&&lanes[1].need>0,midT=Math.abs(L.lead.x-FW/2)<Sim.MIDW*.8;
+   if(canSplit(best)&&(both||midT)&&R(ai)<P.smart+.1){const c=tryPlay(best,FW/2,y,L.l,true);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
+   const c=tryPlay(best,x,y,C.type==='bld'?null:L.l);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
   if(L.need>800)return null;}
  // --- Angriff / Druck ---
  const myTanks=S.ents.filter(e=>e.side===side&&e.cls==='unit'&&e.hp>0&&isTank(e.card));
@@ -1425,6 +1441,7 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
   // sonst günstigste sinnvolle Einheit an die Brücke
   const opts=hand.filter(o=>o.C.type==='unit'||o.C.type==='hero').sort((a,b)=>a.C.cost-b.C.cost);
   const pick=opts.find(o=>isSwarm(o.id))||opts.find(o=>o.C.type==='hero')||opts[0];
+  if(pick&&canSplit(pick)&&!myTanks.length&&R(ai)<(P.mid||0)){const c=tryPlay(pick,FW/2,isRanged(pick.id)?bankY-fwd*70:bankY-fwd*24,lane,true);if(c)return c;}
   const split=myTanks.length&&R(ai)<(P.split||0),pl=split?1-lane:lane,plx=BRIDGES[pl];
   if(pick){if(!split)ai.push={l:lane,t:S.tick};const c=tryPlay(pick,plx+jit()*.4,isRanged(pick.id)?bankY-fwd*70:bankY-fwd*10);if(c)return c;}
   if(me.mana>=9.9){const any=hand.find(o=>o.C.type!=='spell');if(any){const c=tryPlay(any,lx,toMy(600));if(c)return c;}}}
@@ -1670,8 +1687,11 @@ function draw(S,alpha,dt){lastS=S;st.time+=dt;if(!bg)buildBg();
   for(const lane of[0,1]){const g=Sim.tower(S,1,'guard',lane);if(!g||g.hp<=0){ctx.clearRect(0,0,0,0);ctx.fillStyle='rgba(80,180,255,.18)';ctx.fillRect(lane?FW/2:0,160,FW/2,Sim.RY0-4-160);}}
   ctx.save();ctx.beginPath();ctx.rect(0,0,FW,Sim.RY1+4);ctx.clip();ctx.strokeStyle='rgba(255,70,50,.16)';ctx.lineWidth=5;ctx.beginPath();for(let k=-Sim.RY1;k<FW;k+=22){ctx.moveTo(k,Sim.RY1+4);ctx.lineTo(k+Sim.RY1+4,0);}ctx.stroke();ctx.restore();
   ctx.strokeStyle='rgba(255,255,255,.5)';ctx.setLineDash([5,5]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,Sim.RY1+4);ctx.lineTo(FW,Sim.RY1+4);ctx.stroke();
-  // Spurgrenze: links gesetzt = linke Spur, rechts = rechte Spur
-  ctx.strokeStyle='rgba(255,255,255,.28)';ctx.beginPath();ctx.moveTo(FW/2,Sim.RY1+4);ctx.lineTo(FW/2,FH);ctx.stroke();ctx.setLineDash([]);}
+  // 0.5: Mittelzone – Gruppen teilen sich hier auf beide Spuren auf
+  ctx.setLineDash([]);const C0=CARDS[st.ghost.card],grp=(C0.count||1)>1&&C0.type!=='bld',mw=Sim.MIDW,hot=st.ghost.x!=null&&Sim.inMid(st.ghost.x)&&grp;
+  ctx.fillStyle=hot?'rgba(255,215,90,.2)':'rgba(255,215,90,.08)';ctx.fillRect(FW/2-mw/2,Sim.RY1+4,mw,FH-Sim.RY1-4);
+  ctx.strokeStyle=hot?'rgba(255,220,110,.75)':'rgba(255,220,110,.3)';ctx.lineWidth=1.2;ctx.setLineDash([4,5]);ctx.beginPath();ctx.moveTo(FW/2-mw/2,Sim.RY1+4);ctx.lineTo(FW/2-mw/2,FH);ctx.moveTo(FW/2+mw/2,Sim.RY1+4);ctx.lineTo(FW/2+mw/2,FH);ctx.stroke();ctx.setLineDash([]);
+  if(grp){ctx.font='bold 8px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.75)';ctx.fillStyle=hot?'#ffe9a0':'rgba(255,233,160,.7)';ctx.strokeText('⇆ teilt sich',FW/2,Sim.RY1+16);ctx.fillText('⇆ teilt sich',FW/2,Sim.RY1+16);}}
  // Einheiten sammeln
  const list=[];for(const e of S.ents){if(e.hp<=0)continue;let x=lerp(e.ox,e.x,alpha),y=lerp(e.oy,e.y,alpha),z=e.air?24+Math.sin(T*3+e.id)*2.5:0;
   if(e.thrown){const k=Math.min(1,e.thrown.t/e.thrown.max);z=Math.sin(Math.PI*k)*70;}
@@ -1711,20 +1731,29 @@ function draw(S,alpha,dt){lastS=S;st.time+=dt;if(!bg)buildBg();
   if(g.fx!=null){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(g.fx,g.fy);ctx.lineTo(g.x,g.y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.arc(g.fx,g.fy,2.6,0,7);ctx.fill();}
   if(C.type==='spell'){const r=C.s.r;ctx.fillStyle=colF;ctx.strokeStyle=colS;ctx.lineWidth=2+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,r,r*.6,0,0,7);ctx.fill();ctx.stroke();
    ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(g.x-6,g.y);ctx.lineTo(g.x+6,g.y);ctx.moveTo(g.x,g.y-4);ctx.lineTo(g.x,g.y+4);ctx.stroke();}
-  else{const l=Sim.laneOf(g.x),LX=Sim.LANE_X[l];
-   if(ok&&C.type!=='bld'){// Weg-Vorschau entlang der festen Spur
-    const bx=Sim.BRIDGES[l],gt=Sim.tower(S,1,'guard',l),tg=gt&&gt.hp>0?gt:Sim.tower(S,1,'keep');
-    ctx.strokeStyle='rgba(130,205,255,.6)';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.lineDashOffset=-T*24;ctx.beginPath();ctx.moveTo(g.x,g.y);
-    if(!C.air&&g.y>Sim.RY0){ctx.lineTo(bx,Sim.RY1+6);ctx.lineTo(bx,Sim.RY0-8);}
-    if(tg)ctx.lineTo(tg.x,tg.y+12);ctx.stroke();ctx.setLineDash([]);ctx.lineDashOffset=0;}
-   const n=C.count||1,f={1:[[0,0]],2:[[-11,0],[11,0]],3:[[0,-10],[-12,8],[12,8]],4:[[-11,-11],[11,-11],[-11,11],[11,11]],5:[[0,0],[-16,-9],[16,-9],[-16,10],[16,10]]}[n]||[[0,0]];
+  else{const FORM={1:[[0,0]],2:[[-11,0],[11,0]],3:[[0,-10],[-12,8],[12,8]],4:[[-11,-11],[11,-11],[-11,11],[11,11]],5:[[0,0],[-16,-9],[16,-9],[-16,10],[16,10]]};
+   const n=C.count||1,sp=C.type==='bld'?null:Sim.splitCount(S,0,g.x,n),l1=Sim.inMid(g.x)?Sim.midLane(S,0,g.x):Sim.laneOf(g.x);
+   // Positionen wie in der Logik (Aufteilung: links/rechts versetzt)
+   let f=[];if(sp){for(let l=0;l<2;l++)if(sp[l])for(const[dx,dy]of FORM[sp[l]])f.push([(l?9:-9)+dx*.7,dy,l]);}else f=(FORM[n]||FORM[1]).map(([dx,dy])=>[dx,dy,l1]);
+   const labs=[];
+   if(ok&&C.type!=='bld'){// Weg-Vorschau: Pfadlinie je Spur (bei Aufteilung zwei Pfeile)
+    const lanes=sp?[0,1].filter(l=>sp[l]):[l1];
+    for(const l of lanes){const bx=Sim.BRIDGES[l],gt=Sim.tower(S,1,'guard',l),tg=gt&&gt.hp>0?gt:Sim.tower(S,1,'keep');const sx=g.x+(sp?(l?9:-9):0);
+     const pts=[[sx,g.y]];if(!C.air&&g.y>Sim.RY0){pts.push([bx,Sim.RY1+6],[bx,Sim.RY0-8]);}if(tg)pts.push([tg.x,tg.y+14]);
+     const col=sp?(l?'rgba(255,200,90,.85)':'rgba(130,215,255,.85)'):'rgba(130,205,255,.6)';
+     ctx.strokeStyle=col;ctx.lineWidth=sp?2.6:2;ctx.setLineDash([6,5]);ctx.lineDashOffset=-T*24;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(const p of pts.slice(1))ctx.lineTo(p[0],p[1]);ctx.stroke();ctx.setLineDash([]);ctx.lineDashOffset=0;
+     // Pfeilspitze auf dem ersten Abschnitt
+     const [ax,ay]=pts[0],[bx2,by2]=pts[1]||pts[0],dd=Math.hypot(bx2-ax,by2-ay)||1,ux=(bx2-ax)/dd,uy=(by2-ay)/dd,m=Math.min(30,dd*.6),hx=ax+ux*m,hy=ay+uy*m;
+     ctx.fillStyle=col;ctx.strokeStyle=OL;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(hx+ux*8,hy+uy*8);ctx.lineTo(hx-uy*5.5,hy+ux*5.5);ctx.lineTo(hx+uy*5.5,hy-ux*5.5);ctx.closePath();ctx.fill();ctx.stroke();
+     if(sp)labs.push(['×'+sp[l]+(l?' →':''),(l?'← ':'')&&0,hx+ux*14+(l?16:-16),hy+uy*14,l]);}}
    const b0=C.u||C.b,R0=b0.r*1.4+(n>1?12:0);
    ctx.fillStyle=colF;ctx.strokeStyle=OL;ctx.lineWidth=4.5+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,R0,R0*.6,0,0,7);ctx.stroke();ctx.strokeStyle=colS;ctx.lineWidth=2.2+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,R0,R0*.6,0,0,7);ctx.fill();ctx.stroke();
    if(C.type==='bld'&&b0.range){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.ellipse(g.x,g.y,b0.range,b0.range*.75,0,0,7);ctx.stroke();ctx.setLineDash([]);}
    const c=spr(vk(C.art==='fire'?'firerain':C.art,0));
-   if(c)for(const[dx,dy]of f){const x=C.type==='bld'?g.x:Math.max(LX[0],Math.min(LX[1],g.x+dx)),y=g.y+dy-(C.air?24:0);
+   if(c)for(const[dx,dy]of f){const x=C.type==='bld'?g.x:Math.max(8,Math.min(FW-8,g.x+dx)),y=g.y+dy-(C.air?24:0);
     ctx.globalAlpha=ok?.85:.55;blit(c,x,y,false);ctx.globalAlpha=ok?.16+.14*pul:.5;blit(tint(c,ok?'#b0ffe8':'#ff2a18'),x,y,false);}
-   ctx.globalAlpha=1;}
+   ctx.globalAlpha=1;
+   for(const[t,,lx,ly,l]of labs){const tx=(l?'':'← ')+t.replace(' →','')+(l?' →':'');ctx.font='bold 11px system-ui,sans-serif';ctx.textAlign='center';const w=ctx.measureText(tx).width+8;ctx.fillStyle='rgba(20,12,4,.8)';ctx.strokeStyle=l?'rgba(255,200,90,.9)':'rgba(130,215,255,.9)';ctx.lineWidth=1.2;ctx.beginPath();ctx.roundRect?ctx.roundRect(lx-w/2,ly-8,w,15,5):ctx.rect(lx-w/2,ly-8,w,15);ctx.fill();ctx.stroke();ctx.fillStyle='#fff3c0';ctx.fillText(tx,lx,ly+3.5);}}
   if(!ok){const yy=g.y-(C.type==='spell'?0:14);ctx.strokeStyle=OL;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(g.x-6,yy-6);ctx.lineTo(g.x+6,yy+6);ctx.moveTo(g.x+6,yy-6);ctx.lineTo(g.x-6,yy+6);ctx.stroke();ctx.strokeStyle='#ff4a3a';ctx.lineWidth=2.6;ctx.stroke();
    const msg=g.err==='Hier nicht erlaubt'?'Gesperrt':g.err||'';if(msg){ctx.font='bold 9px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.9)';const ty=g.y-(C.type==='spell'?C.s.r*.6+6:46);ctx.strokeText(msg,g.x,ty);ctx.fillStyle='#ffb0a0';ctx.fillText(msg,g.x,ty);}}}
 }
@@ -1940,7 +1969,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.4',I=DUELL_INFO;
+const VERSION='0.5',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
@@ -1959,7 +1988,7 @@ function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
 function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
   <div class="parch"><h3>Klang</h3>${soundRow()}</div>
-  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p></div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p></div>
   <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
 // ----- Kampagne -----
 function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';
