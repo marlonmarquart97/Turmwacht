@@ -51,9 +51,10 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
    if(isRanged(o.id))s+=.8;if(C.type==='hero')s+=1.2;if(o.id==='well'||o.id==='sling')s-=6;
    if(C.u&&C.u.tg==='bld')s-=4;
    s-=C.cost*.25;s+=(R(ai)*2-1)*(1-P.smart)*3;if(s>bs){bs=s;best=o;}}
-  if(best&&bs>-2){const C=best.C;let x=L.lead.x+jit()*.6,y;
+  if(best&&bs>-2){const C=best.C;// 0.6: Deploy-Zeit (1 s) einrechnen -> Abfangpunkt dort, wo der Gegner nach dem Materialisieren steht
+   const lead={x:L.lead.x,y:L.lead.y-fwd*(L.lead.st.spd||20)*Sim.DEP*(1+.3*P.smart)};let x=lead.x+jit()*.6,y;
    if(C.type==='bld'){x=FW/2+(L.l?30:-30);y=toMy(430);}
-   else if(my(L.lead.y)){y=L.lead.y-fwd*(isRanged(best.id)?85:35);}
+   else if(my(lead.y)){y=lead.y-fwd*(isRanged(best.id)?85:35);}
    else y=bankY-fwd*(isRanged(best.id)?90:30);
    y+=jit()*.5;const both=lanes.length>1&&lanes[1].need>0,midT=Math.abs(L.lead.x-FW/2)<Sim.MIDW*.8;
    if(canSplit(best)&&(both||midT)&&R(ai)<P.smart+.1){const c=tryPlay(best,FW/2,y,L.l,true);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}

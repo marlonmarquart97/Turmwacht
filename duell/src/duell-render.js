@@ -83,10 +83,11 @@ function onEvents(evs,S){for(const e of evs){switch(e.k){
  case 'throw':st.flashSling[Math.round(e.x)+'|'+Math.round(e.y)]=.35;break;
  case 'land':parts(e.x,e.y,6,'#a08a60',30,.4);break;
  case 'play':fx({k:'ring',x:e.x,y:e.y,r:22,c:e.side?'rgba(255,110,90,.8)':'rgba(110,170,255,.8)',max:.45,w:2});
-  if(e.side===1){const C=CARDS[e.card];text(e.x,e.y-(C.type==='spell'?0:40),C.name,'#ffb0a0',1.2);}break;
+  {const C=CARDS[e.card];text(e.x,e.y-(C.type==='spell'?0:40),C.name,e.side?'#ffb0a0':'#b8d8ff',1.2);}break;
  }}}
 // ---------- Zeichnen ----------
-function hpBar(x,y,w,h,f,side,big){ctx.fillStyle='rgba(10,6,2,.85)';ctx.fillRect(x-w/2-1,y-1,w+2,h+2);ctx.fillStyle=TEAMD[side];ctx.fillRect(x-w/2,y,w,h);
+function hpBar(x,y,w,h,f,side,big,tr){ctx.fillStyle='rgba(10,6,2,.85)';ctx.fillRect(x-w/2-1,y-1,w+2,h+2);ctx.fillStyle=TEAMD[side];ctx.fillRect(x-w/2,y,w,h);
+ if(tr>f){ctx.fillStyle='rgba(255,236,200,.85)';ctx.fillRect(x-w/2,y,w*Math.min(1,tr),h);}
  ctx.fillStyle=TEAM[side];ctx.fillRect(x-w/2,y,w*Math.max(0,f),h);if(big){ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillRect(x-w/2,y,w*Math.max(0,f),h*.4);}}
 function draw(S,alpha,dt){lastS=S;st.time+=dt;if(!bg)buildBg();
  ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(bg,0,0);
@@ -140,8 +141,10 @@ function draw(S,alpha,dt){lastS=S;st.time+=dt;if(!bg)buildBg();
  drawFx(dt);
  // Lebensbalken
  for(const o of list){const e=o.e;if(e.cls==='tower'){towerPlate(o,e,T);continue;}
-  if(e.hero||e.hp<e.maxhp||e.cls==='bld'){const w=e.hero?30:e.cls==='bld'?30:Math.max(14,e.r*2.2),a=DART[artKey(e)],hh=a?Math.min(a.h*a.m,70):30;
-   hpBar(o.x,o.y-o.z-hh-4,w,e.hero?4:3,e.hp/e.maxhp,e.side,e.hero);if(e.hero){ctx.fillStyle='#ffd860';ctx.strokeStyle=OL;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(o.x-w/2-6,o.y-o.z-hh-6);ctx.lineTo(o.x-w/2-2,o.y-o.z-hh-2);ctx.lineTo(o.x-w/2-6,o.y-o.z-hh+2);ctx.lineTo(o.x-w/2-10,o.y-o.z-hh-2);ctx.closePath();ctx.fill();ctx.stroke();}}}
+  {const w=e.hero?30:e.cls==='bld'?30:Math.max(14,e.r*2.2),a=DART[artKey(e)],hh=a?Math.min(a.h*a.m,70):30,an=st.an.get(e.id),Y=o.y-o.z-hh-4;
+   if(e.dep>0&&e.dep0>0){// Deploy: blauer Füllbalken über dem Kopf
+    const k=Math.max(0,Math.min(1,1-e.dep/e.dep0));ctx.fillStyle='rgba(10,6,2,.8)';ctx.fillRect(o.x-w/2-1,Y-1,w+2,5);ctx.fillStyle='#1c3a70';ctx.fillRect(o.x-w/2,Y,w,3);ctx.fillStyle='#6ab8ff';ctx.fillRect(o.x-w/2,Y,w*k,3);continue;}
+   hpBar(o.x,Y,w,e.hero?4:3,(an?an.hpd:e.hp)/e.maxhp,e.side,e.hero,an?an.hpt/e.maxhp:0);if(e.hero){ctx.fillStyle='#ffd860';ctx.strokeStyle=OL;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(o.x-w/2-6,o.y-o.z-hh-6);ctx.lineTo(o.x-w/2-2,o.y-o.z-hh-2);ctx.lineTo(o.x-w/2-6,o.y-o.z-hh+2);ctx.lineTo(o.x-w/2-10,o.y-o.z-hh-2);ctx.closePath();ctx.fill();ctx.stroke();}}}
  // Fähigkeits-Ziel
  if(st.aim){const h=Sim.byId(S,S.p[0].heroId);if(h){const A=CARDS[h.card].abil;ctx.strokeStyle='rgba(255,220,100,.6)';ctx.setLineDash([4,4]);ctx.lineWidth=1.5;if(A.reach){ctx.beginPath();ctx.ellipse(h.x,h.y,A.reach,A.reach*.75,0,0,7);ctx.stroke();}ctx.setLineDash([]);
   if(st.aim.x!=null){let tx=st.aim.x,ty=st.aim.y;if(A.reach){const d=Math.hypot(tx-h.x,ty-h.y);if(d>A.reach){tx=h.x+(tx-h.x)*A.reach/d;ty=h.y+(ty-h.y)*A.reach/d;}}const r=A.r||44;ctx.fillStyle='rgba(255,220,100,.22)';ctx.strokeStyle='#ffd860';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(tx,ty,r,r*.6,0,0,7);ctx.fill();ctx.stroke();}}}
@@ -216,8 +219,9 @@ function tint(c,col){const K='_t'+col;if(c[K])return c[K];const t=document.creat
 function track(S,list,dt){if(st.simRef!==S){st.simRef=S;st.an=new Map();st.corpses=[];}
  const fr=++st.frame;
  for(const o of list){const e=o.e;let a=st.an.get(e.id);
-  if(!a){a={hp:e.hp,fl:0,kx:0,ky:0,kt:0,dn:0,dnT:0,side:e.side,wp:(e.id*1.7)%6.28};st.an.set(e.id,a);}
+  if(!a){a={hpd:e.hp,hpt:e.hp,hp:e.hp,fl:0,kx:0,ky:0,kt:0,dn:0,dnT:0,side:e.side,wp:(e.id*1.7)%6.28};st.an.set(e.id,a);}
   if(e.hp<a.hp-.5){const d=a.hp-e.hp;if(d>=10)a.fl=.14;a.dn+=d;}
+  if(dt>0){a.hpd+=(e.hp-a.hpd)*Math.min(1,dt*9);a.hpt+=(e.hp-a.hpt)*Math.min(1,dt*2.2);if(a.hpt<a.hpd)a.hpt=a.hpd;}else if(e.hp>a.hpd){a.hpd=a.hpt=e.hp;}
   a.hp=e.hp;a.fr=fr;a.o=o;a.fl=Math.max(0,a.fl-dt);a.kt=Math.max(0,a.kt-dt);a.dnT-=dt;
   if(st.dmgNums&&dt>0&&a.dn>=25&&a.dnT<=0){fx({k:'dmg',x:o.x+((e.id*7)%9-4),y:o.y-o.z-(e.cls==='tower'?96:hOf(e)+8),txt:String(Math.round(a.dn)),c:e.side?'#ffe9a0':'#ffb4a8',max:.8});a.dn=0;a.dnT=.35;}
   if(dt>0&&e.mv&&!e.frz&&!e.stun)a.wp+=dt*(e.st&&e.st.spd?e.st.spd*.36:9);}
@@ -270,15 +274,15 @@ function drawEnt(S,o){const e=o.e,key=artKey(e);let c;
  if(e.cls==='bld'&&e.card==='sling'){const fk=Math.round(e.x)+'|'+Math.round(e.y);c=spr(vk(st.flashSling[fk]>0?'sling2':'sling',e.side));}
  else c=spr(key);
  if(!c)return;const dep=e.dep>0;
- if(dep){ctx.globalAlpha=.55;ctx.strokeStyle=TEAM[e.side];ctx.lineWidth=2;ctx.beginPath();ctx.arc(o.x,o.y-4,e.r+4,-Math.PI/2,-Math.PI/2+6.283*(1-e.dep/(e.cls==='bld'?1:.9)));ctx.stroke();}
+ if(dep){const k=e.dep0?1-e.dep/e.dep0:1;ctx.fillStyle=e.side?'rgba(255,90,70,.28)':'rgba(90,160,255,.28)';ctx.beginPath();ctx.ellipse(o.x,o.y,e.r+3,(e.r+3)*.55,0,0,7);ctx.fill();ctx.globalAlpha=.32+.28*k;}
  const a=st.an.get(e.id)||{fl:0,kt:0,kx:0,ky:0,wp:0},hh=hOf(e),face=e.face||1,flip=e.cls==='unit'&&face<0;
  let dx=0,dy=0,rot=0,sx=1,sy=1,legK=0,W=null,ks=-1,kw=0,tgt=null;
  if(e.cls==='unit'){W=WSTYLE[e.card]||'sword';const at=(S.tick-e.atkT)*Sim.TICK,hit=e.st.hit||1,busy=!e.frz&&!e.stun&&!dep&&!e.thrown&&!e.leap;
   tgt=e.tgt?Sim.byId(S,e.tgt):null;const Wd=Math.min(.34,hit*.45);
-  kw=busy&&tgt&&e.lock&&e.cd>0&&e.cd<Wd?1-e.cd/Wd:0;ks=at>=0&&at<.24?at/.24:-1;
+  kw=busy&&tgt&&e.lock&&e.cd>0&&e.cd<Wd?1-e.cd/Wd:0;ks=at>=0&&at<.24?at/.24:-1;const pk=W!=='bow'&&W!=='cast'&&W!=='throw'?(Sim.SWING||2)*Sim.TICK/.24:.3;
   if(W==='sword'||W==='axe'||W==='club'||W==='claw'||W==='bite'){const big=W==='club'?1.4:1;
    if(kw>0){rot-=face*.17*big*kw*kw;dx-=face*1.6*kw;if(W==='club')sy=1+.04*kw;}
-   if(ks>=0){const p=Math.sin(Math.PI*Math.min(1,ks*1.6));rot+=face*.24*big*p;dx+=face*(W==='axe'?7:W==='bite'?6:4)*Math.sin(Math.PI*ks);if(W==='axe'||W==='bite')dy-=(W==='axe'?6:4)*Math.sin(Math.PI*ks);}}
+   if(ks>=0){const p=Math.sin(Math.PI*Math.min(1,ks*.5/pk));rot+=face*.24*big*p;dx+=face*(W==='axe'?7:W==='bite'?6:4)*Math.sin(Math.PI*ks);if(W==='axe'||W==='bite')dy-=(W==='axe'?6:4)*Math.sin(Math.PI*ks);}}
   else if(W==='bow'){if(kw>0){rot-=face*.07*kw;sx=1-.03*kw;}if(ks>=0&&ks<.4)dx-=face*1.6*Math.sin(Math.PI*ks/.4);}
   else if(W==='cast'){if(kw>0){dy-=2.2*kw;sy=1+.05*kw;sx=1-.02*kw;}if(ks>=0&&ks<.5)rot+=face*.1*Math.sin(Math.PI*ks/.5);}
   else if(W==='throw'){if(kw>0)rot-=face*.2*kw;if(ks>=0)rot+=face*.22*Math.sin(Math.PI*Math.min(1,ks*1.5));}

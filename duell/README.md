@@ -1,4 +1,4 @@
-# Turmwacht Duell (Offline-Testversion 0.5)
+# Turmwacht Duell (Offline-Testversion 0.6)
 
 Kartenduell am Schattenpass – Einzelspieler-Kampagne gegen Computergegner.
 Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfade → später unter `/duell/` im Turmwacht-Repo).
@@ -16,6 +16,19 @@ Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfa
 - `headless-match.js` – KI-gegen-KI in Node (`node src/headless-match.js 30 morvath`)
 
 Bauen: `python3 src/build.py` → `index.html`.
+
+## Neu in 0.6 – Bewegung & Zielerfassung nach Clash-Royale-Vorbild
+- Lenkverhalten statt eckiger Wegpunkte: Einheiten steuern einen Vorausschau-Punkt in der Brückenachse an (Abstand wächst mit dem seitlichen Versatz) und laufen in weichen Kurven über die Brücke; Geschwindigkeit wird träge nachgeführt. Türme/Gebäude werden vorausschauend umlaufen (z. B. hinter dem eigenen Turm gesetzte Truppen).
+- Deutlichere Tempo-Unterschiede: Fledermäuse 50, Wölfe 48, Orks/Skelette 30, Ritter 24, Riese & Oger 15.
+- Kollision mit Masse: Einheiten überlappen nicht (4 Auflösungs-Durchgänge, an Türmen eingeklemmte Einheiten gelten als schwer), schwere schieben leichte weg. Gruppen fächern sich im Halbkreis um ihr Ziel auf (seitliches Umlaufen bereits kämpfender Verbündeter). Treffer schwerer Nahkämpfer stoßen leichte Einheiten zurück.
+- Zielerfassung: ungebunden wird jeden Tick neu gewählt – betritt ein Gegner den Sichtradius, dreht die Einheit sofort ab. Nach Kontakt ist sie LOCKED und bleibt am Ziel, bis es tot ist (auch ein Turm); danach sofort Retarget (z. B. Bergfried nach Turmfall). Gebäude-Zieler ignorieren Truppen.
+- Fernkämpfer bleiben in maximaler Reichweite stehen (auch auf der Brücke), Nahkämpfer laufen bis zum Kontakt (Kollisionsradien berühren sich) und schlagen dann mit ihrer Reichweite.
+- Schlag-Frame: Nahkampf-Schaden fällt genau 2 Ticks (0,1 s) nach dem Ausholen, die Schlaganimation hat ihren Höhepunkt exakt dort.
+- Deploy: Truppen erscheinen 1 s als halbtransparente Geister mit blauem Füllbalken über dem Kopf – unverwundbar, ohne Bewegung/Angriff –, dann materialisieren sie. Formationen: 2 nebeneinander, 3 Dreieck, 4 Quadrat, 5 Kreis.
+- UI: Lebensbalken über jeder Einheit (blau/rot), gleitend abnehmend mit hellem Nachlauf; Kartenname wird beim Ausspielen für beide Seiten kurz eingeblendet.
+- KI rechnet die Deploy-Zeit ein (Abfangpunkt = Position des Gegners nach dem Materialisieren).
+- Balance (200 Partien): Grimmzahn 90 %, Morvath 64 %.
+- Tests: neuer `movement.js` (Deploy-Geister, Formationen, Kollision/Masse, Halbkreis, LOCK, Abdrehen, Retarget, Fernkampf-Stopp, Kontakt, Schlag-Frame, Rückstoß, Kurve zur Brücke, Determinismus). Alte Testversionen als `*-v05.js`.
 
 ## Neu in 0.5
 - Freie Bewegung wie bei Clash Royale (ersetzt die feste Spurtreue aus 0.2): Kreaturen laufen zum Turm ihrer Spur, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur oder über die Mitte – und fangen Angreifer vom Turm weg ab. Nach einem Kill suchen sie das nächste Ziel; wer dabei auf die andere Seite gewechselt ist, läuft dort weiter. Ohne Gegner in Sicht geht es geradeaus. Gefallener Außenturm → weiter zum Bergfried.
