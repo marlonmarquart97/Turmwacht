@@ -51,57 +51,186 @@ function phaseWatch(S,ev){let fell=false;
 // ---------- Bildschirme ----------
 const ov=$('ov');
 function show(html,cls){ov.className='ov show '+(cls||'');ov.innerHTML=html;ov.scrollTop=0;}
-function hide(){ov.className='ov';ov.innerHTML='';}
+function hide(){closeCard();ov.className='ov';ov.innerHTML='';}
 function cardHTML(id,o){o=o||{};const C=CARDS[id];const t=C.type;
  return `<div class="cd t-${t}${o.cls?' '+o.cls:''}" data-id="${id}"${o.i!=null?` data-i="${o.i}"`:''}><img src="${DR.icon(C.art==='fire'?'firerain':C.art,64)}" alt=""><b class="cost">${C.cost}</b>${C.count>1?`<i class="cnt">×${C.count}</i>`:''}${t==='hero'?'<i class="hb">Held</i>':''}<span>${esc(C.name)}</span></div>`;}
 function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:</span><button class="sm${tr==='tavern'?' on':''}" data-trk="tavern">🍺 Taverne</button><button class="sm${tr==='calm'?' on':''}" data-trk="calm">🔥 Kaminfeuer</button></div>
  <div class="row snd"><button class="sm${SFX.on.music?' on':''}" data-tog="music">${SFX.on.music?'🎵 Musik an':'🔇 Musik aus'}</button><button class="sm${SFX.on.sfx?' on':''}" data-tog="sfx">${SFX.on.sfx?'🔊 Effekte an':'🔈 Effekte aus'}</button></div>`;}
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
-function menu(){G.paused=true;$('app').classList.add('inmenu');
- show(`<div class="box menu"><div class="logo"><img src="${DR.icon('keep0',96)}" alt=""><div><h1>Turmwacht Duell</h1><p class="sub">Kartenduell am Schattenpass</p></div></div>
-  <button class="big" id="bCamp">⚔️ Kampagne</button><button class="big" id="bFree">🎲 Freies Gefecht</button><button class="big" id="bDeck">🃏 Deck bearbeiten</button>
-  ${soundRow()}<p class="foot">Offline-Testversion 0.3 · Fortschritt wird im Browser gespeichert</p></div>`,'m');
- $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=()=>{audio();deckEditor(menu);};bindSound(ov,menu);}
+// ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
+const VERSION='0.4',I=DUELL_INFO;
+const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
+const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
+function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
+function bindCardTaps(root){root.querySelectorAll('[data-card]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();audio();openCard(b.dataset.card);}));}
+// ----- Hauptmenü -----
+function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const P=prog(),d=G.deck,hero=d.find(id=>CARDS[id].type==='hero');
+ show(`<div class="mm"><div class="crest"><img src="${DR.icon('keep0',120)}" alt=""><div><h1>Turmwacht<br><span>Duell</span></h1><p>Kartenduell am Schattenpass</p></div></div>
+  <button class="deckbar" id="bDeckBar"><div class="dbh"><span>🃏 Dein Deck</span><span class="dbs">Ø <b>${I.fx(I.avg(d),1)}</b> Mana${hero?` · 👑 ${esc(CARDS[hero].name)}`:''}</span></div>
+   <div class="dstrip">${d.map(id=>`<span class="mi t-${CARDS[id].type}" data-id="${id}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></span>`).join('')}</div><small>Antippen zum Bearbeiten</small></button>
+  <div class="tiles">
+   <button class="tile camp" id="bCamp"><img src="${DR.icon('lichP',72)}" alt=""><b>Kampagne</b><small>${P.won.length}/${DUELL_SCEN.length} Szenarien geschafft</small><i class="pb"><i style="width:${P.won.length/DUELL_SCEN.length*100}%"></i></i></button>
+   <button class="tile free" id="bFree"><img src="${DR.icon('chief',72)}" alt=""><b>Freier Kampf</b><small>Üben ohne Fortschritt</small></button>
+   <button class="tile deck" id="bDeck"><img src="${DR.icon('blade',72)}" alt=""><b>Deck &amp; Sammlung</b><small>${B.playerSet.length} Karten · Infos zu jeder Kreatur</small></button>
+   <button class="tile set" id="bSet"><span class="gear">⚙️</span><b>Einstellungen</b><small>Musik &amp; Effekte</small></button></div>
+  <p class="foot">Turmwacht Duell · Offline-Testversion ${VERSION} · Fortschritt wird im Browser gespeichert</p></div>`,'m');
+ $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
+function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
+  <div class="parch"><h3>Klang</h3>${soundRow()}</div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p></div>
+  <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
+// ----- Kampagne -----
+function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';
+ return `<div class="scen sc2 ${st}${u?'':' locked'}" data-s="${sc.id}" role="button" tabindex="0" ${u?'':'aria-disabled="true"'}>
+  <div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${O.tag==='schwer'?'hard':''}">${esc(O.tag)}</i></div>
+  <div class="sci"><small>Kapitel ${sc.id}</small><b>${esc(sc.title)}</b><em>gegen ${esc(O.name)}, ${esc(O.title)}</em>
+   ${u?'':`<p class="lk">🔒 Besiege zuerst „${esc(DUELL_SCEN.find(s=>s.id===sc.id-1).title)}“</p>`}</div>
+  ${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}
+  <i class="seal ${st}">${w?'✓<small>Geschafft</small>':u?'▶<small>Bereit</small>':'🔒<small>Gesperrt</small>'}</i></div>`;}
 function campaign(){const P=prog();
- show(`<div class="box"><h2>Kampagne</h2><p class="sub">Der Schattenpass ruft. Besiege die Anführer der Feinde.</p>
-  ${DUELL_SCEN.map(sc=>{const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);
-   return `<button class="scen${u?'':' locked'}" data-s="${sc.id}" ${u?'':'aria-disabled="true"'}><img src="${DR.icon(O.portrait,72)}" alt=""><div><small>Szenario ${sc.id}</small><b>${esc(sc.title)}</b><em>gegen ${esc(O.name)}, ${esc(O.title)}</em></div><i class="st">${w?'✅ Gewonnen':u?'▶ Offen':'🔒 Gesperrt'}</i></button>`;}).join('')}
-  <div class="row"><button id="bBack">← Zurück</button></div></div>`);
- ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const id=+b.dataset.s;if(!unlocked(id)){toast('Erst Szenario '+(id-1)+' gewinnen!');return;}story(id);});
+ show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><h2>Kampagne</h2><p class="sub">Der Schattenpass ruft. Besiege die Anführer der Feinde.</p></div></div>
+  <div class="cprog"><span>Fortschritt</span><i><i style="width:${P.won.length/DUELL_SCEN.length*100}%"></i></i><b>${P.won.length}/${DUELL_SCEN.length}</b></div>
+  ${DUELL_SCEN.map(sc=>scenCard(sc,P)).join('')}<p class="hint2">Tipp: Tippe auf eine Karte im Gegnerdeck, um sie dir genauer anzusehen.</p></div>`);
+ bindCardTaps(ov);
+ ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const id=+b.dataset.s;if(!unlocked(id)){toast('Erst Szenario '+(id-1)+' gewinnen!');return;}audio();story(id);});
  $('bBack').onclick=menu;}
 function story(id){const sc=DUELL_SCEN.find(s=>s.id===id),O=DUELL_OPP[sc.opp];
- show(`<div class="box"><small class="kick">Szenario ${sc.id}</small><h2>${esc(sc.title)}</h2>
+ show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><small class="kick">Kapitel ${sc.id}</small><h2>${esc(sc.title)}</h2></div></div>
   <div class="opp"><img src="${DR.icon(O.portrait,96)}" alt=""><div><b>${esc(O.name)}</b><em>${esc(O.title)} · ${O.tag}</em><span class="q">${esc(O.quote)}</span></div></div>
-  ${sc.story.map(p=>`<p>${esc(p)}</p>`).join('')}<p class="rule">⚖️ ${esc(sc.rule)}</p><p class="tip">${esc(sc.tip)}</p>
-  <h3>Gegnerisches Deck</h3><div class="mini">${O.deck.map(c=>cardHTML(c,{cls:'xs'})).join('')}</div>
-  <h3>Dein Deck</h3><div class="mini">${G.deck.map(c=>cardHTML(c,{cls:'xs'})).join('')}</div>
-  <div class="row"><button id="bBack">← Zurück</button><button id="bEd">🃏 Deck ändern</button><button class="go" id="bGo">⚔️ Kampf beginnen</button></div></div>`);
- $('bBack').onclick=campaign;$('bEd').onclick=()=>deckEditor(()=>story(id));$('bGo').onclick=()=>{audio();start({mode:'camp',scen:id});};}
+  <div class="parch">${sc.story.map(p=>`<p>${esc(p)}</p>`).join('')}</div><p class="rule">⚖️ ${esc(sc.rule)}</p><p class="tip">${esc(sc.tip)}</p>
+  <h3>Gegnerisches Deck <small>(antippen für Details)</small></h3>${deckStrip(O.deck,{cls:'foe'})}
+  <h3>Dein Deck <small>Ø ${I.fx(I.avg(G.deck),1)} Mana</small></h3>${deckStrip(G.deck)}
+  <div class="row stick"><button id="bEd">🃏 Deck ändern</button><button class="go" id="bGo">⚔️ Kampf beginnen</button></div></div>`);
+ bindCardTaps(ov);$('bBack').onclick=campaign;$('bEd').onclick=()=>deckEditor(()=>story(id));$('bGo').onclick=()=>{audio();start({mode:'camp',scen:id});};}
 function free(){
- show(`<div class="box"><h2>Freies Gefecht</h2><p class="sub">Ein Übungskampf ohne Kampagnenfortschritt.</p>
-  ${Object.entries(DUELL_OPP).map(([k,O])=>{const u=k==='grimm'||unlocked(2);return `<button class="scen${u?'':' locked'}" data-o="${k}"><img src="${DR.icon(O.portrait,72)}" alt=""><div><small>${O.tag}</small><b>${esc(O.name)}</b><em>${esc(O.title)}</em></div><i class="st">${u?'▶':'🔒 Kampagne'}</i></button>`;}).join('')}
-  <div class="row"><button id="bBack">← Zurück</button><button id="bEd">🃏 Deck ändern</button></div></div>`);
+ show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><h2>Freier Kampf</h2><p class="sub">Ein Übungskampf ohne Kampagnenfortschritt.</p></div></div>
+  ${Object.entries(DUELL_OPP).map(([k,O])=>{const u=k==='grimm'||unlocked(2);return `<div class="scen sc2 ${u?'open':'locked locked'}" data-o="${k}" role="button" tabindex="0"><div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${O.tag==='schwer'?'hard':''}">${esc(O.tag)}</i></div>
+   <div class="sci"><small>Gegner</small><b>${esc(O.name)}</b><em>${esc(O.title)}</em>${u?'':'<p class="lk">🔒 Erst in der Kampagne besiegen</p>'}</div>${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}<i class="seal ${u?'open':'locked'}">${u?'⚔<small>Kämpfen</small>':'🔒<small>Gesperrt</small>'}</i></div>`;}).join('')}
+  <div class="row stick"><button id="bEd">🃏 Deck ändern</button></div></div>`);
+ bindCardTaps(ov);
  ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const k=b.dataset.o;if(k!=='grimm'&&!unlocked(2)){toast('Morvath wartet in der Kampagne (Szenario 2).');return;}audio();start({mode:'free',opp:k});});
  $('bBack').onclick=menu;$('bEd').onclick=()=>deckEditor(free);}
-// ---------- Deck-Editor ----------
-function deckEditor(back){let d=G.deck.slice(),info=null;
- const render=()=>{const err0=Sim.validateDeck(d),err=err0&&(d.length!==8&&!d.some(id=>CARDS[id].type==='hero')?err0+' Außerdem fehlt ein Held.':err0),heroes=d.filter(id=>CARDS[id].type==='hero').length,avg=d.length?(d.reduce((a,id)=>a+CARDS[id].cost,0)/d.length).toFixed(1):'–';
-  const I=info&&CARDS[info];
-  show(`<div class="box deck"><h2>Deck bearbeiten</h2>
-   <div class="dstat"><span>Karten <b>${d.length}/8</b></span><span>Ø Mana <b>${avg}</b></span><span class="${heroes===1?'ok':'bad'}" id="heroRule">Held ${heroes===1?'✓':'✗'} <small>(genau 1)</small></span></div>
-   <div class="slots">${Array.from({length:8},(_,i)=>d[i]?cardHTML(d[i],{cls:'in',i}):'<div class="cd empty">frei</div>').join('')}</div>
-   <p class="msg ${err?'bad':'ok'}" id="deckMsg">${err?esc(err):'Deck bereit ✓'}</p>
-   <div class="info">${I?`<b>${esc(I.name)}</b> · ${I.cost} Mana · ${({unit:'Einheit',hero:'Held',bld:'Gebäude',spell:'Zauber'})[I.type]}<br>${esc(I.desc||'')}${I.abil?`<br><i>Fähigkeit: ${esc(I.abil.name)}</i>`:''}`:'Tippe eine Karte in der Sammlung an, um sie hinzuzufügen – tippe im Deck, um sie zu entfernen.'}</div>
-   <h3>Sammlung</h3><div class="coll">${B.playerSet.map(id=>cardHTML(id,{cls:d.includes(id)?'used':''})).join('')}</div>
-   <div class="row stick"><button id="bStd">Standarddeck</button><button class="go" id="bOk" ${err?'disabled':''}>✔ Fertig</button></div></div>`,'d');
-  ov.querySelectorAll('.slots .cd.in').forEach(c=>c.onclick=()=>{info=c.dataset.id;d.splice(+c.dataset.i,1);render();});
-  ov.querySelectorAll('.coll .cd').forEach(c=>c.onclick=()=>{const id=c.dataset.id;info=id;
-   if(d.includes(id)){d.splice(d.indexOf(id),1);render();return;}
-   if(CARDS[id].type==='hero'){const h=d.findIndex(x=>CARDS[x].type==='hero');if(h>=0){const old=CARDS[d[h]].name;d[h]=id;toast('Nur ein Held pro Deck – '+old+' wurde ersetzt.');render();return;}}
-   if(d.length>=8){toast('Deck ist voll – entferne erst eine Karte.');render();return;}
-   d.push(id);render();});
-  $('bStd').onclick=()=>{d=B.defaultDeck.slice();render();};
+// ----- Detailkarte -----
+const dc=el('div','dcwrap');dc.id='dcard';$('app').appendChild(dc);let dcAnim=0,dcOpen=null;
+function closeCard(){if(!dcOpen)return;const f=dcOpen.onClose;dcOpen=null;dc.className='dcwrap';dc.innerHTML='';cancelAnimationFrame(dcAnim);if(f)f();}
+G.closeCard=closeCard;
+function bar(f){return f==null?'':`<i class="sb"><i style="width:${Math.max(4,Math.min(1,f)*100).toFixed(0)}%"></i></i>`;}
+function openCard(id,o){o=o||{};const C=CARDS[id],R=I.rarity(id),S=I.stats(id),A=I.abilities(id);dcOpen={id,onClose:o.onClose};
+ const acts=(o.actions||[]).map((a,i)=>`<button class="${a.cls||''}" data-act="${i}">${a.label}</button>`).join('');
+ dc.innerHTML=`<div class="dc r-${R.k} t-${C.type}" role="dialog" aria-modal="true" aria-label="${esc(C.name)}"><button class="x" id="dcX" aria-label="Schließen">✕</button>
+  <div class="dch"><b class="gem">${C.cost}</b><div><h2>${esc(C.name)}</h2><div class="tags"><i class="rar">${R.n}</i><i class="typ">${TICON[C.type]} ${I.TYPE[C.type]}</i>${C.air?'<i class="typ">🦇 Flieger</i>':''}${C.npc?'<i class="npc">Gegnerkarte</i>':''}</div></div></div>
+  <div class="fig"><canvas id="dcCv"></canvas>${C.count>1?`<i class="cnt">×${C.count}</i>`:''}</div>
+  <div class="dcb">${o.note?`<p class="note">${o.note}</p>`:''}
+   <div class="stats">${S.map(r=>`<div class="st${r.f!=null?'':' nb'}"><span>${r.k}</span><b>${esc(r.v)}${r.sub?` <small>${esc(r.sub)}</small>`:''}</b>${bar(r.f)}</div>`).join('')}</div>
+   <h3>Fähigkeiten</h3><ul class="ab">${A.map(a=>typeof a==='string'?`<li>${esc(a)}</li>`:`<li class="hab"><b>✦ ${esc(a.abil)}</b> – ${esc(a.t)} <small>(${esc(a.charge)})</small></li>`).join('')}</ul>
+   <p class="desc">${esc(C.desc||'')}</p><p class="lore">„${esc(I.LORE[id]||'')}“</p></div>
+  ${acts?`<div class="dca">${acts}</div>`:''}</div>`;
+ dc.className='dcwrap show';
+ dc.querySelector('.dc').addEventListener('click',ev=>ev.stopPropagation());
+ $('dcX').onclick=closeCard;
+ dc.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{const a=o.actions[+b.dataset.act];const f=a.fn;dcOpen.onClose=null;closeCard();f();});
+ figAnim(id);}
+dc.addEventListener('click',ev=>{if(ev.target===dc)closeCard();});
+window.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&dcOpen){ev.stopImmediatePropagation();closeCard();}},true);
+G.openCard=openCard;
+// Große Figur (Frontansicht, bestehende Vektor-Art) mit Idle-Animation
+const figCache={};
+function figSprite(art,H){const K=art+'@'+H;if(figCache[K])return figCache[K];const a=DART[art];const k=H/Math.max(a.h,a.w*.9),dp=Math.min(3,window.devicePixelRatio||1)*1;
+ const W=Math.ceil(a.w*k+12),Hh=Math.ceil(a.h*k+12),c=document.createElement('canvas');c.width=W*dp;c.height=Hh*dp;const g=c.getContext('2d');
+ const q0=document.createElement('canvas');q0.width=c.width;q0.height=c.height;const q=q0.getContext('2d');q.scale(dp,dp);q.translate(6+a.ax*k,6+a.ay*k);q.scale(k,k);try{a.fn(q);}catch(e){}
+ for(let i=0;i<8;i++){const an=i*Math.PI/4;g.drawImage(q0,Math.cos(an)*2.4*dp,Math.sin(an)*2.4*dp);}
+ g.globalCompositeOperation='source-in';g.fillStyle='rgba(14,8,3,.95)';g.fillRect(0,0,c.width,c.height);g.globalCompositeOperation='source-over';g.drawImage(q0,0,0);
+ return figCache[K]={c,w:W,h:Hh,fx:6+a.ax*k,fy:6+a.ay*k};}
+function figAnim(id){const cv2=$('dcCv');if(!cv2)return;const C=CARDS[id],art=artOf(id),a=DART[art],spell=C.type==='spell',bld=C.type==='bld',air=!!C.air,hero=C.type==='hero';
+ const box=cv2.parentElement.getBoundingClientRect(),W=Math.max(160,Math.round(box.width)),H=Math.max(150,Math.round(box.height)),dp=Math.min(3,window.devicePixelRatio||1);
+ cv2.width=W*dp;cv2.height=H*dp;cv2.style.width=W+'px';cv2.style.height=H+'px';const g=cv2.getContext('2d');
+ const fh=spell?H*.62:H*(air?.62:bld?.74:.78),sp=figSprite(art,Math.round(fh));const col={hero:'255,216,96',spell:'190,140,255',bld:'220,210,190',unit:'255,190,110'}[C.type];
+ const P=Array.from({length:14},(_,i)=>({x:Math.random(),y:Math.random(),s:.4+Math.random(),p:Math.random()*6}));
+ let t0=performance.now();
+ const fr=now=>{if(!dcOpen||dcOpen.id!==id||!cv2.isConnected)return;const t=(now-t0)/1000;g.setTransform(dp,0,0,dp,0,0);g.clearRect(0,0,W,H);
+  const gx=W/2,gy=spell?H*.5:H*.9;
+  // Lichtschein + Sockel
+  const rg=g.createRadialGradient(gx,H*.55,4,gx,H*.55,H*.62);rg.addColorStop(0,`rgba(${col},.38)`);rg.addColorStop(1,`rgba(${col},0)`);g.fillStyle=rg;g.fillRect(0,0,W,H);
+  if(!spell){g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(gx,gy,sp.w*.34*(air?.7+.08*Math.sin(t*1.6):1),7,0,0,7);g.fill();
+   g.strokeStyle=`rgba(${col},.5)`;g.lineWidth=1.5;g.beginPath();g.ellipse(gx,gy,sp.w*.42,9,0,0,7);g.stroke();}
+  // Funken
+  for(const p of P){const yy=((p.y-t*.06*p.s)%1+1)%1,al=Math.sin(yy*Math.PI)*.8;g.fillStyle=`rgba(${col},${al})`;g.beginPath();g.arc(p.x*W,yy*H,1.1+p.s*1.2,0,7);g.fill();}
+  // Idle: Atmen, leichtes Wiegen, alle ~3,5 s eine kurze Kampfgeste
+  const ph=t%3.6,flo=ph<.5?Math.sin(ph/.5*Math.PI):0;
+  let sx=1-.012*Math.sin(t*2.2),sy=1+.028*Math.sin(t*2.2),rot=.025*Math.sin(t*1.25)+(bld||spell?0:.12*flo),dy=0;
+  if(air){dy=-8-6*Math.sin(t*1.7);rot=.05*Math.sin(t*1.1);}
+  if(bld){sx=1;sy=1+.01*Math.sin(t*2);rot=0;}
+  if(spell){rot=t*.5;const s=1+.06*Math.sin(t*3);sx=sy=s;}
+  g.save();g.translate(gx,gy+dy);g.rotate(rot);g.scale(sx,sy);
+  if(spell)g.drawImage(sp.c,-sp.w/2,-sp.h/2,sp.w,sp.h);else g.drawImage(sp.c,-sp.fx,-sp.fy,sp.w,sp.h);g.restore();
+  if(hero&&flo>0){g.globalAlpha=flo*.5;g.strokeStyle='#ffe9a0';g.lineWidth=3;g.beginPath();g.arc(gx,gy-sp.h*.55,sp.h*.42+flo*10,0,7);g.stroke();g.globalAlpha=1;}
+  dcAnim=requestAnimationFrame(fr);};
+ dcAnim=requestAnimationFrame(fr);}
+// ----- Deck-Editor -----
+const VIEW=Object.assign({f:'all',s:'cost'},LS.get('duell_view',{}));
+const isHero=id=>CARDS[id].type==='hero';
+function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
+ const others=()=>d.filter(id=>!isHero(id)),heroOf=()=>d.find(isHero);
+ const err=()=>{const h=d.filter(isHero).length;if(h===0)return 'Es fehlt ein Held: Tippe einen Helden 👑 an und wähle „Als Held einsetzen“.';if(h>1)return 'Nur ein Held pro Deck erlaubt.';
+  if(d.length<8)return 'Noch '+(8-d.length)+(8-d.length===1?' Karte':' Karten')+' frei – ein Deck braucht genau 8 Karten.';return Sim.validateDeck(d);};
+ function add(id){if(d.includes(id))return;if(isHero(id)){const h=heroOf();if(h){d[d.indexOf(h)]=id;toast(CARDS[id].name+' ersetzt '+CARDS[h].name+' als Held.');}else d.push(id);flash=id;render();return;}
+  if(others().length>=7){toast('Die 7 Plätze für Einheiten, Zauber und Gebäude sind voll – wähle „Tauschen“ oder entferne erst eine Karte.');swap={from:'coll',id};render();return;}
+  d.push(id);flash=id;render();}
+ function remove(id){d.splice(d.indexOf(id),1);render();}
+ function replace(oldId,newId){const i=d.indexOf(oldId);if(i<0||d.includes(newId))return;d[i]=newId;flash=newId;swap=null;toast(CARDS[newId].name+' ersetzt '+CARDS[oldId].name+'.');render();}
+ function compatible(a,b){return isHero(a)===isHero(b);}
+ function detail(id){const inD=d.includes(id),C=CARDS[id],acts=[];let note='';
+  if(inD){acts.push({label:'➖ Entfernen',cls:'rm',fn:()=>remove(id)});acts.push({label:'⇄ Tauschen',fn:()=>{swap={from:'deck',id};render();}});note='✓ Im Deck'+(isHero(id)?' – dein Held':'');}
+  else if(isHero(id)){const h=heroOf();acts.push({label:h?'👑 Als Held einsetzen':'👑 Als Held einsetzen',cls:'go',fn:()=>add(id)});if(h)note='Ersetzt deinen Helden '+esc(CARDS[h].name)+' (nur 1 Held pro Deck).';}
+  else{const full=others().length>=7;if(!full)acts.push({label:'➕ Ins Deck',cls:'go',fn:()=>add(id)});acts.push({label:'⇄ Tauschen',cls:full?'go':'',fn:()=>{swap={from:'coll',id};render();}});if(full)note='Deck ist voll – tausche eine Karte aus.';}
+  openCard(id,{actions:acts,note});}
+ const render=()=>{const e=err(),h=heroOf(),o=others(),avg=I.avg(d);
+  const slot=(id,i,hs)=>{if(!id)return `<div class="cd empty${hs?' hslot':''}${swap&&swap.from==='coll'&&isHero(swap.id)===!!hs?' tgt':''}" data-slot="${hs?'h':'e'}" data-i="${i}">${hs?'<i class="crown">👑</i><span>Held wählen</span>':'<i class="plus">+</i><span>frei</span>'}</div>`;
+   const tg=swap&&swap.from==='coll'&&compatible(swap.id,id),me=swap&&swap.from==='deck'&&swap.id===id;
+   return cardHTML(id,{cls:'in'+(hs?' hslot':'')+(tg?' tgt':'')+(me?' me':'')+(flash===id?' pop':''),i}).replace('<div ','<div draggable="true" ');};
+  const slots=[slot(h,0,true)].concat(Array.from({length:7},(_,k)=>slot(o[k],k+1,false))).join('');
+  let list=B.playerSet.filter(id=>VIEW.f==='all'||CARDS[id].type===VIEW.f);
+  const TO={hero:0,unit:1,bld:2,spell:3};
+  list.sort((a,b)=>VIEW.s==='name'?CARDS[a].name.localeCompare(CARDS[b].name,'de'):VIEW.s==='type'?(TO[CARDS[a].type]-TO[CARDS[b].type])||CARDS[a].cost-CARDS[b].cost:VIEW.s==='cost-'?CARDS[b].cost-CARDS[a].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'):CARDS[a].cost-CARDS[b].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'));
+  const cnt=t=>B.playerSet.filter(id=>t==='all'||CARDS[id].type===t).length;
+  const coll=list.map(id=>{const inD=d.includes(id),tg=swap&&swap.from==='deck'&&!inD&&compatible(swap.id,id);return cardHTML(id,{cls:(inD?'used':'')+(tg?' tgt':'')+(swap&&!tg&&swap.from==='deck'?' dim':'')}).replace('<div ','<div draggable="true" ').replace('</div>',inD?'<i class="ind">Im Deck</i></div>':'</div>');}).join('');
+  const hint=swap?(swap.from==='coll'?`⇄ Tippe den Platz, den <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll${isHero(swap.id)?' (Held-Platz)':''}.`:`⇄ Wähle in der Sammlung die Karte, die <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll.`):
+   (e?esc(e):'✓ Deck bereit! Tippe eine Karte an, um sie dir anzusehen oder zu tauschen.');
+  show(`<div class="box deck scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Deck &amp; Sammlung</h2></div>
+   <div class="dstat"><span class="pill">🃏 <b>${d.length}/8</b></span><span class="pill">💧 Ø <b id="avgM">${I.fx(avg,1)}</b> Mana</span><span class="pill ${d.filter(isHero).length===1?'ok':'bad'}" id="heroRule">👑 Held ${d.filter(isHero).length===1?'✓':'fehlt'}</span></div>
+   <div class="slots">${slots}</div>
+   <p class="msg ${swap?'sw':e?'bad':'ok'}" id="deckMsg">${hint}${swap?' <button class="sm2" id="bSwX">Abbrechen</button>':''}</p>
+   <div class="colh"><h3>Sammlung <small>${B.playerSet.length} Karten</small></h3>
+    <label class="sort">Sortieren <select id="dSort"><option value="cost">Kosten ↑</option><option value="cost-">Kosten ↓</option><option value="type">Typ</option><option value="name">Name</option></select></label></div>
+   <div class="flt">${['all','hero','unit','spell','bld'].map(t=>`<button class="chipb${VIEW.f===t?' on':''}" data-f="${t}">${t==='all'?'Alle':TICON[t]+' '+(t==='hero'?'Helden':t==='unit'?'Einheiten':t==='spell'?'Zauber':'Gebäude')} <small>${cnt(t)}</small></button>`).join('')}</div>
+   <div class="coll">${coll||'<p class="sub">Keine Karten.</p>'}</div>
+   <div class="row stick"><button id="bStd">↺ Standarddeck</button><button class="go" id="bOk" ${e?'disabled':''}>✔ Fertig</button></div></div>`,'d');
+  flash=null;$('dSort').value=VIEW.s;
+  $('bBack').onclick=()=>{if(!err()&&d.join()!==G.deck.join()){G.deck=d.slice();saveDeck(G.deck);toast('Deck gespeichert.');}else if(err()&&d.join()!==G.deck.join())toast('Ungültiges Deck verworfen – dein altes Deck bleibt aktiv.');back();};
+  if($('bSwX'))$('bSwX').onclick=()=>{swap=null;render();};
+  ov.querySelectorAll('.flt [data-f]').forEach(b=>b.onclick=()=>{VIEW.f=b.dataset.f;LS.set('duell_view',VIEW);render();});
+  $('dSort').onchange=()=>{VIEW.s=$('dSort').value;LS.set('duell_view',VIEW);render();};
+  ov.querySelectorAll('.slots .cd').forEach(c=>c.onclick=()=>{audio();const id=c.dataset.id;
+   if(swap&&swap.from==='coll'){const hs=c.classList.contains('hslot');if(isHero(swap.id)!==hs){toast(isHero(swap.id)?'Ein Held gehört auf den goldenen Held-Platz.':'Der goldene Platz ist nur für deinen Helden.');return;}
+    if(id)replace(id,swap.id);else{const s=swap.id;swap=null;d.push(s);flash=s;render();}return;}
+   if(swap&&swap.from==='deck'){if(id===swap.id){swap=null;render();return;}}
+   if(!id){if(c.dataset.slot==='h'){VIEW.f='hero';swap=null;render();toast('Wähle einen Helden aus der Sammlung.');}else toast('Tippe eine Karte in der Sammlung an und wähle „Ins Deck“.');return;}
+   detail(id);});
+  ov.querySelectorAll('.coll .cd').forEach(c=>c.onclick=()=>{audio();const id=c.dataset.id;
+   if(swap&&swap.from==='deck'){if(c.classList.contains('tgt')){replace(swap.id,id);return;}if(d.includes(id)){toast('Diese Karte ist schon im Deck.');return;}toast(isHero(swap.id)?'Ein Held kann nur gegen einen Helden getauscht werden.':'Helden kommen nur auf den Held-Platz.');return;}
+   if(swap&&swap.from==='coll'&&swap.id!==id){swap=null;}
+   detail(id);});
+  // Drag & Drop (Maus am PC)
+  ov.querySelectorAll('.cd[draggable]').forEach(c=>{c.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',JSON.stringify({id:c.dataset.id,inD:!!c.closest('.slots')}));ev.dataTransfer.effectAllowed='move';c.classList.add('drg');});
+   c.addEventListener('dragend',()=>c.classList.remove('drg'));});
+  const rd=ev=>{try{return JSON.parse(ev.dataTransfer.getData('text/plain'));}catch(_){return null;}};
+  ov.querySelectorAll('.slots .cd').forEach(s=>{s.addEventListener('dragover',ev=>{ev.preventDefault();s.classList.add('ovr');});s.addEventListener('dragleave',()=>s.classList.remove('ovr'));
+   s.addEventListener('drop',ev=>{ev.preventDefault();s.classList.remove('ovr');const D=rd(ev);if(!D||D.inD)return;const hs=s.classList.contains('hslot');
+    if(isHero(D.id)!==hs){toast(isHero(D.id)?'Helden gehören auf den goldenen Held-Platz.':'Der goldene Platz ist nur für deinen Helden.');return;}
+    if(d.includes(D.id))return;if(s.dataset.id)replace(s.dataset.id,D.id);else{d.push(D.id);flash=D.id;render();}});});
+  const cz=ov.querySelector('.coll');cz.addEventListener('dragover',ev=>ev.preventDefault());cz.addEventListener('drop',ev=>{ev.preventDefault();const D=rd(ev);if(D&&D.inD&&d.includes(D.id))remove(D.id);});
+  $('bStd').onclick=()=>{d=B.defaultDeck.slice();swap=null;render();toast('Standarddeck geladen.');};
   $('bOk').onclick=()=>{const e=Sim.validateDeck(d);if(e){toast(e);return;}G.deck=d.slice();saveDeck(G.deck);back();};};
  render();}
 // ---------- Kampf ----------

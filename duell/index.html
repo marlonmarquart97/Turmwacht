@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#24160b"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>Turmwacht Duell – Kartenduell am Schattenpass</title>
+<!-- Turmwacht Duell 0.4 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 html,body{height:100%;overflow:hidden;background:#0c0804;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;color:#f3e2b0;overscroll-behavior:none}
@@ -67,9 +68,6 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 .row.snd{align-items:center;margin-top:6px}.row.snd span{font-size:13px;flex:0 0 auto}.sm{font-size:13px!important;padding:7px 4px!important}.sm.on{border-color:#ffe27a!important;background:linear-gradient(#7a6e52,#3e3628)!important}
 .col{display:flex;flex-direction:column;margin-top:8px}
 .foot{font-size:11px!important;color:#8a7a60;text-align:center;margin-top:10px!important}
-.scen{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:8px 0;padding:8px;border-radius:9px;background:linear-gradient(#5a4430,#2a1c10);border:2px solid #b8902f;box-shadow:0 3px 0 #000}
-.scen img{width:64px;height:64px;flex:0 0 64px;background:rgba(0,0,0,.3);border-radius:8px}.scen div{flex:1;min-width:0}.scen small{display:block;font-size:11px;color:#c8a050}.scen b{display:block;font-size:17px}.scen em{display:block;font-size:12.5px;color:#d8c098}
-.scen .st{font-style:normal;font-size:12px;white-space:nowrap}.scen.locked{filter:grayscale(.9) brightness(.65)}
 .opp{display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);border-radius:8px;padding:6px;margin:8px 0}.opp img{width:80px;height:80px}.opp b{display:block;font-size:18px}.opp em{display:block;font-size:12px;color:#d8a080}.opp .q{display:block;font-size:13px;font-style:italic;margin-top:3px}
 .rule{color:#e0c0ff}.tip{color:#a8e080}.story{font-style:italic}.unlock{font-weight:700;color:#9ad860;font-size:16px!important}
 .mini{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}.cd.xs{padding:1px;border-width:1.5px}.cd.xs span,.cd.xs .hb,.cd.xs .cnt{display:none}.cd.xs .cost{width:15px;height:15px;font-size:9px;left:-3px;top:-3px;border-width:1px}
@@ -107,6 +105,111 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 #cdown.go{animation:cdn .95s ease-out forwards}#cdown.hot{color:#ff6a4a;text-shadow:0 4px 0 #000,0 0 24px #ff2a10}
 @keyframes cdn{0%{opacity:0;transform:scale(1.6)}15%{opacity:.95;transform:scale(1)}70%{opacity:.75}100%{opacity:0;transform:scale(.85)}}
 #app.inmenu #tstrip{visibility:hidden}
+/* ===== 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ===== */
+:root{--gold:#d8b04a;--gold2:#ffe9a0;--wood1:#4a3220;--wood2:#24160b;--parch1:#f1e2b8;--parch2:#d9bf86;--ink:#3a2410}
+.ov.m,.ov.d{padding:10px 8px}
+.mm{max-width:470px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.crest{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:linear-gradient(rgba(0,0,0,.15),rgba(0,0,0,.45)),repeating-linear-gradient(90deg,#4a2f18 0 18px,#402813 18px 19px,#523519 19px 38px);border:3px solid var(--gold);box-shadow:0 5px 0 #000,inset 0 0 0 2px #1a0e05,inset 0 2px 0 rgba(255,220,150,.3)}
+.crest img{width:92px;height:92px;flex:0 0 92px;filter:drop-shadow(0 4px 4px #000)}
+.crest h1{font-size:30px;line-height:.95;color:var(--gold2);text-shadow:0 3px 0 #000,0 0 14px rgba(255,170,40,.45);letter-spacing:.5px}
+.crest h1 span{font-size:22px;color:#ffcf70;letter-spacing:4px;text-transform:uppercase}
+.crest p{font-size:13px;color:#e0c890;font-style:italic;margin-top:4px}
+.deckbar{display:block;width:100%;text-align:left;padding:8px 10px 6px;border-radius:12px;background:linear-gradient(var(--parch1),var(--parch2));color:var(--ink);border:3px solid #8a6424;box-shadow:0 4px 0 #000,inset 0 0 18px rgba(120,80,20,.35)}
+.deckbar .dbh{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-weight:700;font-size:15px;margin-bottom:6px}
+.deckbar .dbs{font-size:12.5px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deckbar small{display:block;text-align:right;font-size:11px;color:#7a5a2a;margin-top:3px;font-style:italic}
+.dstrip{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.dstrip .mi{position:relative;display:block;aspect-ratio:1;border-radius:7px;border:2px solid #9a7a30;background:radial-gradient(circle at 50% 40%,#7a6040,#2e2216);box-shadow:0 2px 0 rgba(0,0,0,.7);padding:0}
+.dstrip .mi img{width:100%;height:100%;display:block;pointer-events:none}
+.dstrip .mi b{position:absolute;left:-3px;top:-4px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#f0c8ff,#9a40e0 55%,#4a1080);border:1.5px solid #120b05;font:700 10px/13px system-ui,sans-serif;color:#fff;text-align:center}
+.mi.t-hero{border-color:#ffd860;box-shadow:0 0 0 1px #ffd860,0 2px 0 rgba(0,0,0,.7)}.mi.t-spell{border-color:#a080e0;background:radial-gradient(circle,#5a4480,#1c1230)}.mi.t-bld{border-color:#a0a0a8;background:radial-gradient(circle,#6e6860,#2a2722)}
+.dstrip.xs{gap:3px;margin-top:5px}.dstrip.xs .mi{border-width:1.5px;border-radius:5px}.dstrip.xs .mi b{width:13px;height:13px;font-size:8.5px;line-height:11px}
+.dstrip.foe .mi{border-color:#c05040}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;min-height:150px;padding:10px 6px 10px;border-radius:12px;overflow:hidden;
+ background:linear-gradient(rgba(0,0,0,.05),rgba(0,0,0,.55)),repeating-linear-gradient(90deg,#5a3c22 0 16px,#4c321b 16px 17px,#634329 17px 32px);border:3px solid var(--gold);box-shadow:0 5px 0 #000,inset 0 0 0 2px #1a0e05,inset 0 2px 0 rgba(255,220,150,.35);transition:transform .08s}
+.tile:active{transform:translateY(3px);box-shadow:0 2px 0 #000,inset 0 0 0 2px #1a0e05}
+.tile img,.tile .gear{width:76px;height:76px;filter:drop-shadow(0 4px 3px #000);margin-bottom:auto}.tile .gear{font-size:54px;line-height:76px}
+.tile b{font-size:18px;color:var(--gold2);text-shadow:0 2px 0 #000;line-height:1.1}
+.tile small{font-size:11.5px;color:#e8d0a0;margin-top:3px;line-height:1.2}
+.tile.camp{background:linear-gradient(rgba(90,10,10,.25),rgba(0,0,0,.6)),repeating-linear-gradient(90deg,#5a3c22 0 16px,#4c321b 16px 17px,#634329 17px 32px)}
+.tile.camp::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(190,90,255,.25),transparent 60%);pointer-events:none}
+.tile.free::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(140,255,90,.18),transparent 60%);pointer-events:none}
+.tile.deck::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(255,216,96,.25),transparent 60%);pointer-events:none}
+.tile .pb,.cprog>i{display:block;width:80%;height:6px;border-radius:3px;background:#1a0e05;border:1px solid #8a6a26;margin-top:6px;overflow:hidden}.tile .pb i,.cprog>i>i{display:block;height:100%;background:linear-gradient(90deg,#9ad860,#ffe070)}
+/* Bildschirm-Kopf */
+.scr .sh{display:flex;align-items:center;gap:10px;margin-bottom:8px}.scr .sh h2{margin:0}
+.bk{flex:0 0 40px;height:40px;border-radius:50%;font-size:20px;font-weight:700;background:linear-gradient(#6a5236,#34251a);border:2px solid var(--gold);box-shadow:0 2px 0 #000}
+.parch{background:linear-gradient(var(--parch1),var(--parch2));color:var(--ink);border:2px solid #8a6424;border-radius:9px;padding:8px 10px;margin:8px 0;box-shadow:inset 0 0 16px rgba(120,80,20,.35)}
+.parch h3{color:#6a3a10!important;margin-top:0!important}.parch p{color:var(--ink)}.parch .row.snd span{color:var(--ink)}
+.box h3 small,.colh h3 small{font-size:11px;color:#b8a070;font-weight:400}
+.hint2{font-size:12px!important;color:#c8b088;text-align:center;font-style:italic}
+/* Kampagne */
+.cprog{display:flex;align-items:center;gap:8px;font-size:13px;margin:2px 0 6px}.cprog>i{flex:1;width:auto;margin:0;height:8px}.cprog b{color:var(--gold2)}
+.sc2{position:relative;display:flex;align-items:stretch;gap:10px;width:100%;text-align:left;margin:10px 0;padding:8px 8px 8px 8px;border-radius:12px;cursor:pointer;
+ background:linear-gradient(rgba(0,0,0,.1),rgba(0,0,0,.5)),repeating-linear-gradient(90deg,#5a3c22 0 16px,#4c321b 16px 17px,#634329 17px 32px);border:3px solid var(--gold);box-shadow:0 4px 0 #000,inset 0 0 0 2px #1a0e05}
+.sc2 .por{position:relative;flex:0 0 84px;height:96px;border-radius:9px;background:radial-gradient(circle at 50% 40%,#6a3020,#1a0a06);border:2px solid #c05040;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 12px #000}
+.sc2 .por img{width:80px;height:80px;filter:drop-shadow(0 3px 3px #000)}
+.sc2 .diff{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);font:700 10px system-ui,sans-serif;font-style:normal;background:#4a7a2a;border:1.5px solid #9ad860;color:#fff;border-radius:8px;padding:1px 7px;text-transform:uppercase;white-space:nowrap}.sc2 .diff.hard{background:#8a2a1a;border-color:#ff8a60}
+.sc2 .sci{flex:1;min-width:0;padding-right:44px}.sc2 .sci small{display:block;font-size:11px;color:#e0b050;text-transform:uppercase;letter-spacing:1px}.sc2 .sci b{display:block;font-size:18px;color:var(--gold2);text-shadow:0 2px 0 #000;line-height:1.15}.sc2 .sci em{display:block;font-size:12.5px;color:#e0c8a0}
+.sc2{flex-wrap:wrap}.sc2 .sdk{flex:1 0 100%;margin-top:4px;padding:5px 6px 6px;border-radius:8px;background:rgba(0,0,0,.3)}.sdk small{display:block;font:700 9.5px system-ui,sans-serif;color:#e0a090;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.sc2 .lk{font-size:12px!important;color:#e0c090;margin-top:8px!important;font-style:italic}
+.seal{position:absolute;right:8px;top:8px;width:46px;height:46px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;font-size:18px;font-weight:700;line-height:1;border:2px solid #120b05;box-shadow:0 2px 0 #000}
+.seal small{font:800 8px system-ui,sans-serif;margin-top:2px;text-transform:uppercase}
+.seal.won{background:radial-gradient(circle at 40% 35%,#c8f080,#3a7a1a);color:#fff;text-shadow:0 1px 0 #000}.seal.open{background:radial-gradient(circle at 40% 35%,#ffe9a0,#b8801a);color:#3a2200}.seal.locked{background:radial-gradient(circle at 40% 35%,#8a8070,#3a342c);color:#ddd}
+.sc2.locked{filter:grayscale(.85) brightness(.7);cursor:not-allowed}.sc2.won{border-color:#9ad860}
+.sc2.open:not(.won){animation:glowc 2s ease-in-out infinite alternate}@keyframes glowc{to{box-shadow:0 4px 0 #000,inset 0 0 0 2px #1a0e05,0 0 14px rgba(255,216,96,.55)}}
+/* Deck-Editor */
+.deck .dstat{display:flex;gap:6px;justify-content:space-between;margin:2px 0 8px}
+.pill{flex:1;text-align:center;font-size:13px;padding:5px 4px;border-radius:14px;background:rgba(0,0,0,.35);border:1.5px solid #8a6a26;white-space:nowrap}.pill.ok{border-color:#9ad860;color:#c8f0a0}.pill.bad{border-color:#ff7a60;color:#ffb0a0;animation:lowb .7s infinite alternate}
+.slots{padding:8px;border-radius:10px;background:linear-gradient(var(--parch1),var(--parch2));border:2px solid #8a6424;box-shadow:inset 0 0 18px rgba(120,80,20,.4)}
+.slots .cd,.coll .cd{min-height:84px}
+.cd.hslot{border-color:#ffd860!important;box-shadow:0 0 0 2px #ffd860,0 2px 0 #000}
+.cd.hslot::before{content:'HELD';position:absolute;left:50%;top:-8px;transform:translateX(-50%);font:900 8px system-ui,sans-serif;background:#ffd860;color:#3a2200;border-radius:4px;padding:1px 4px;z-index:2;letter-spacing:.5px}
+.cd.hslot .hb{display:none}
+.slots .cd.empty{background:rgba(90,60,20,.18);border:2px dashed #8a6424;color:#7a5a2a}.slots .cd.empty .plus{font-style:normal;font-size:26px;line-height:1;margin-bottom:auto;margin-top:14px}.slots .cd.empty span{color:#7a5a2a;text-shadow:none}
+.slots .cd.empty.hslot{background:rgba(255,216,96,.25);animation:lowb .8s infinite alternate}.cd.empty .crown{font-style:normal;font-size:24px;margin-bottom:auto;margin-top:12px}
+.cd.tgt{animation:tgt .6s ease-in-out infinite alternate;border-color:#7af0ff!important}@keyframes tgt{from{box-shadow:0 0 0 2px #7af0ff,0 2px 0 #000}to{box-shadow:0 0 0 4px #7af0ff,0 0 14px #7af0ff}}
+.cd.me{outline:3px solid #7af0ff;outline-offset:1px}.cd.dim{opacity:.35}.cd.pop{animation:pop .35s ease-out}@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.cd.ovr{outline:3px dashed #7af0ff}.cd.drg{opacity:.5}
+.msg{font-size:13px!important;min-height:20px;padding:5px 8px;border-radius:8px;background:rgba(0,0,0,.3);margin:8px 0!important}.msg.sw{color:#a8f4ff;border:1.5px solid #7af0ff}
+.sm2{font-size:12px;padding:3px 8px;border-radius:6px;background:linear-gradient(#6a5236,#34251a);border:1.5px solid var(--gold);margin-left:4px}
+.colh{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;margin-top:6px}.colh h3{margin:0 0 2px!important}
+.sort{font-size:12px;color:#c8b088;white-space:nowrap}.sort select{font:inherit;font-size:13px;background:#2a1a10;color:#f3e2b0;border:1.5px solid var(--gold);border-radius:6px;padding:3px 4px;margin-left:3px}
+.flt{display:flex;flex-wrap:wrap;gap:5px;padding:6px 0 8px;scrollbar-width:none}.flt::-webkit-scrollbar{display:none}
+.chipb{flex:0 0 auto;font-size:12.5px;padding:5px 9px;border-radius:14px;background:rgba(0,0,0,.35);border:1.5px solid #8a6a26;white-space:nowrap}.chipb small{opacity:.7;font-size:10.5px}.chipb.on{background:linear-gradient(#ffe070,#c8901a);color:#2a1600;border-color:#fff0b0;font-weight:700}
+.coll .cd.used{opacity:.62;filter:saturate(.45)}.cd .ind{position:absolute;left:0;right:0;top:40%;font:900 9px system-ui,sans-serif;font-style:normal;text-align:center;background:rgba(40,90,20,.92);color:#e8ffd0;padding:2px 0;transform:rotate(-12deg);letter-spacing:.5px;pointer-events:none}
+.coll .cd:not(.used):hover{transform:translateY(-2px)}
+/* Detailkarte */
+.dcwrap{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:10px;background:rgba(6,3,1,.78);backdrop-filter:blur(3px)}
+.dcwrap.show{display:flex;animation:fadein .15s ease-out}@keyframes fadein{from{opacity:0}}
+.dc{position:relative;width:100%;max-width:400px;max-height:100%;display:flex;flex-direction:column;border-radius:14px;overflow:hidden;background:linear-gradient(#5a3c22,#2a1a0c);border:3px solid var(--gold);box-shadow:0 8px 0 #000,0 0 30px rgba(0,0,0,.9),inset 0 0 0 2px #1a0e05;animation:cardin .22s cubic-bezier(.2,1.4,.5,1)}
+@keyframes cardin{from{transform:scale(.85) translateY(20px);opacity:0}}
+.dc.r-leg{border-color:#ffd860;box-shadow:0 8px 0 #000,0 0 26px rgba(255,200,60,.5),inset 0 0 0 2px #1a0e05}.dc.r-epic{border-color:#c080ff}.dc.r-rare{border-color:#6ab0ff}.dc.r-com{border-color:#b8a888}
+.dc .x{position:absolute;right:8px;top:8px;z-index:3;width:36px;height:36px;border-radius:50%;font-size:17px;font-weight:700;background:linear-gradient(#8a3a2a,#4a1a10);border:2px solid #ffb090;box-shadow:0 2px 0 #000}
+.dch{display:flex;align-items:center;gap:10px;padding:10px 50px 6px 10px;background:linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,0))}
+.dch h2{font-size:21px;color:var(--gold2);text-shadow:0 2px 0 #000;line-height:1.1}
+.gem{flex:0 0 42px;height:42px;border-radius:50%;background:radial-gradient(circle at 38% 35%,#f8d8ff,#a040e8 50%,#4a1080);border:3px solid #120b05;font:900 22px/36px system-ui,sans-serif;text-align:center;color:#fff;text-shadow:0 2px 0 #000;box-shadow:0 0 10px rgba(180,80,255,.6)}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.tags i{font:700 10.5px system-ui,sans-serif;font-style:normal;padding:2px 7px;border-radius:8px;background:rgba(0,0,0,.4);border:1px solid #8a6a26}
+.r-leg .rar{background:linear-gradient(#ffe070,#c8901a);color:#2a1600;border-color:#fff0b0}.r-epic .rar{background:#6a2aa8;border-color:#d0a0ff}.r-rare .rar{background:#1a4a8a;border-color:#8ac0ff}.r-com .rar{background:#5a5040}.tags .npc{background:#7a1a10;border-color:#ff8a60}
+.fig{position:relative;flex:0 0 auto;height:min(30vh,210px);margin:0 10px;border-radius:10px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#5a7a4a,#24301c 70%,#151a10);border:2px solid #1a0e05;box-shadow:inset 0 0 24px #000}
+.t-spell .fig{background:radial-gradient(ellipse at 50% 45%,#4a3a7a,#1c1230 75%)}.t-bld .fig{background:radial-gradient(ellipse at 50% 45%,#6a6a5a,#2a2a22 75%)}.t-hero .fig{background:radial-gradient(ellipse at 50% 45%,#7a6a3a,#2a2210 75%)}
+.fig canvas{position:absolute;inset:0;display:block}.fig .cnt{position:absolute;right:8px;bottom:6px;font:900 20px system-ui,sans-serif;font-style:normal;color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000}
+.dcb{flex:1;overflow-y:auto;margin:8px 10px 0;padding:8px 10px 10px;border-radius:10px;background:linear-gradient(var(--parch1),var(--parch2));color:var(--ink);box-shadow:inset 0 0 18px rgba(120,80,20,.4);-webkit-overflow-scrolling:touch}
+.dcb .note{font-weight:700;color:#6a3a10;margin:0 0 6px!important;font-size:13px!important}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.st{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:0 6px;font-size:12px;border-bottom:1px dotted rgba(90,60,20,.35);padding-bottom:3px}
+.st span{color:#6a4a20}.st b{text-align:right;font-size:13px;color:#2a1608}.st b small{font-weight:400;font-size:10px;color:#7a5a2a;display:block;line-height:1}
+.st .sb{grid-column:1/3;display:block;height:5px;border-radius:3px;background:rgba(60,40,10,.25);overflow:hidden;margin-top:2px}.st .sb i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#b8701a,#ffc040)}
+.st.nb{align-self:end}
+.dcb h3{font-size:13px;color:#6a3a10;margin:8px 0 3px}
+.ab{list-style:none;font-size:12.5px;line-height:1.35}.ab li{padding-left:14px;position:relative;margin:2px 0}.ab li::before{content:'◆';position:absolute;left:0;color:#a8701a;font-size:9px;top:3px}
+.ab li.hab{background:rgba(255,216,96,.35);border-radius:6px;padding:4px 6px 4px 8px}.ab li.hab::before{content:''}.ab li small{color:#7a5a2a}
+.dcb .desc{font-size:12.5px!important;margin:6px 0 2px!important}.dcb .lore{font-size:12.5px!important;font-style:italic;color:#6a4a2a;margin:4px 0 0!important;border-top:1px solid rgba(90,60,20,.3);padding-top:5px}
+.dca{display:flex;gap:6px;padding:8px 10px 10px}.dca button{flex:1;padding:11px 6px;font-size:15px;font-weight:700;border-radius:8px;background:linear-gradient(#6a5236,#34251a);border:2px solid var(--gold);box-shadow:0 3px 0 #000;text-shadow:0 1px 0 #000}
+.dca .go{background:linear-gradient(#4a7a2a,#244a12);border-color:#9ad860}.dca .rm{background:linear-gradient(#8a3a2a,#4a1a10);border-color:#ff9a7a}
+@media (max-height:700px){.fig{height:24vh}.tile{min-height:122px}.tile img,.tile .gear{width:58px;height:58px}.tile .gear{font-size:40px;line-height:58px}.crest img{width:70px;height:70px;flex-basis:70px}}
+@media (min-width:700px){#app.inmenu{max-width:620px}.mm,.box{max-width:560px}.coll{grid-template-columns:repeat(6,1fr)!important}.tile{min-height:170px}.dc{max-width:440px}}
 
 @media (max-height:760px){.cd.h{min-height:64px}.cd img{max-width:48px}#hud{padding:3px 5px}.who img{width:30px;height:30px}#abil{width:60px;height:60px}}
 </style></head><body>
@@ -1372,6 +1475,91 @@ const DUELL_SCEN=[
   lose:'Kaltes Lachen hallt aus der Gruft. Morvath ist stark – prüfe dein Deck und greife erneut an!'}];
 
 
+// ---- duell-cards.js ----
+// ===== Turmwacht Duell – Karten-Infos für Menü & Detailkarte (0.4) =====
+// Nur Anzeige: Seltenheit, Lore und aufbereitete Werte. Alle Zahlen werden live aus TW_BESTIARY gelesen – keine eigenen Spielwerte.
+const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
+ const TYPE={hero:'Held',unit:'Einheit',spell:'Zauber',bld:'Gebäude'};
+ const LORE={
+  orcs:'Söldner aus den Felsklippen. Für einen Krug Met und eine gute Prügelei stellen sie sich vor jede Brücke.',
+  archers:'Die Elfen der Grenzwälder treffen eine Fledermaus im Mondlicht – und verfehlen selten zweimal.',
+  firemage:'Ein Gelehrter der Flammenakademie. Er redet wenig, aber seine Feuerbälle sprechen für sich.',
+  alch:'Halb Gelehrter, halb Goblin. Was in seinen Flaschen brodelt, weiß nicht einmal er genau.',
+  sling:'Ein knarrendes Holzgestell, zwei kichernde Bediener und viele fliegende Orks. Die Orks fragen nicht, wohin.',
+  ranger:'Ein Wachturm der Waldläufer, in einer Nacht errichtet. Von oben sieht man jeden Feind kommen.',
+  well:'Eine uralte Quelle voller Magie. Wer sie hütet, dem geht das Mana nicht so schnell aus.',
+  blade:'Der Klingenmeister hat den Schattenpass hundertmal verteidigt. Sein Sprung lässt Schildwälle zerbrechen.',
+  frosthero:'Er kam aus den Eisgipfeln, um den Pass zu bewachen. Wo er geht, gefriert der Atem der Feinde.',
+  poisonhero:'Sie mischt Tränke für Heiler – und Gifte für alle anderen. Ihre grünen Wolken fürchtet jedes Heer.',
+  zepp:'Kobold-Ingenieure halten es für sicher. Die Bomben sind es eher nicht.',
+  giant:'Aus den Knochen eines Riesen zusammengefügt. Selbst sein Tod ist eine Waffe.',
+  shaman:'Er singt die alten Lieder der Steppe. Wunden schließen sich, und manchmal fährt ein Blitz aus den Wolken.',
+  bats:'Ein kreischender Schwarm aus den Höhlen unter dem Pass. Einzeln harmlos, zusammen eine Plage.',
+  firerain:'Ein uralter Kriegszauber. Der Himmel glüht kurz auf – dann regnet es Feuer.',
+  frost:'Eisige Winde aus dem Norden. Für drei Herzschläge steht die Zeit still.',
+  skels:'Morvaths Fußvolk. Sie klappern, sie zerfallen – und sie stehen immer wieder auf.',
+  skelarch:'Selbst im Tod spannen sie noch ihre Bögen. Ihre Pfeile sind kalt wie ein Grab.',
+  knight:'Einst ein stolzer Ritter der Turmwacht, heute Morvaths Wächter in rostiger Rüstung.',
+  wolves:'Grimmzahns Lieblinge. Sie jagen im Rudel und riechen Angst über die ganze Schlucht.',
+  ogre:'Ein Oger mit einem einzigen Ziel: Mauern einreißen. Alles andere übersieht er.',
+  lich:'Morvath selbst, Herr der Gruft. Jeder Gefallene hört seinen Ruf.'};
+ const fx=(n,d)=>{d=d==null?1:d;return(+n).toFixed(d).replace(/\.0+$/,'').replace('.',',');};
+ const pct=f=>Math.round(f*100)+' %';
+ function rarity(id){const c=C[id];if(c.type==='hero')return{k:'leg',n:'Legendär'};if(c.cost>=6)return{k:'epic',n:'Episch'};if(c.cost>=4)return{k:'rare',n:'Selten'};return{k:'com',n:'Gewöhnlich'};}
+ function target(tg,air){return(tg==='bld'?'Nur Gebäude & Türme':tg==='any'?'Boden, Luft & Gebäude':'Boden & Gebäude');}
+ function speedName(s){return s<20?'langsam':s<28?'mittel':s<40?'schnell':'sehr schnell';}
+ // Vergleichsgrößen über alle Einheiten-/Heldenkarten (für Balken)
+ const U=Object.values(C).filter(c=>c.u).map(c=>c.u);
+ const MAX={hp:Math.max(...U.map(u=>u.hp)),dmg:Math.max(...U.map(u=>u.dmg)),dps:Math.max(...U.map(u=>u.dmg/u.hit)),range:Math.max(...U.map(u=>u.range)),spd:Math.max(...U.map(u=>u.spd)),hit:Math.min(...U.map(u=>u.hit)),
+  bhp:Math.max(...Object.values(C).filter(c=>c.b).map(c=>c.b.hp)),sdmg:Math.max(...Object.values(C).filter(c=>c.s).map(c=>c.s.dmg)),sr:Math.max(...Object.values(C).filter(c=>c.s).map(c=>c.s.r))};
+ // Werte-Zeilen: {k:Label, v:Text, f:Balken 0..1 (optional), sub:Zusatz}
+ function stats(id){const c=C[id],R=[];
+  if(c.u){const u=c.u,n=c.count||1,dps=u.dmg/u.hit;
+   R.push({k:'Leben',v:fx(u.hp,0),f:u.hp/MAX.hp,sub:n>1?'×'+n+' = '+fx(u.hp*n,0):''});
+   R.push({k:'Schaden',v:fx(u.dmg,0),f:u.dmg/MAX.dmg,sub:u.splash?'Fläche':''});
+   R.push({k:'DPS',v:fx(dps,0),f:dps/MAX.dps,sub:n>1?'×'+n+' = '+fx(dps*n,0):''});
+   R.push({k:'Angriffstempo',v:fx(u.hit,1)+' s',f:MAX.hit/u.hit,sub:u.hit<=1?'schnell':u.hit>=1.5?'langsam':'mittel'});
+   R.push({k:'Reichweite',v:u.range<=14?'Nahkampf':fx(u.range/B.tile,1)+' Felder',f:u.range/MAX.range});
+   R.push({k:'Tempo',v:speedName(u.spd),f:u.spd/MAX.spd,sub:fx(u.spd,0)});
+   R.push({k:'Ziel',v:target(u.tg)});R.push({k:'Anzahl',v:String(n)});
+   if(c.air)R.push({k:'Bewegung',v:'Fliegt'});}
+  else if(c.b){const b=c.b;R.push({k:'Leben',v:fx(b.hp,0),f:b.hp/MAX.bhp});R.push({k:'Lebensdauer',v:fx(b.life,0)+' s'});
+   if(b.dmg){R.push({k:'Schaden',v:fx(b.dmg,0),f:b.dmg/MAX.dmg});R.push({k:'DPS',v:fx(b.dmg/b.hit,0),f:b.dmg/b.hit/MAX.dps});R.push({k:'Angriffstempo',v:fx(b.hit,1)+' s',f:MAX.hit/b.hit});R.push({k:'Reichweite',v:fx(b.range/B.tile,1)+' Felder',f:Math.min(1,b.range/MAX.range)});R.push({k:'Ziel',v:target(b.tg)});}
+   if(b.spawn){const s=C[b.spawn.card];R.push({k:'Erzeugt',v:'1 '+s.name.replace(/-Krieger$/,'')+' / '+fx(b.spawn.every,0)+' s'});}
+   if(b.mana)R.push({k:'Mana',v:'+'+b.mana.amt+' alle '+fx(b.mana.every,0)+' s'});
+   R.push({k:'Anzahl',v:'1 Gebäude'});}
+  else if(c.s){const s=c.s;R.push({k:'Schaden',v:fx(s.dmg,0),f:s.dmg/MAX.sdmg,sub:'Türme '+pct(s.tower)});R.push({k:'Radius',v:fx(s.r/B.tile,1)+' Felder',f:s.r/MAX.sr});
+   if(s.delay)R.push({k:'Verzögerung',v:fx(s.delay,1)+' s'});if(s.freeze)R.push({k:'Einfrieren',v:fx(s.freeze,1)+' s'});R.push({k:'Ziel',v:'Boden & Luft, beliebiger Ort'});}
+  return R;}
+ // Fähigkeiten-Text automatisch aus den Daten
+ function abilities(id){const c=C[id],L=[];const u=c.u,b=c.b,s=c.s;
+  if(u){if(u.proj&&u.range>14&&!u.bomb)L.push('Fernkampf'+(u.tg==='any'?' – trifft auch Flieger.':'.'));
+   if(u.range<=14&&!u.bomb)L.push('Nahkampf'+(u.tg==='ground'?' – kann keine Flieger angreifen.':'.'));
+   if(u.splash)L.push('Flächenschaden im Radius '+fx(u.splash/B.tile,1)+' Felder.');
+   if(u.bomb)L.push('Wirft Bomben auf Gebäude und Türme.');
+   if(u.tg==='bld'&&!u.bomb)L.push('Ignoriert Truppen und marschiert direkt auf Gebäude und Türme.');
+   if(c.air)L.push('Fliegt – nur Fernkämpfer, Türme und Zauber erreichen ihn.');
+   if(u.puddle){const p=u.puddle;L.push('Giftpfütze: '+fx(p.dps,0)+' Schaden/s für '+fx(p.t,1)+' s, verlangsamt um '+pct(p.slow)+'.');}
+   if(u.slow)L.push('Verlangsamt Getroffene um '+pct(u.slow.f)+' für '+fx(u.slow.t,1)+' s.');
+   if(u.dot)L.push('Gift: '+fx(u.dot.dps,0)+' Schaden/s für '+fx(u.dot.t,0)+' s.');
+   if(u.heal)L.push('Heilt Verbündete im Umkreis von '+fx(u.heal.r/B.tile,1)+' Feldern um '+fx(u.heal.hps,0)+' Leben/s.');
+   if(u.death){const d=u.death;L.push('Beim Tod: Explosion nach '+fx(d.fuse,1)+' s, '+fx(d.dmg,0)+' Schaden'+(d.knock?', schleudert Truppen weg':'')+'.');}}
+  if(c.abil){const A=c.abil,first=fx(A.charge*.6,0);let t='';
+   if(A.key==='leap')t='springt bis '+fx(A.reach/B.tile,1)+' Felder weit auf ein Ziel: '+fx(A.dmg,0)+' Flächenschaden, betäubt '+fx(A.stun,1)+' s.';
+   else if(A.key==='nova')t='friert alles um den Helden '+fx(A.freeze,1)+' s ein und verursacht '+fx(A.dmg,0)+' Schaden.';
+   else if(A.key==='cloud')t='Giftwolke für '+fx(A.t,0)+' s: '+fx(A.dps,0)+' Schaden/s, verlangsamt um '+pct(A.slow)+', trifft auch Flieger.';
+   else if(A.key==='summon')t='erweckt '+A.summon.n+' Skelette (wie „'+C[A.summon.card].name+'“) an einem Zielort.';
+   L.push({abil:A.name,t,charge:'lädt '+fx(A.charge,0)+' s (erstmals nach ~'+first+' s)'});}
+  if(b){if(b.spawn)L.push('Schleudert alle '+fx(b.spawn.every,0)+' s einen '+C[b.spawn.card].name.replace(/-Krieger$/,'-Krieger')+' über die Schlucht.');
+   if(b.mana)L.push('Erzeugt '+fx(b.life,0)+' s lang alle '+fx(b.mana.every,0)+' s '+b.mana.amt+' Mana (insgesamt +'+Math.floor(b.life/b.mana.every)*b.mana.amt+').');
+   if(b.dmg)L.push('Schießt Pfeile auf Boden und Luft und lockt Bodentruppen an.');
+   L.push('Zerfällt nach '+fx(b.life,0)+' s. Nur auf deiner Hälfte baubar.');}
+  if(s){L.push('Wirkt an jeder Stelle des Feldes'+(s.delay?' nach '+fx(s.delay,1)+' s':'')+'.');if(s.freeze)L.push('Friert Einheiten und Türme '+fx(s.freeze,0)+' s ein.');L.push('Türme erleiden nur '+pct(s.tower)+' des Schadens.');}
+  return L;}
+ function avg(deck){return deck.length?deck.reduce((a,id)=>a+C[id].cost,0)/deck.length:0;}
+ return{TYPE,LORE,rarity,stats,abilities,avg,fx,MAX};})();
+
+
 // ---- duell-render.js ----
 // ===== Turmwacht Duell – Darstellung (liest nur den Sim-Zustand) =====
 const DR=(()=>{
@@ -1744,57 +1932,186 @@ function phaseWatch(S,ev){let fell=false;
 // ---------- Bildschirme ----------
 const ov=$('ov');
 function show(html,cls){ov.className='ov show '+(cls||'');ov.innerHTML=html;ov.scrollTop=0;}
-function hide(){ov.className='ov';ov.innerHTML='';}
+function hide(){closeCard();ov.className='ov';ov.innerHTML='';}
 function cardHTML(id,o){o=o||{};const C=CARDS[id];const t=C.type;
  return `<div class="cd t-${t}${o.cls?' '+o.cls:''}" data-id="${id}"${o.i!=null?` data-i="${o.i}"`:''}><img src="${DR.icon(C.art==='fire'?'firerain':C.art,64)}" alt=""><b class="cost">${C.cost}</b>${C.count>1?`<i class="cnt">×${C.count}</i>`:''}${t==='hero'?'<i class="hb">Held</i>':''}<span>${esc(C.name)}</span></div>`;}
 function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:</span><button class="sm${tr==='tavern'?' on':''}" data-trk="tavern">🍺 Taverne</button><button class="sm${tr==='calm'?' on':''}" data-trk="calm">🔥 Kaminfeuer</button></div>
  <div class="row snd"><button class="sm${SFX.on.music?' on':''}" data-tog="music">${SFX.on.music?'🎵 Musik an':'🔇 Musik aus'}</button><button class="sm${SFX.on.sfx?' on':''}" data-tog="sfx">${SFX.on.sfx?'🔊 Effekte an':'🔈 Effekte aus'}</button></div>`;}
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
-function menu(){G.paused=true;$('app').classList.add('inmenu');
- show(`<div class="box menu"><div class="logo"><img src="${DR.icon('keep0',96)}" alt=""><div><h1>Turmwacht Duell</h1><p class="sub">Kartenduell am Schattenpass</p></div></div>
-  <button class="big" id="bCamp">⚔️ Kampagne</button><button class="big" id="bFree">🎲 Freies Gefecht</button><button class="big" id="bDeck">🃏 Deck bearbeiten</button>
-  ${soundRow()}<p class="foot">Offline-Testversion 0.3 · Fortschritt wird im Browser gespeichert</p></div>`,'m');
- $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=()=>{audio();deckEditor(menu);};bindSound(ov,menu);}
+// ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
+const VERSION='0.4',I=DUELL_INFO;
+const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
+const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
+function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
+function bindCardTaps(root){root.querySelectorAll('[data-card]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();audio();openCard(b.dataset.card);}));}
+// ----- Hauptmenü -----
+function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const P=prog(),d=G.deck,hero=d.find(id=>CARDS[id].type==='hero');
+ show(`<div class="mm"><div class="crest"><img src="${DR.icon('keep0',120)}" alt=""><div><h1>Turmwacht<br><span>Duell</span></h1><p>Kartenduell am Schattenpass</p></div></div>
+  <button class="deckbar" id="bDeckBar"><div class="dbh"><span>🃏 Dein Deck</span><span class="dbs">Ø <b>${I.fx(I.avg(d),1)}</b> Mana${hero?` · 👑 ${esc(CARDS[hero].name)}`:''}</span></div>
+   <div class="dstrip">${d.map(id=>`<span class="mi t-${CARDS[id].type}" data-id="${id}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></span>`).join('')}</div><small>Antippen zum Bearbeiten</small></button>
+  <div class="tiles">
+   <button class="tile camp" id="bCamp"><img src="${DR.icon('lichP',72)}" alt=""><b>Kampagne</b><small>${P.won.length}/${DUELL_SCEN.length} Szenarien geschafft</small><i class="pb"><i style="width:${P.won.length/DUELL_SCEN.length*100}%"></i></i></button>
+   <button class="tile free" id="bFree"><img src="${DR.icon('chief',72)}" alt=""><b>Freier Kampf</b><small>Üben ohne Fortschritt</small></button>
+   <button class="tile deck" id="bDeck"><img src="${DR.icon('blade',72)}" alt=""><b>Deck &amp; Sammlung</b><small>${B.playerSet.length} Karten · Infos zu jeder Kreatur</small></button>
+   <button class="tile set" id="bSet"><span class="gear">⚙️</span><b>Einstellungen</b><small>Musik &amp; Effekte</small></button></div>
+  <p class="foot">Turmwacht Duell · Offline-Testversion ${VERSION} · Fortschritt wird im Browser gespeichert</p></div>`,'m');
+ $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
+function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
+  <div class="parch"><h3>Klang</h3>${soundRow()}</div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p></div>
+  <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
+// ----- Kampagne -----
+function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';
+ return `<div class="scen sc2 ${st}${u?'':' locked'}" data-s="${sc.id}" role="button" tabindex="0" ${u?'':'aria-disabled="true"'}>
+  <div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${O.tag==='schwer'?'hard':''}">${esc(O.tag)}</i></div>
+  <div class="sci"><small>Kapitel ${sc.id}</small><b>${esc(sc.title)}</b><em>gegen ${esc(O.name)}, ${esc(O.title)}</em>
+   ${u?'':`<p class="lk">🔒 Besiege zuerst „${esc(DUELL_SCEN.find(s=>s.id===sc.id-1).title)}“</p>`}</div>
+  ${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}
+  <i class="seal ${st}">${w?'✓<small>Geschafft</small>':u?'▶<small>Bereit</small>':'🔒<small>Gesperrt</small>'}</i></div>`;}
 function campaign(){const P=prog();
- show(`<div class="box"><h2>Kampagne</h2><p class="sub">Der Schattenpass ruft. Besiege die Anführer der Feinde.</p>
-  ${DUELL_SCEN.map(sc=>{const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);
-   return `<button class="scen${u?'':' locked'}" data-s="${sc.id}" ${u?'':'aria-disabled="true"'}><img src="${DR.icon(O.portrait,72)}" alt=""><div><small>Szenario ${sc.id}</small><b>${esc(sc.title)}</b><em>gegen ${esc(O.name)}, ${esc(O.title)}</em></div><i class="st">${w?'✅ Gewonnen':u?'▶ Offen':'🔒 Gesperrt'}</i></button>`;}).join('')}
-  <div class="row"><button id="bBack">← Zurück</button></div></div>`);
- ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const id=+b.dataset.s;if(!unlocked(id)){toast('Erst Szenario '+(id-1)+' gewinnen!');return;}story(id);});
+ show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><h2>Kampagne</h2><p class="sub">Der Schattenpass ruft. Besiege die Anführer der Feinde.</p></div></div>
+  <div class="cprog"><span>Fortschritt</span><i><i style="width:${P.won.length/DUELL_SCEN.length*100}%"></i></i><b>${P.won.length}/${DUELL_SCEN.length}</b></div>
+  ${DUELL_SCEN.map(sc=>scenCard(sc,P)).join('')}<p class="hint2">Tipp: Tippe auf eine Karte im Gegnerdeck, um sie dir genauer anzusehen.</p></div>`);
+ bindCardTaps(ov);
+ ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const id=+b.dataset.s;if(!unlocked(id)){toast('Erst Szenario '+(id-1)+' gewinnen!');return;}audio();story(id);});
  $('bBack').onclick=menu;}
 function story(id){const sc=DUELL_SCEN.find(s=>s.id===id),O=DUELL_OPP[sc.opp];
- show(`<div class="box"><small class="kick">Szenario ${sc.id}</small><h2>${esc(sc.title)}</h2>
+ show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><small class="kick">Kapitel ${sc.id}</small><h2>${esc(sc.title)}</h2></div></div>
   <div class="opp"><img src="${DR.icon(O.portrait,96)}" alt=""><div><b>${esc(O.name)}</b><em>${esc(O.title)} · ${O.tag}</em><span class="q">${esc(O.quote)}</span></div></div>
-  ${sc.story.map(p=>`<p>${esc(p)}</p>`).join('')}<p class="rule">⚖️ ${esc(sc.rule)}</p><p class="tip">${esc(sc.tip)}</p>
-  <h3>Gegnerisches Deck</h3><div class="mini">${O.deck.map(c=>cardHTML(c,{cls:'xs'})).join('')}</div>
-  <h3>Dein Deck</h3><div class="mini">${G.deck.map(c=>cardHTML(c,{cls:'xs'})).join('')}</div>
-  <div class="row"><button id="bBack">← Zurück</button><button id="bEd">🃏 Deck ändern</button><button class="go" id="bGo">⚔️ Kampf beginnen</button></div></div>`);
- $('bBack').onclick=campaign;$('bEd').onclick=()=>deckEditor(()=>story(id));$('bGo').onclick=()=>{audio();start({mode:'camp',scen:id});};}
+  <div class="parch">${sc.story.map(p=>`<p>${esc(p)}</p>`).join('')}</div><p class="rule">⚖️ ${esc(sc.rule)}</p><p class="tip">${esc(sc.tip)}</p>
+  <h3>Gegnerisches Deck <small>(antippen für Details)</small></h3>${deckStrip(O.deck,{cls:'foe'})}
+  <h3>Dein Deck <small>Ø ${I.fx(I.avg(G.deck),1)} Mana</small></h3>${deckStrip(G.deck)}
+  <div class="row stick"><button id="bEd">🃏 Deck ändern</button><button class="go" id="bGo">⚔️ Kampf beginnen</button></div></div>`);
+ bindCardTaps(ov);$('bBack').onclick=campaign;$('bEd').onclick=()=>deckEditor(()=>story(id));$('bGo').onclick=()=>{audio();start({mode:'camp',scen:id});};}
 function free(){
- show(`<div class="box"><h2>Freies Gefecht</h2><p class="sub">Ein Übungskampf ohne Kampagnenfortschritt.</p>
-  ${Object.entries(DUELL_OPP).map(([k,O])=>{const u=k==='grimm'||unlocked(2);return `<button class="scen${u?'':' locked'}" data-o="${k}"><img src="${DR.icon(O.portrait,72)}" alt=""><div><small>${O.tag}</small><b>${esc(O.name)}</b><em>${esc(O.title)}</em></div><i class="st">${u?'▶':'🔒 Kampagne'}</i></button>`;}).join('')}
-  <div class="row"><button id="bBack">← Zurück</button><button id="bEd">🃏 Deck ändern</button></div></div>`);
+ show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><h2>Freier Kampf</h2><p class="sub">Ein Übungskampf ohne Kampagnenfortschritt.</p></div></div>
+  ${Object.entries(DUELL_OPP).map(([k,O])=>{const u=k==='grimm'||unlocked(2);return `<div class="scen sc2 ${u?'open':'locked locked'}" data-o="${k}" role="button" tabindex="0"><div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${O.tag==='schwer'?'hard':''}">${esc(O.tag)}</i></div>
+   <div class="sci"><small>Gegner</small><b>${esc(O.name)}</b><em>${esc(O.title)}</em>${u?'':'<p class="lk">🔒 Erst in der Kampagne besiegen</p>'}</div>${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}<i class="seal ${u?'open':'locked'}">${u?'⚔<small>Kämpfen</small>':'🔒<small>Gesperrt</small>'}</i></div>`;}).join('')}
+  <div class="row stick"><button id="bEd">🃏 Deck ändern</button></div></div>`);
+ bindCardTaps(ov);
  ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const k=b.dataset.o;if(k!=='grimm'&&!unlocked(2)){toast('Morvath wartet in der Kampagne (Szenario 2).');return;}audio();start({mode:'free',opp:k});});
  $('bBack').onclick=menu;$('bEd').onclick=()=>deckEditor(free);}
-// ---------- Deck-Editor ----------
-function deckEditor(back){let d=G.deck.slice(),info=null;
- const render=()=>{const err0=Sim.validateDeck(d),err=err0&&(d.length!==8&&!d.some(id=>CARDS[id].type==='hero')?err0+' Außerdem fehlt ein Held.':err0),heroes=d.filter(id=>CARDS[id].type==='hero').length,avg=d.length?(d.reduce((a,id)=>a+CARDS[id].cost,0)/d.length).toFixed(1):'–';
-  const I=info&&CARDS[info];
-  show(`<div class="box deck"><h2>Deck bearbeiten</h2>
-   <div class="dstat"><span>Karten <b>${d.length}/8</b></span><span>Ø Mana <b>${avg}</b></span><span class="${heroes===1?'ok':'bad'}" id="heroRule">Held ${heroes===1?'✓':'✗'} <small>(genau 1)</small></span></div>
-   <div class="slots">${Array.from({length:8},(_,i)=>d[i]?cardHTML(d[i],{cls:'in',i}):'<div class="cd empty">frei</div>').join('')}</div>
-   <p class="msg ${err?'bad':'ok'}" id="deckMsg">${err?esc(err):'Deck bereit ✓'}</p>
-   <div class="info">${I?`<b>${esc(I.name)}</b> · ${I.cost} Mana · ${({unit:'Einheit',hero:'Held',bld:'Gebäude',spell:'Zauber'})[I.type]}<br>${esc(I.desc||'')}${I.abil?`<br><i>Fähigkeit: ${esc(I.abil.name)}</i>`:''}`:'Tippe eine Karte in der Sammlung an, um sie hinzuzufügen – tippe im Deck, um sie zu entfernen.'}</div>
-   <h3>Sammlung</h3><div class="coll">${B.playerSet.map(id=>cardHTML(id,{cls:d.includes(id)?'used':''})).join('')}</div>
-   <div class="row stick"><button id="bStd">Standarddeck</button><button class="go" id="bOk" ${err?'disabled':''}>✔ Fertig</button></div></div>`,'d');
-  ov.querySelectorAll('.slots .cd.in').forEach(c=>c.onclick=()=>{info=c.dataset.id;d.splice(+c.dataset.i,1);render();});
-  ov.querySelectorAll('.coll .cd').forEach(c=>c.onclick=()=>{const id=c.dataset.id;info=id;
-   if(d.includes(id)){d.splice(d.indexOf(id),1);render();return;}
-   if(CARDS[id].type==='hero'){const h=d.findIndex(x=>CARDS[x].type==='hero');if(h>=0){const old=CARDS[d[h]].name;d[h]=id;toast('Nur ein Held pro Deck – '+old+' wurde ersetzt.');render();return;}}
-   if(d.length>=8){toast('Deck ist voll – entferne erst eine Karte.');render();return;}
-   d.push(id);render();});
-  $('bStd').onclick=()=>{d=B.defaultDeck.slice();render();};
+// ----- Detailkarte -----
+const dc=el('div','dcwrap');dc.id='dcard';$('app').appendChild(dc);let dcAnim=0,dcOpen=null;
+function closeCard(){if(!dcOpen)return;const f=dcOpen.onClose;dcOpen=null;dc.className='dcwrap';dc.innerHTML='';cancelAnimationFrame(dcAnim);if(f)f();}
+G.closeCard=closeCard;
+function bar(f){return f==null?'':`<i class="sb"><i style="width:${Math.max(4,Math.min(1,f)*100).toFixed(0)}%"></i></i>`;}
+function openCard(id,o){o=o||{};const C=CARDS[id],R=I.rarity(id),S=I.stats(id),A=I.abilities(id);dcOpen={id,onClose:o.onClose};
+ const acts=(o.actions||[]).map((a,i)=>`<button class="${a.cls||''}" data-act="${i}">${a.label}</button>`).join('');
+ dc.innerHTML=`<div class="dc r-${R.k} t-${C.type}" role="dialog" aria-modal="true" aria-label="${esc(C.name)}"><button class="x" id="dcX" aria-label="Schließen">✕</button>
+  <div class="dch"><b class="gem">${C.cost}</b><div><h2>${esc(C.name)}</h2><div class="tags"><i class="rar">${R.n}</i><i class="typ">${TICON[C.type]} ${I.TYPE[C.type]}</i>${C.air?'<i class="typ">🦇 Flieger</i>':''}${C.npc?'<i class="npc">Gegnerkarte</i>':''}</div></div></div>
+  <div class="fig"><canvas id="dcCv"></canvas>${C.count>1?`<i class="cnt">×${C.count}</i>`:''}</div>
+  <div class="dcb">${o.note?`<p class="note">${o.note}</p>`:''}
+   <div class="stats">${S.map(r=>`<div class="st${r.f!=null?'':' nb'}"><span>${r.k}</span><b>${esc(r.v)}${r.sub?` <small>${esc(r.sub)}</small>`:''}</b>${bar(r.f)}</div>`).join('')}</div>
+   <h3>Fähigkeiten</h3><ul class="ab">${A.map(a=>typeof a==='string'?`<li>${esc(a)}</li>`:`<li class="hab"><b>✦ ${esc(a.abil)}</b> – ${esc(a.t)} <small>(${esc(a.charge)})</small></li>`).join('')}</ul>
+   <p class="desc">${esc(C.desc||'')}</p><p class="lore">„${esc(I.LORE[id]||'')}“</p></div>
+  ${acts?`<div class="dca">${acts}</div>`:''}</div>`;
+ dc.className='dcwrap show';
+ dc.querySelector('.dc').addEventListener('click',ev=>ev.stopPropagation());
+ $('dcX').onclick=closeCard;
+ dc.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{const a=o.actions[+b.dataset.act];const f=a.fn;dcOpen.onClose=null;closeCard();f();});
+ figAnim(id);}
+dc.addEventListener('click',ev=>{if(ev.target===dc)closeCard();});
+window.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&dcOpen){ev.stopImmediatePropagation();closeCard();}},true);
+G.openCard=openCard;
+// Große Figur (Frontansicht, bestehende Vektor-Art) mit Idle-Animation
+const figCache={};
+function figSprite(art,H){const K=art+'@'+H;if(figCache[K])return figCache[K];const a=DART[art];const k=H/Math.max(a.h,a.w*.9),dp=Math.min(3,window.devicePixelRatio||1)*1;
+ const W=Math.ceil(a.w*k+12),Hh=Math.ceil(a.h*k+12),c=document.createElement('canvas');c.width=W*dp;c.height=Hh*dp;const g=c.getContext('2d');
+ const q0=document.createElement('canvas');q0.width=c.width;q0.height=c.height;const q=q0.getContext('2d');q.scale(dp,dp);q.translate(6+a.ax*k,6+a.ay*k);q.scale(k,k);try{a.fn(q);}catch(e){}
+ for(let i=0;i<8;i++){const an=i*Math.PI/4;g.drawImage(q0,Math.cos(an)*2.4*dp,Math.sin(an)*2.4*dp);}
+ g.globalCompositeOperation='source-in';g.fillStyle='rgba(14,8,3,.95)';g.fillRect(0,0,c.width,c.height);g.globalCompositeOperation='source-over';g.drawImage(q0,0,0);
+ return figCache[K]={c,w:W,h:Hh,fx:6+a.ax*k,fy:6+a.ay*k};}
+function figAnim(id){const cv2=$('dcCv');if(!cv2)return;const C=CARDS[id],art=artOf(id),a=DART[art],spell=C.type==='spell',bld=C.type==='bld',air=!!C.air,hero=C.type==='hero';
+ const box=cv2.parentElement.getBoundingClientRect(),W=Math.max(160,Math.round(box.width)),H=Math.max(150,Math.round(box.height)),dp=Math.min(3,window.devicePixelRatio||1);
+ cv2.width=W*dp;cv2.height=H*dp;cv2.style.width=W+'px';cv2.style.height=H+'px';const g=cv2.getContext('2d');
+ const fh=spell?H*.62:H*(air?.62:bld?.74:.78),sp=figSprite(art,Math.round(fh));const col={hero:'255,216,96',spell:'190,140,255',bld:'220,210,190',unit:'255,190,110'}[C.type];
+ const P=Array.from({length:14},(_,i)=>({x:Math.random(),y:Math.random(),s:.4+Math.random(),p:Math.random()*6}));
+ let t0=performance.now();
+ const fr=now=>{if(!dcOpen||dcOpen.id!==id||!cv2.isConnected)return;const t=(now-t0)/1000;g.setTransform(dp,0,0,dp,0,0);g.clearRect(0,0,W,H);
+  const gx=W/2,gy=spell?H*.5:H*.9;
+  // Lichtschein + Sockel
+  const rg=g.createRadialGradient(gx,H*.55,4,gx,H*.55,H*.62);rg.addColorStop(0,`rgba(${col},.38)`);rg.addColorStop(1,`rgba(${col},0)`);g.fillStyle=rg;g.fillRect(0,0,W,H);
+  if(!spell){g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(gx,gy,sp.w*.34*(air?.7+.08*Math.sin(t*1.6):1),7,0,0,7);g.fill();
+   g.strokeStyle=`rgba(${col},.5)`;g.lineWidth=1.5;g.beginPath();g.ellipse(gx,gy,sp.w*.42,9,0,0,7);g.stroke();}
+  // Funken
+  for(const p of P){const yy=((p.y-t*.06*p.s)%1+1)%1,al=Math.sin(yy*Math.PI)*.8;g.fillStyle=`rgba(${col},${al})`;g.beginPath();g.arc(p.x*W,yy*H,1.1+p.s*1.2,0,7);g.fill();}
+  // Idle: Atmen, leichtes Wiegen, alle ~3,5 s eine kurze Kampfgeste
+  const ph=t%3.6,flo=ph<.5?Math.sin(ph/.5*Math.PI):0;
+  let sx=1-.012*Math.sin(t*2.2),sy=1+.028*Math.sin(t*2.2),rot=.025*Math.sin(t*1.25)+(bld||spell?0:.12*flo),dy=0;
+  if(air){dy=-8-6*Math.sin(t*1.7);rot=.05*Math.sin(t*1.1);}
+  if(bld){sx=1;sy=1+.01*Math.sin(t*2);rot=0;}
+  if(spell){rot=t*.5;const s=1+.06*Math.sin(t*3);sx=sy=s;}
+  g.save();g.translate(gx,gy+dy);g.rotate(rot);g.scale(sx,sy);
+  if(spell)g.drawImage(sp.c,-sp.w/2,-sp.h/2,sp.w,sp.h);else g.drawImage(sp.c,-sp.fx,-sp.fy,sp.w,sp.h);g.restore();
+  if(hero&&flo>0){g.globalAlpha=flo*.5;g.strokeStyle='#ffe9a0';g.lineWidth=3;g.beginPath();g.arc(gx,gy-sp.h*.55,sp.h*.42+flo*10,0,7);g.stroke();g.globalAlpha=1;}
+  dcAnim=requestAnimationFrame(fr);};
+ dcAnim=requestAnimationFrame(fr);}
+// ----- Deck-Editor -----
+const VIEW=Object.assign({f:'all',s:'cost'},LS.get('duell_view',{}));
+const isHero=id=>CARDS[id].type==='hero';
+function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
+ const others=()=>d.filter(id=>!isHero(id)),heroOf=()=>d.find(isHero);
+ const err=()=>{const h=d.filter(isHero).length;if(h===0)return 'Es fehlt ein Held: Tippe einen Helden 👑 an und wähle „Als Held einsetzen“.';if(h>1)return 'Nur ein Held pro Deck erlaubt.';
+  if(d.length<8)return 'Noch '+(8-d.length)+(8-d.length===1?' Karte':' Karten')+' frei – ein Deck braucht genau 8 Karten.';return Sim.validateDeck(d);};
+ function add(id){if(d.includes(id))return;if(isHero(id)){const h=heroOf();if(h){d[d.indexOf(h)]=id;toast(CARDS[id].name+' ersetzt '+CARDS[h].name+' als Held.');}else d.push(id);flash=id;render();return;}
+  if(others().length>=7){toast('Die 7 Plätze für Einheiten, Zauber und Gebäude sind voll – wähle „Tauschen“ oder entferne erst eine Karte.');swap={from:'coll',id};render();return;}
+  d.push(id);flash=id;render();}
+ function remove(id){d.splice(d.indexOf(id),1);render();}
+ function replace(oldId,newId){const i=d.indexOf(oldId);if(i<0||d.includes(newId))return;d[i]=newId;flash=newId;swap=null;toast(CARDS[newId].name+' ersetzt '+CARDS[oldId].name+'.');render();}
+ function compatible(a,b){return isHero(a)===isHero(b);}
+ function detail(id){const inD=d.includes(id),C=CARDS[id],acts=[];let note='';
+  if(inD){acts.push({label:'➖ Entfernen',cls:'rm',fn:()=>remove(id)});acts.push({label:'⇄ Tauschen',fn:()=>{swap={from:'deck',id};render();}});note='✓ Im Deck'+(isHero(id)?' – dein Held':'');}
+  else if(isHero(id)){const h=heroOf();acts.push({label:h?'👑 Als Held einsetzen':'👑 Als Held einsetzen',cls:'go',fn:()=>add(id)});if(h)note='Ersetzt deinen Helden '+esc(CARDS[h].name)+' (nur 1 Held pro Deck).';}
+  else{const full=others().length>=7;if(!full)acts.push({label:'➕ Ins Deck',cls:'go',fn:()=>add(id)});acts.push({label:'⇄ Tauschen',cls:full?'go':'',fn:()=>{swap={from:'coll',id};render();}});if(full)note='Deck ist voll – tausche eine Karte aus.';}
+  openCard(id,{actions:acts,note});}
+ const render=()=>{const e=err(),h=heroOf(),o=others(),avg=I.avg(d);
+  const slot=(id,i,hs)=>{if(!id)return `<div class="cd empty${hs?' hslot':''}${swap&&swap.from==='coll'&&isHero(swap.id)===!!hs?' tgt':''}" data-slot="${hs?'h':'e'}" data-i="${i}">${hs?'<i class="crown">👑</i><span>Held wählen</span>':'<i class="plus">+</i><span>frei</span>'}</div>`;
+   const tg=swap&&swap.from==='coll'&&compatible(swap.id,id),me=swap&&swap.from==='deck'&&swap.id===id;
+   return cardHTML(id,{cls:'in'+(hs?' hslot':'')+(tg?' tgt':'')+(me?' me':'')+(flash===id?' pop':''),i}).replace('<div ','<div draggable="true" ');};
+  const slots=[slot(h,0,true)].concat(Array.from({length:7},(_,k)=>slot(o[k],k+1,false))).join('');
+  let list=B.playerSet.filter(id=>VIEW.f==='all'||CARDS[id].type===VIEW.f);
+  const TO={hero:0,unit:1,bld:2,spell:3};
+  list.sort((a,b)=>VIEW.s==='name'?CARDS[a].name.localeCompare(CARDS[b].name,'de'):VIEW.s==='type'?(TO[CARDS[a].type]-TO[CARDS[b].type])||CARDS[a].cost-CARDS[b].cost:VIEW.s==='cost-'?CARDS[b].cost-CARDS[a].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'):CARDS[a].cost-CARDS[b].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'));
+  const cnt=t=>B.playerSet.filter(id=>t==='all'||CARDS[id].type===t).length;
+  const coll=list.map(id=>{const inD=d.includes(id),tg=swap&&swap.from==='deck'&&!inD&&compatible(swap.id,id);return cardHTML(id,{cls:(inD?'used':'')+(tg?' tgt':'')+(swap&&!tg&&swap.from==='deck'?' dim':'')}).replace('<div ','<div draggable="true" ').replace('</div>',inD?'<i class="ind">Im Deck</i></div>':'</div>');}).join('');
+  const hint=swap?(swap.from==='coll'?`⇄ Tippe den Platz, den <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll${isHero(swap.id)?' (Held-Platz)':''}.`:`⇄ Wähle in der Sammlung die Karte, die <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll.`):
+   (e?esc(e):'✓ Deck bereit! Tippe eine Karte an, um sie dir anzusehen oder zu tauschen.');
+  show(`<div class="box deck scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Deck &amp; Sammlung</h2></div>
+   <div class="dstat"><span class="pill">🃏 <b>${d.length}/8</b></span><span class="pill">💧 Ø <b id="avgM">${I.fx(avg,1)}</b> Mana</span><span class="pill ${d.filter(isHero).length===1?'ok':'bad'}" id="heroRule">👑 Held ${d.filter(isHero).length===1?'✓':'fehlt'}</span></div>
+   <div class="slots">${slots}</div>
+   <p class="msg ${swap?'sw':e?'bad':'ok'}" id="deckMsg">${hint}${swap?' <button class="sm2" id="bSwX">Abbrechen</button>':''}</p>
+   <div class="colh"><h3>Sammlung <small>${B.playerSet.length} Karten</small></h3>
+    <label class="sort">Sortieren <select id="dSort"><option value="cost">Kosten ↑</option><option value="cost-">Kosten ↓</option><option value="type">Typ</option><option value="name">Name</option></select></label></div>
+   <div class="flt">${['all','hero','unit','spell','bld'].map(t=>`<button class="chipb${VIEW.f===t?' on':''}" data-f="${t}">${t==='all'?'Alle':TICON[t]+' '+(t==='hero'?'Helden':t==='unit'?'Einheiten':t==='spell'?'Zauber':'Gebäude')} <small>${cnt(t)}</small></button>`).join('')}</div>
+   <div class="coll">${coll||'<p class="sub">Keine Karten.</p>'}</div>
+   <div class="row stick"><button id="bStd">↺ Standarddeck</button><button class="go" id="bOk" ${e?'disabled':''}>✔ Fertig</button></div></div>`,'d');
+  flash=null;$('dSort').value=VIEW.s;
+  $('bBack').onclick=()=>{if(!err()&&d.join()!==G.deck.join()){G.deck=d.slice();saveDeck(G.deck);toast('Deck gespeichert.');}else if(err()&&d.join()!==G.deck.join())toast('Ungültiges Deck verworfen – dein altes Deck bleibt aktiv.');back();};
+  if($('bSwX'))$('bSwX').onclick=()=>{swap=null;render();};
+  ov.querySelectorAll('.flt [data-f]').forEach(b=>b.onclick=()=>{VIEW.f=b.dataset.f;LS.set('duell_view',VIEW);render();});
+  $('dSort').onchange=()=>{VIEW.s=$('dSort').value;LS.set('duell_view',VIEW);render();};
+  ov.querySelectorAll('.slots .cd').forEach(c=>c.onclick=()=>{audio();const id=c.dataset.id;
+   if(swap&&swap.from==='coll'){const hs=c.classList.contains('hslot');if(isHero(swap.id)!==hs){toast(isHero(swap.id)?'Ein Held gehört auf den goldenen Held-Platz.':'Der goldene Platz ist nur für deinen Helden.');return;}
+    if(id)replace(id,swap.id);else{const s=swap.id;swap=null;d.push(s);flash=s;render();}return;}
+   if(swap&&swap.from==='deck'){if(id===swap.id){swap=null;render();return;}}
+   if(!id){if(c.dataset.slot==='h'){VIEW.f='hero';swap=null;render();toast('Wähle einen Helden aus der Sammlung.');}else toast('Tippe eine Karte in der Sammlung an und wähle „Ins Deck“.');return;}
+   detail(id);});
+  ov.querySelectorAll('.coll .cd').forEach(c=>c.onclick=()=>{audio();const id=c.dataset.id;
+   if(swap&&swap.from==='deck'){if(c.classList.contains('tgt')){replace(swap.id,id);return;}if(d.includes(id)){toast('Diese Karte ist schon im Deck.');return;}toast(isHero(swap.id)?'Ein Held kann nur gegen einen Helden getauscht werden.':'Helden kommen nur auf den Held-Platz.');return;}
+   if(swap&&swap.from==='coll'&&swap.id!==id){swap=null;}
+   detail(id);});
+  // Drag & Drop (Maus am PC)
+  ov.querySelectorAll('.cd[draggable]').forEach(c=>{c.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',JSON.stringify({id:c.dataset.id,inD:!!c.closest('.slots')}));ev.dataTransfer.effectAllowed='move';c.classList.add('drg');});
+   c.addEventListener('dragend',()=>c.classList.remove('drg'));});
+  const rd=ev=>{try{return JSON.parse(ev.dataTransfer.getData('text/plain'));}catch(_){return null;}};
+  ov.querySelectorAll('.slots .cd').forEach(s=>{s.addEventListener('dragover',ev=>{ev.preventDefault();s.classList.add('ovr');});s.addEventListener('dragleave',()=>s.classList.remove('ovr'));
+   s.addEventListener('drop',ev=>{ev.preventDefault();s.classList.remove('ovr');const D=rd(ev);if(!D||D.inD)return;const hs=s.classList.contains('hslot');
+    if(isHero(D.id)!==hs){toast(isHero(D.id)?'Helden gehören auf den goldenen Held-Platz.':'Der goldene Platz ist nur für deinen Helden.');return;}
+    if(d.includes(D.id))return;if(s.dataset.id)replace(s.dataset.id,D.id);else{d.push(D.id);flash=D.id;render();}});});
+  const cz=ov.querySelector('.coll');cz.addEventListener('dragover',ev=>ev.preventDefault());cz.addEventListener('drop',ev=>{ev.preventDefault();const D=rd(ev);if(D&&D.inD&&d.includes(D.id))remove(D.id);});
+  $('bStd').onclick=()=>{d=B.defaultDeck.slice();swap=null;render();toast('Standarddeck geladen.');};
   $('bOk').onclick=()=>{const e=Sim.validateDeck(d);if(e){toast(e);return;}G.deck=d.slice();saveDeck(G.deck);back();};};
  render();}
 // ---------- Kampf ----------

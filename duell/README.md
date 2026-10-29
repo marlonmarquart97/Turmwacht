@@ -1,4 +1,4 @@
-# Turmwacht Duell (Offline-Testversion 0.3)
+# Turmwacht Duell (Offline-Testversion 0.4)
 
 Kartenduell am Schattenpass – Einzelspieler-Kampagne gegen Computergegner.
 Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfade → später unter `/duell/` im Turmwacht-Repo).
@@ -10,11 +10,20 @@ Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfa
 - `duell-sim.js` – deterministische Spiellogik (fester 20-Hz-Tick, eigener Zufallsgenerator, Befehle `{tick,side,a,i,x,y}` → Lockstep-tauglich, `hash()` als Prüfsumme)
 - `duell-ai.js` – Computergegner (Profile grimm/morvath/bot)
 - `duell-campaign.js` – Szenarien, Gegner, Story-Texte
+- `duell-cards.js` – Karten-Infos für die Detailkarte (Seltenheit, Werte, Fähigkeitstexte, Lore; liest alle Werte live aus `TW_BESTIARY`)
 - `duell-back.js` – Rückansichten aller Einheiten/Helden/Gebäude-Figuren (`viewKey()`)
 - `duell-art.js`, `duell-render.js` – Darstellung (Canvas), `duell-ui.js` – Bedienung/Menüs
 - `headless-match.js` – KI-gegen-KI in Node (`node src/headless-match.js 30 morvath`)
 
 Bauen: `python3 src/build.py` → `index.html`.
+
+## Neu in 0.4
+- Neues Hauptmenü: Wappen, aktives Deck (8 Symbole, Ø-Mana, Held) und große Kacheln für Kampagne, Freier Kampf, Deck & Sammlung, Einstellungen.
+- Deck-Editor neu: 8 Plätze (2×4) mit eigenem goldenen Held-Platz, Sammlung mit Filter (Typ) und Sortierung (Kosten/Typ/Name), „Im Deck“-Markierung, Ø-Mana und Prüfung live.
+- Antippen einer Karte öffnet die Detailkarte mit „Ins Deck“ / „Entfernen“ / „Tauschen“ bzw. „Als Held einsetzen“; Tauschen: Karte wählen → Platz antippen. Am PC zusätzlich Drag & Drop.
+- Detailkarte für jede Kreatur (aus Sammlung, Kampagne, Story und Gegnerdeck): große animierte Figur, Seltenheit/Typ, Mana, Leben, Schaden, DPS, Angriffstempo, Reichweite, Tempo, Ziel, Anzahl, Fähigkeiten, Lore, Vergleichsbalken. Schließen per ✕, Tipp daneben oder Esc.
+- Kampagne/Freier Kampf: Szenario-Karten mit Gegnerporträt, Schwierigkeit, Siegel (offen/geschafft/gesperrt) und Gegnerdeck.
+- Keine Änderung an Spiellogik/Balance; Speicherstände (`turmwacht_duell_deck`, `turmwacht_duell_progress`) kompatibel. Neu: `turmwacht_duell_view` (Filter/Sortierung).
 
 ## Neu in 0.3
 - **Turm-Lebensanzeigen:** Jeder Turm hat eine immer sichtbare Plakette mit Zahl unter dem Sockel (rot = Gegner, blau = eigen, pulsiert unter 33 %), auch der gegnerische Bergfried. Oben zusätzlich die Leiste „Gegner-Türme“ (linker Turm · Bergfried · rechter Turm) und der Kronenstand „Du : Gegner“. Geprüft bei 390×844 und 360×740.
