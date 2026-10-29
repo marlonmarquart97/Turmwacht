@@ -7,6 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1f3044">
 <title>Turmwacht – Der Schattenpass</title>
+<!-- Turmwacht v3.3 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 html,body{height:100%;overflow:hidden;background:#120c07;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;color:#f3e2b0;overscroll-behavior:none}
@@ -107,6 +108,26 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;dis
 }
 @media (max-width:370px){.pill{font-size:13px;padding:1px 4px}.hbtn{padding:2px 4px}.bbtn .nm{font-size:10px}.pill .gi{width:.95em;height:.95em}}
 @media (orientation:landscape) and (max-height:500px){#panel{width:156px}.bbtn{min-height:44px}.bbtn canvas.icon{width:26px;height:26px}#startBtn{min-height:44px}}
+/* v3.3: Übersichten, Bestenliste */
+#own,#foe{position:absolute;top:6px;z-index:2;font:700 12px/1.1 system-ui,-apple-system,"Segoe UI",sans-serif;color:#ffe2a0;text-shadow:0 1px 0 #000;pointer-events:auto;max-width:calc(50% - 10px)}
+#own{left:6px}#foe{right:6px;text-align:right}
+.ovb{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(rgba(40,26,12,.88),rgba(20,12,6,.88));border:1.5px solid #c9a227;border-radius:6px;padding:3px 6px;min-height:28px;cursor:pointer;color:#ffe2a0;font:inherit;box-shadow:0 2px 0 #000}
+#own .ovb{border-color:#4a90e0}#foe .ovb{border-color:#d84a3a}
+.ovb .ar{opacity:.8;font-size:10px}
+.ovl{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;background:rgba(14,9,4,.82);border:1px solid rgba(201,162,39,.55);border-radius:6px;padding:3px;max-height:96px;overflow:hidden}
+#foe .ovl{justify-content:flex-end}
+.ovl.hide{display:none}
+.chip{display:inline-flex;align-items:center;gap:1px;background:rgba(255,255,255,.06);border-radius:4px;padding:0 3px 0 1px;white-space:nowrap}
+.chip img{width:22px;height:22px;display:block}.chip b{font-size:12px}.chip.el{box-shadow:inset 0 0 0 1px var(--c,#fff)}
+.chip.boss b{color:#d8a8ff}.chip.dead{opacity:.45}
+.ovt{width:100%;font-size:10.5px;opacity:.85;padding:0 2px}
+#own .chip{box-shadow:inset 0 -2px 0 #3a7ad0}#foe .chip{box-shadow:inset 0 -2px 0 #c0392b}
+@media (max-width:430px){#own,#foe{font-size:11px}.chip img{width:19px;height:19px}.chip b{font-size:11px}.ovb{min-height:26px;padding:2px 5px}.ovl{max-height:76px}}
+#card.top~#own,#card.top~#foe{top:auto;bottom:66px}
+.hs{width:100%;border-collapse:collapse;margin:6px 0;font-size:14px}.hs th,.hs td{padding:3px 5px;border-bottom:1px solid rgba(201,162,39,.3);text-align:left}.hs th{color:#ffd23a;font-size:12px}.hs td.n{text-align:right}.hs tr.me td{background:rgba(255,208,64,.18);color:#fff2c0}
+.hsin{display:flex;gap:6px;justify-content:center;align-items:center;margin:6px 0;flex-wrap:wrap}.hsin input{font:inherit;font-size:16px;padding:6px 8px;border-radius:5px;border:2px solid #c9a227;background:#1a1008;color:#ffe2a0;width:min(60vw,220px)}
+.sm2{background:linear-gradient(#3a2a12,#1e1408);color:#ffe2a0;border:2px solid #c9a227;border-radius:6px;font-weight:700;font-size:15px;padding:7px 14px}
+.box{position:relative}.ver{position:absolute;top:6px;right:9px;font-size:11px;opacity:.65}
 </style>
 </head>
 <body>
@@ -123,7 +144,7 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;dis
     <button class="hbtn" id="pauseBtn"><svg class="gi" viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" fill="#ffd040" stroke="#120b05" stroke-width="2"/><rect x="14" y="4" width="5" height="16" fill="#ffd040" stroke="#120b05" stroke-width="2"/></svg></button>
   </div>
   <div id="main">
-    <div id="stage"><canvas id="cv"></canvas><button id="heroSel" title="Held auswählen"><canvas class="icon" data-icon=""></canvas><i class="hp"><b></b></i><span class="lv">1</span></button><div id="card"></div><div id="toast"></div><div id="pmenu"></div></div>
+    <div id="stage"><canvas id="cv"></canvas><button id="heroSel" title="Held auswählen"><canvas class="icon" data-icon=""></canvas><i class="hp"><b></b></i><span class="lv">1</span></button><div id="card"></div><div id="own"></div><div id="foe"></div><div id="toast"></div><div id="pmenu"></div></div>
     <div id="panel">
       <button class="bbtn" data-b="archer"><canvas class="icon" data-icon="archer"></canvas><span class="nm">Elfen-Schützen</span><span class="ct"><i class="coin"></i> 100</span></button>
       <button class="bbtn" data-b="catapult"><canvas class="icon" data-icon="catapult"></canvas><span class="nm">Ork-Katapult</span><span class="ct"><i class="coin"></i> 160</span></button>
@@ -208,7 +229,16 @@ const EDEF={
 const BOSSES=['colossus','dragon','lich','golem','titan'];
 const HAND={1:[['skel',12,.9,0]],2:[['skel',14,.7,0],['wolf',6,.5,6]],3:[['skel',16,.6,0],['wolf',10,.45,3]],4:[['skel',20,.5,0],['ogre',4,2.2,5],['wolf',8,.4,10]]};
 function rngFor(n){let a=n*9973+17;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-function hpMul(n){return 1+.2*(n-1)+.014*(n-1)*(n-1);}
+// v3.3 Late-Game-Balance: ab Welle ~25 exponentiell zähere Gegner, Gold ab Welle 15 abnehmend
+const BAL={g0:15,gk:.015,gmin:.45,h0:25,hx:1.045,ex:.008,emax:.5,sell:.6,zcap:30,cap0:10,capW:4,tf:4,tk:.2,mk:.5};
+// v3.3 gegen Zubauen: Turmlimit wächst mit den Wellen, jeder weitere Turm desselben Typs wird teurer
+function towerCap(){return BAL.cap0+Math.floor((G?G.wave:0)/BAL.capW);}
+function nOf(k){return G?G.towers.filter(t=>t.kind===k).length:0;}
+function buildCost(k){const c=TDEF[k].cost,n=nOf(k),f=k==='mine'?BAL.mk:BAL.tk;return Math.round(c*(1+f*Math.max(0,n-(k==='mine'?0:BAL.tf-1)))/5)*5;}
+function goldMul(n){return n<=BAL.g0?1:Math.max(BAL.gmin,1/(1+BAL.gk*(n-BAL.g0)));}
+function lateMul(n){return n<=BAL.h0?1:Math.pow(BAL.hx,n-BAL.h0);}
+function gAdj(v,n){return Math.max(1,Math.round(v*goldMul(n||G.wave||1)));}
+function hpMul(n){return(1+.2*(n-1)+.014*(n-1)*(n-1))*lateMul(n);}
 function spdMul(n){return 1+Math.min(.35,.012*(n-1));}
 function genWave(n){if(HAND[n])return HAND[n].map(g=>g.slice());const r=rngFor(n);
  const pool=[['skel',1,1],['wolf',1,2],['ogre',4,4],['knight',2.5,5],['bat',1.2,6],['shaman',3,8],['rockling',7,21],['zepp',3.6,11],['giant',6,13]].filter(q=>n>=q[2]);
@@ -221,7 +251,7 @@ const AFX={armor:{name:'Gepanzert',col:'#c8d4e0',desc:'Elite-Gegner tragen schwe
  shield:{name:'Schildträger',col:'#5ab0ff',desc:'Elite-Gegner haben einen Schutzschild',at:10},regen:{name:'Regeneration',col:'#5aff6a',desc:'Elite-Gegner heilen sich – Gift & Feuer stoppen das',at:12},
  split:{name:'Spaltend',col:'#ff7ad0',desc:'Elite-Gegner zerfallen beim Tod in zwei',at:14}};
 function waveMod(n){if(n<8||n%5===0)return null;const r=rngFor(n*31+7);const ks=Object.keys(AFX).filter(k=>n>=AFX[k].at);return ks[Math.floor(r()*ks.length)];}
-function eliteFrac(n){return Math.min(.28,.12+.006*(n-8));}
+function eliteFrac(n){const b=Math.min(.28,.12+.006*(n-8));return n<=BAL.h0?b:Math.min(BAL.emax,b+BAL.ex*(n-BAL.h0));}
 const SPELL={fire:{name:'Feuerregen',cd:28,r:100},frost:{name:'Frost',cd:45,dur:3}};
 function spellCost(k){return k==='fire'?50+6*G.wave:70+8*G.wave;}
 const LS={get(k,d){try{const v=localStorage.getItem('turmwacht_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('turmwacht_'+k,JSON.stringify(v));}catch(e){}}};
@@ -583,7 +613,9 @@ function drawFlame(x,y,s){const f=1+Math.sin(G.time*20+x)*.15;ctx.beginPath();ct
 function drawFireIcon(g){g.save();g.rotate(-.7);P(g,[[-4,0],[0,-26],[4,0]]);F(g,LG(g,0,-26,0,0,'rgba(255,200,60,0)','#ff8a20'),0);g.restore();E(g,4,4,8);F(g,'#ff5a10',1.5);E(g,3,3,4.5);F(g,'#ffe080',0);}
 function drawFrostIcon(g){g.save();g.shadowColor='#9fe8ff';g.shadowBlur=4;for(let i=0;i<6;i++){g.save();g.rotate(i*Math.PI/3);L(g,0,0,0,-14,'#e8faff',2.6);L(g,0,-8,-4,-12,'#e8faff',1.8);L(g,0,-8,4,-12,'#e8faff',1.8);g.restore();}g.restore();E(g,0,0,3);F(g,'#9fe8ff',1);}
 const ICON={hero_blade:[drawBlade,.62,20],hero_frost:[drawFrostMage,.58,24],hero_poison:[drawPoisoner,.62,20],archer:[g=>drawArcherTower(g,1),.62,14],catapult:[g=>{drawCatFrame(g,0,0,0);g.translate(6,6);drawOrc(g);},.62,10],mage:[g=>drawMageTower(g,1),.55,18],mine:[g=>drawMine(g,1),.62,6],alch:[g=>drawAlchemist(g,1),.58,14],bat:[drawBat,.8,4],shaman:[drawShaman,.6,16],colossus:[drawColossus,.3,14],lich:[drawLich,.38,18],golem:[drawGolem,.32,14],titan:[drawTitan,.24,14],fire:[drawFireIcon,1,0],frost:[drawFrostIcon,1,0],
- skel:[drawSkel,.7,12],wolf:[drawWolf,.7,8],knight:[drawKnight,.6,14],ogre:[drawOgre,.5,14],dragon:[drawDragon,.34,14]};
+ skel:[drawSkel,.7,12],wolf:[drawWolf,.7,8],knight:[drawKnight,.6,14],ogre:[drawOgre,.5,14],dragon:[drawDragon,.34,14],rockling:[drawRockling,.8,10],zepp:[drawZepp,.5,6],giant:[drawGiant,.5,18],orc:[drawOrc,.62,10]};
+// v3.3: Icons als gecachte Bilder für die Übersichten
+const ICACHE={};function iconURL(k){if(ICACHE[k]!=null)return ICACHE[k];const I=ICON[k];if(!I)return ICACHE[k]='';const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');g.scale(48/44,48/44);g.translate(22,22+I[2]);g.scale(I[1],I[1]);try{I[0](g);}catch(e){}return ICACHE[k]=c.toDataURL();}
 function renderIcons(root){(root||document).querySelectorAll('canvas.icon').forEach(c=>{const k=c.dataset.icon,I=ICON[k];if(!I)return;const css=c.clientWidth||44,r=window.devicePixelRatio||1;
  c.width=css*r;c.height=css*r;const g=c.getContext('2d');g.scale(css*r/44,css*r/44);g.translate(22,22+I[2]);g.scale(I[1],I[1]);I[0](g);});}
 // Katapult-Gestell (auch für Icon), Winkel a, Schwung s
@@ -647,16 +679,16 @@ function canPlace(x,y){
  if(G.towers.some(t=>dist(t.x,t.y,x,y)<46))return false;
  if(DECO.some(d=>dist(d.x,d.y,x,y)<d.r+18))return false;
  return true;}
-function place(kind,x,y){const D=TDEF[kind];if(G.gold<D.cost){toast('Nicht genug Gold!');return false;}
+function place(kind,x,y){const D=TDEF[kind],cost=buildCost(kind);if(G.towers.length>=towerCap()){toast('Turmlimit erreicht ('+G.towers.length+'/'+towerCap()+') – steigt alle '+BAL.capW+' Wellen. Rüste lieber auf!');return false;}if(G.gold<cost){toast('Nicht genug Gold!');return false;}
  if(!canPlace(x,y)){toast('Hier kann nicht gebaut werden');return false;}
- G.gold-=D.cost;const t={kind,x,y,lvl:0,cd:.2,spent:D.cost,ang:portrait?Math.PI/2:0,anim:0,mineT:0,tm:0,id:Math.random()};G.towers.push(t);
+ G.gold-=cost;const t={kind,x,y,lvl:0,cd:.2,spent:cost,ang:portrait?Math.PI/2:0,anim:0,mineT:0,tm:0,id:Math.random()};G.towers.push(t);
  puff(x,y,'#e8d9b0',12);mode=null;ghost=null;sel=t;return t;}
 function stat(t){return TDEF[t.kind].lv[t.lvl];}
 function upgrade(t){const D=TDEF[t.kind],n=D.lv[t.lvl+1];if(!n)return;if(G.gold<n.cost){toast('Nicht genug Gold!');return;}
  G.gold-=n.cost;t.spent+=n.cost;t.lvl++;puff(t.x,t.y,'#ffe27a',18);addText(t.x,t.y-30,'Stufe '+(t.lvl+1)+'!','#ffe27a');}
-function sell(t){const v=Math.floor(t.spent*.7);G.gold+=v;G.towers=G.towers.filter(o=>o!==t);addText(t.x,t.y,'+'+v+' Gold','#ffd84a');puff(t.x,t.y,'#aaa',10);sel=null;}
+function sell(t){const v=Math.floor(t.spent*BAL.sell);G.gold+=v;G.towers=G.towers.filter(o=>o!==t);addText(t.x,t.y,'+'+v+' Gold','#ffd84a');puff(t.x,t.y,'#aaa',10);sel=null;}
 function canCallEarly(){return G.state==='wave'&&!G.spawnQ.length&&G.enemies.length>0;}
-function earlyBonus(){return 10+3*G.wave;}
+function earlyBonus(){return gAdj(10+3*G.wave,G.wave);}
 function startWave(){if(G.state!=='build'&&!canCallEarly())return;
  if(G.state==='wave'){const b=earlyBonus();G.gold+=b;addText(CASTLE[0]-30,CASTLE[1]-60,'Früh gerufen +'+b,'#ffd84a');}
  G.wave++;const n=G.wave;G.state='wave';G.waveT=0;G.spawnQ=[];const hpm=hpMul(n),spm=spdMul(n);
@@ -665,14 +697,14 @@ function startWave(){if(G.state!=='build'&&!canCallEarly())return;
  G.spawnQ.sort((a,b)=>a.t-b.t);
  if(mod){const A=AFX[mod];G.banner={t:2.6,max:2.6,name:A.name,sub:A.desc,tag:'ELITE-WELLE',col:A.col};}
  toast(n%5===0?'Welle '+n+': Ein Boss naht!':mod?'Welle '+n+' · Elite: '+AFX[mod].name:'Welle '+n+' beginnt!');if(window.SFX)SFX.horn(n%5===0);}
-function bossMul(n){const c=Math.floor((n/5-1)/BOSSES.length);return(1+.7*c)*(1+.03*n);}
+function bossMul(n){const c=Math.floor((n/5-1)/BOSSES.length);return(1+.7*c)*(1+.03*n)*lateMul(n);}
 function spawn(type,hpm,spm,n,d0){const D=EDEF[type];n=n||G.wave||1;const hp=D.boss?Math.round(D.hp*bossMul(n)):Math.round(D.hp*hpm*10)/10;
- const e={type,D,hp,maxhp:hp,d:d0==null?-10:d0,spm:spm||1,slowT:0,slow:0,frozenT:0,burnT:0,burnTick:0,push:0,id:++G.eid,hit:0,blk:null,atkT:1,atk:D.atk*(1+.08*n),sumT:4,healT:2,poisonT:0,acidT:0,n,armor:D.armor||0,gold:D.gold,sh:0,bombT:2.2};
+ const e={type,D,hp,maxhp:hp,d:d0==null?-10:d0,spm:spm||1,slowT:0,slow:0,frozenT:0,burnT:0,burnTick:0,push:0,id:++G.eid,hit:0,blk:null,atkT:1,atk:D.atk*(1+.08*n),sumT:4,healT:2,poisonT:0,acidT:0,n,armor:D.armor||0,gold:gAdj(D.gold,n),sh:0,bombT:2.2};
  G.enemies.push(e);
  if(D.intro&&!G.seen[type]){G.seen[type]=1;toast(D.intro);}if(D.bomber&&window.SFX)SFX.prop();
  if(D.boss){G.banner={t:3.2,max:3.2,name:D.name,sub:D.sub||''};if(window.SFX)SFX.boss();}
  return e;}
-function makeElite(e,k){e.aff=k;e.hp=e.maxhp=Math.round(e.maxhp*1.35*10)/10;e.gold=Math.ceil(e.D.gold*1.5);
+function makeElite(e,k){e.aff=k;e.hp=e.maxhp=Math.round(e.maxhp*1.35*10)/10;e.gold=gAdj(e.D.gold*1.5,e.n);
  if(k==='armor')e.armor+=2;else if(k==='swift')e.spm*=1.4;else if(k==='shield')e.sh=e.shMax=Math.round(e.maxhp*.6*10)/10;}
 function damage(e,amt,ap,quiet){if(e.hp<=0)return;let a=amt;if(e.acidT>0)a*=1.25;else if(e.armor&&!ap)a=Math.max(a-e.armor,a*.34);
  if(e.sh>0){const b=Math.min(e.sh,a);e.sh-=b;a-=b;if(e.sh<=0&&!quiet){const p=posAt(e.d);puff(p[0],p[1]-14,'#8ac8ff',10);}}e.hp-=a;if(!quiet){e.hit=.12;if(G.fx.length<220){const q=posAt(e.d);G.fx.push({k:'spark',x:q[0],y:q[1],oy:-e.D.r*eScale(e)*1.1,a:Math.random()*7,c:/skel|giant|colossus|rock|golem|lich/.test(e.type)?'#fff0c8':'#ffc45a',life:.26,max:.26});}}
@@ -681,8 +713,8 @@ function kill(e){G.gold+=e.gold;G.kills++;const p=posAt(e.d);addText(p[0],p[1],'
  if(window.SFX)SFX.death(e.D.boss);heroXP(e.D.boss?60:e.D.gold);
  if(e.D.bomber)dropBomb(e,'small');
  if(e.D.deathBomb){dropBomb(e,'big');if(window.SFX)SFX.bones();}
- if(e.aff==='split'){const n=e.n,t=e.type,mh=e.maxhp;G.pending.push({t:0,fn:()=>{for(const o of[-8,8]){const c=spawn(t,1,spdMul(n),n,Math.max(0,e.d+o));c.hp=c.maxhp=Math.round(mh*.38*10)/10;c.gold=Math.ceil(e.D.gold/2);c.small=1;}puff(p[0],p[1],'#ff7ad0',16);}});}
- if(e.D.boss){boom(p[0],p[1],140,'#b06bff');toast(e.D.name+' besiegt! +'+e.D.gold+' Gold');}
+ if(e.aff==='split'){const n=e.n,t=e.type,mh=e.maxhp;G.pending.push({t:0,fn:()=>{for(const o of[-8,8]){const c=spawn(t,1,spdMul(n),n,Math.max(0,e.d+o));c.hp=c.maxhp=Math.round(mh*.38*10)/10;c.gold=gAdj(e.D.gold/2,n);c.small=1;}puff(p[0],p[1],'#ff7ad0',16);}});}
+ if(e.D.boss){boom(p[0],p[1],140,'#b06bff');toast(e.D.name+' besiegt! +'+e.gold+' Gold');}
  if(e.D.split){const n=e.n;G.pending.push({t:0,fn:()=>{for(const o of[-14,0,14]){const r=spawn('rockling',hpMul(n)*(1+.5*Math.floor((n/5-1)/BOSSES.length)),spdMul(n),n,Math.max(0,e.d+o));r.hp=r.maxhp=Math.round(r.maxhp*.6+EDEF.golem.hp*bossMul(n)*.06);}puff(p[0],p[1],'#8a8478',30);}});}
  if(e.poisonT>0&&e.spreadP){const q=e.spreadP;G.puddles.push({x:p[0],y:p[1],r:40,life:3,max:3,slow:q.slow,dps:q.dps*.7,acid:1,cloud:1,seed:Math.random()*9});}}
 function tgtOrder(t,list){const m=t.tm||0;if(m===1)return list.sort((a,b)=>b.hp-a.hp);if(m===2)return list.sort((a,b)=>a.d-b.d);return list;}
@@ -720,7 +752,7 @@ function update(dt){
  G.puddles=G.puddles.filter(q=>q.life>0);
  // Türme
  for(const t of G.towers){const s=stat(t);t.anim=Math.max(0,t.anim-dt*2.5);
-  if(t.kind==='mine'){if(G.state==='wave'){t.mineT+=dt;if(t.mineT>=s.every){t.mineT=0;G.gold+=s.gold;addText(t.x,t.y-30,'+'+s.gold,'#ffd84a');t.anim=1;}}continue;}
+  if(t.kind==='mine'){if(G.state==='wave'){t.mineT+=dt;if(t.mineT>=s.every){t.mineT=0;const mg=gAdj(s.gold,G.wave);G.gold+=mg;addText(t.x,t.y-30,'+'+mg,'#ffd84a');t.anim=1;}}continue;}
   t.cd-=dt*(1+auraFor(t));if(t.cd>0)continue;
   let tg=inRange(t,s.range);if(t.kind==='catapult'||t.kind==='alch')tg=tg.filter(e=>!e.D.fly);if(!tg.length){t.cd=0;continue;}tgtOrder(t,tg);
   t.cd=s.rate;t.anim=1;const e=tg[0],p=posAt(e.d);t.ang=viewAng(t.x,t.y,p[0],p[1]);
@@ -752,7 +784,7 @@ function update(dt){
  // Status
  if(G.lives<=0&&G.state!=='lost'){G.state='lost';if(G.wave-1>G.best){G.best=G.wave-1;}LS.set('best',G.best);if(window.SFX)SFX.over();setTimeout(()=>showEnd(),700);}
  if(G.state==='wave'&&!G.spawnQ.length&&!G.enemies.length){
-  {const b=30+6*G.wave,z=Math.min(40,Math.floor(G.gold*.05));G.gold+=b+z;G.state='build';if(G.wave>G.best){G.best=G.wave;LS.set('best',G.best);}
+  {const b=gAdj(30+6*G.wave,G.wave),z=Math.min(G.wave<=BAL.g0?40:BAL.zcap,Math.floor(G.gold*.05));G.gold+=b+z;G.state='build';if(G.wave>G.best){G.best=G.wave;LS.set('best',G.best);}
    toast('Welle '+G.wave+' geschafft! +'+b+' Gold'+(z?' · Zinsen +'+z:''));heroWave();}}
 }
 function dropBomb(e,kind){const p=posAt(e.d),n=e.n||G.wave||1,big=kind==='big';
@@ -917,6 +949,7 @@ function uScale(w){return FZ*(w?1.2:1.34);}
 function gruntSpr(w){const m=uScale(w);return w?sprite('grunt1',78,62,39,54,g=>drawGrunt(g,1),m,1):sprite('grunt0',62,50,31,44,g=>drawGrunt(g,0),m,1);}
 function drawUnit(u,q){const[x,y]=V(q[0]+u.ox,q[1]+u.oy);ctx.save();if(u.life<1)ctx.globalAlpha=Math.max(0,u.life);
  const um=uScale(u.w);ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(x,y,(u.w?14:11)*um,5*um,0,0,7);ctx.fill();
+ ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=3.6;ctx.beginPath();ctx.ellipse(x,y,(u.w?14:11)*um,5.4*um,0,0,7);ctx.stroke();ctx.strokeStyle='#3d9bff';ctx.lineWidth=1.8;ctx.stroke();// v3.3 eigene Einheit: blauer Ring
  const dir=V(u.face,0),fl=(portrait?dir[1]:dir[0])<0;const sw=u.anim>0?Math.sin(u.anim*Math.PI)*.35:0,bob=u.tg&&u.anim<=0?Math.abs(Math.sin(G.time*10+u.id))*-1.5:0;
  ctx.translate(x,y+bob);ctx.rotate(fl?-sw:sw);if(u.land>0)ctx.scale(1+u.land*.8,1-u.land*1.2);blit(gruntSpr(u.w),0,0,fl);
  if(u.hit>0){ctx.globalAlpha=.4;ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(0,-17*um,11*um,16*um,0,0,7);ctx.fill();}ctx.restore();
@@ -948,6 +981,8 @@ function drawAffBadge(k,x,y){const c=AFX[k].col;ctx.save();ctx.translate(x,y);ct
  ctx.restore();}
 function drawEnemy(e,p){const[x,y0]=V(p[0],p[1]),D=e.D,T=G.time,m=eScale(e),Dr=D.r*m;const fr=e.frozenT>0;const bob=fr?0:Math.abs(Math.sin(T*(D.boss?4:9)+e.id))*-2.5;const y=y0+Dr*.55;
  ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(x,y,Dr*.95,Dr*.38,0,0,7);ctx.fill();
+ // v3.3 Feind-Markierung: roter Bodenring
+ ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=3.6;ctx.beginPath();ctx.ellipse(x,y,Dr*.98,Dr*.42,0,0,7);ctx.stroke();ctx.strokeStyle=D.boss?'#ff4a3a':'rgba(235,48,36,.92)';ctx.lineWidth=D.boss?2.4:1.8;ctx.stroke();
  const n=posAt(e.d+2),dir=V(n[0]-p[0],n[1]-p[1]);const A=EART[e.type];const flip=(e.type==='wolf'||e.type==='dragon')?dir[0]>0.3:dir[0]<-0.3;
  if(D.boss){ctx.fillStyle=`rgba(140,60,220,${.18+.1*Math.sin(T*4)})`;ctx.beginPath();ctx.ellipse(x,y,Dr*1.5,Dr*.7,0,0,7);ctx.fill();}
  if(e.aff){const A=AFX[e.aff];ctx.save();ctx.globalAlpha=.55+.25*Math.sin(T*5+e.id);ctx.strokeStyle=A.col;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y,Dr*1.15,Dr*.5,0,0,7);ctx.stroke();ctx.globalAlpha=.18;ctx.fillStyle=A.col;ctx.fill();ctx.restore();}
@@ -1021,6 +1056,7 @@ function updHero(dt){const h=G.hero;if(!h)return;h.hit=Math.max(0,h.hit-dt);h.an
 function heroSpr(k){const A={blade:[drawBlade,80,76,38,70],frost:[drawFrostMage,66,84,33,78],poison:[drawPoisoner,64,70,32,64]}[k];return sprite('hero_'+k,A[1],A[2],A[3],A[4],A[0],FZ*1.06,1);}
 function drawHero(){const h=G.hero,[x,y]=V(h.x,h.y),T=G.time,jz=h.jz||0;
  ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(x,y,15*FZ*(1-jz/140),6*FZ*(1-jz/140),0,0,7);ctx.fill();
+ if(!h.dead){const k=1-jz/140;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=4.2;ctx.beginPath();ctx.ellipse(x,y,17*FZ*k,6.8*FZ*k,0,0,7);ctx.stroke();ctx.strokeStyle='#58b0ff';ctx.lineWidth=2.4;ctx.stroke();}// v3.3 Held: blauer Ring
  if(mode&&(mode.type==='hero'||mode.type==='ability')){const pu=Math.sin(G.time*5)*2;ctx.strokeStyle='#ffd040';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y,22+pu,9+pu*.4,0,0,7);ctx.stroke();ctx.strokeStyle='rgba(255,208,64,.35)';ctx.lineWidth=6;ctx.beginPath();ctx.ellipse(x,y,27+pu,11+pu*.4,0,0,7);ctx.stroke();}
  const dir=V(h.face,0),fl=(portrait?dir[1]:dir[0])<0,sw=h.anim>0?Math.sin(h.anim*Math.PI)*.3:0,bob=h.moving?-Math.abs(Math.sin(T*11))*2.5:Math.sin(T*2.5)*.8;
  ctx.save();ctx.translate(x,y-jz+bob);ctx.rotate(fl?-sw:sw);blit(heroSpr(h.kind),0,0,fl);if(h.hit>0){ctx.globalAlpha=.35;ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(0,-24*FZ,13*FZ,22*FZ,0,0,7);ctx.fill();}ctx.restore();
@@ -1108,7 +1144,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 
 const panel=document.getElementById('panel');
 panel.querySelectorAll('[data-b]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.b;sel=null;
- if(mode&&mode.type==='build'&&mode.kind===k){mode=null;ghost=null;}else{mode={type:'build',kind:k};ghost=null;if(G.gold<TDEF[k].cost)toast('Nicht genug Gold – aber schau dir die Vorschau an');}uiKey=null;}));
+ if(mode&&mode.type==='build'&&mode.kind===k){mode=null;ghost=null;}else{mode={type:'build',kind:k};ghost=null;if(G.towers.length>=towerCap())toast('Turmlimit erreicht ('+G.towers.length+'/'+towerCap()+') – steigt alle '+BAL.capW+' Wellen');else if(G.gold<buildCost(k))toast('Nicht genug Gold – aber schau dir die Vorschau an');}uiKey=null;}));
 panel.querySelector('[data-s=fire]').addEventListener('click',()=>{sel=null;if(G.cool.fire>0){toast('Feuerregen lädt noch…');return;}if(G.gold<spellCost('fire')){toast('Feuerregen kostet '+spellCost('fire')+' Gold');return;}
  if(mode&&mode.type==='spell'){mode=null;aim=null;}else{mode={type:'spell',kind:'fire'};ghost=null;aim=null;}uiKey=null;});
 panel.querySelector('[data-s=frost]').addEventListener('click',()=>{if(G.cool.frost>0){toast('Frost lädt noch…');return;}if(!G.enemies.length){toast('Keine Gegner auf dem Feld');return;}castFrost();uiKey=null;});
@@ -1118,7 +1154,7 @@ document.getElementById('heroBtn').addEventListener('click',()=>{sel=null;ghost=
  if(h.dead){toast(H.name+' erholt sich noch…');return;}if(h.mana<H.cost){toast(H.ab+' braucht '+H.cost+' Mana');return;}mode={type:'ability'};aim=null;uiKey=null;});
 document.getElementById('speedBtn').addEventListener('click',()=>{G.speed=G.speed>=3?1:G.speed+1;});
 document.getElementById('pauseBtn').addEventListener('click',()=>{G.paused=!G.paused;G.pmenu=G.paused;if(G.paused){renderPm();pm.classList.add('show');}else pm.classList.remove('show');toast(G.paused?'Pausiert':'Weiter');});
-window.addEventListener('keydown',e=>{if(e.key==='Escape')clearSel();if(e.key===' '){e.preventDefault();startWave();}if(e.key==='h'||e.key==='H')$('heroBtn').click();});
+window.addEventListener('keydown',e=>{if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key==='Escape')clearSel();if(e.key===' '){e.preventDefault();startWave();}if(e.key==='h'||e.key==='H')$('heroBtn').click();});
 
 // ---------- UI ----------
 const $=id=>document.getElementById(id),card=$('card');let uiKey=null,lastBtn={};
@@ -1127,7 +1163,7 @@ function updateUI(){
  $('hLives').textContent=G.lives;$('hGold').textContent=G.gold;$('hWave').textContent=G.wave;$('hBest').textContent=Math.max(G.best,G.wave-(G.state==='wave'||G.state==='lost'?1:0));
  if(!G.paused&&pm.classList.contains('show'))pm.classList.remove('show');
  {const a=SVI.ff+' '+G.speed+'x',b=G.paused?SVI.play:SVI.pause;if(lastBtn.a!==a){lastBtn.a=a;$('speedBtn').innerHTML=a;}if(lastBtn.b!==b){lastBtn.b=b;$('pauseBtn').innerHTML=b;}}
- panel.querySelectorAll('[data-b]').forEach(b=>{const k=b.dataset.b;setCls(b,'sel',!!(mode&&mode.kind===k));setCls(b,'poor',G.gold<TDEF[k].cost);});
+ panel.querySelectorAll('[data-b]').forEach(b=>{const k=b.dataset.b;setCls(b,'sel',!!(mode&&mode.kind===k));const bc=buildCost(k),full=G.towers.length>=towerCap();setCls(b,'poor',G.gold<bc||full);const ct=b.querySelector('.ct'),tx=full?'Limit':bc;if(ct&&ct.dataset.v!=tx){ct.dataset.v=tx;ct.innerHTML=full?'🔒 Limit':'<i class="coin"></i> '+bc;}});
  for(const k of['fire','frost']){const b=panel.querySelector(`[data-s=${k}]`),c=G.cool[k],cd=b.querySelector('.cd');setCls(b,'sel',!!(mode&&mode.kind===k));
   const sc=b.querySelector('.sc'),cost=spellCost(k),ct='<i class="coin"></i> '+cost;if(sc.innerHTML!==ct)sc.innerHTML=ct;setCls(b,'poor',G.gold<cost);
   const s=c>0?Math.ceil(c)+'s':'';if(cd.textContent!==s)cd.textContent=s;cd.style.setProperty('--p',c>0?(c/SPELL[k].cd).toFixed(3):0);}
@@ -1139,24 +1175,24 @@ function updateUI(){
  {const h=G.hero,hs=$('heroSel'),ic=hs.querySelector('canvas');if(ic.dataset.icon!=='hero_'+h.kind){ic.dataset.icon='hero_'+h.kind;renderIcons(hs);}hs.querySelector('.hp b').style.width=(h.dead?0:h.hp/h.maxhp*100).toFixed(0)+'%';const l=''+h.lvl,le=hs.querySelector('.lv');if(le.textContent!==l)le.textContent=l;setCls(hs,'sel',!!(mode&&mode.type==='hero'));setCls(hs,'dead',!!h.dead);setCls(hs,'hidecard',card.classList.contains('show')&&!card.classList.contains('top'));}
  const sb=$('startBtn');const st=G.state==='build'?SVI.play+' Welle '+(G.wave+1)+' starten':canCallEarly()?SVI.ff+' Welle '+(G.wave+1)+' früh rufen<small>+'+earlyBonus()+' Gold Bonus</small>':G.state==='wave'?SVI.swords+' Welle läuft…':'';if(lastBtn.s!==st){lastBtn.s=st;sb.innerHTML=st;}setCls(sb,'off',G.state!=='build'&&!canCallEarly());
  // Karte
- let key='';if(mode&&mode.type==='build')key='b'+mode.kind+(ghost?'g'+(canPlace(ghost.x,ghost.y)?1:0):'')+(G.gold>=TDEF[mode.kind].cost);
+ let key='';if(mode&&mode.type==='build')key='b'+mode.kind+(ghost?'g'+(canPlace(ghost.x,ghost.y)?1:0):'')+(G.gold>=buildCost(mode.kind))+'n'+G.towers.length;
  else if(mode&&mode.type==='spell')key='s';else if(mode&&mode.type==='ability')key='a'+G.hero.kind;else if(mode&&mode.type==='hero'){const h=G.hero;key='h'+h.lvl+'_'+Math.ceil(h.hp/h.maxhp*10)+'_'+Math.floor(h.xp/h.need*10)+(h.mana>=HEROES[h.kind].cost);}else if(sel&&G.towers.includes(sel)){const n=TDEF[sel.kind].lv[sel.lvl+1];key='t'+sel.id+sel.lvl+'m'+(sel.tm||0)+(n?(G.gold>=n.cost):'')+Math.floor(sel.spent);}
  {const f=mode&&mode.type==='build'?ghost:mode&&(mode.type==='hero'||mode.type==='ability')?(aim||G.hero):sel;let top=false;if(f&&card.classList.contains('show')){const[vx,vy]=V(f.x,f.y);top=oy+vy*scale>ch*.5;}setCls(card,'top',top);}
  if(key===uiKey)return;uiKey=key;
  if(!key){card.className='';card.innerHTML='';return;}
  card.className='show';
- if(key[0]==='b'){const D=TDEF[mode.kind],ok=ghost&&canPlace(ghost.x,ghost.y)&&G.gold>=D.cost;
-  card.innerHTML=`<div class="t"><canvas class="icon sm" data-icon="${mode?mode.kind:sel.kind}"></canvas> ${D.name} · <i class="coin"></i>${D.cost}<button class="x" data-a="cancel">${SVI.close}</button></div><div class="d">${D.desc}<br>${ghost?(canPlace(ghost.x,ghost.y)?'Nochmal auf den Turm tippen oder „Bauen“ drücken. Ziehen zum Verschieben.':SVI.no+' Hier nicht möglich (Weg, Baum oder anderer Turm).'):SVI.tap+' Tippe auf eine freie Stelle neben dem Weg.'}</div>
+ if(key[0]==='b'){const D=TDEF[mode.kind],bc=buildCost(mode.kind),ok=ghost&&canPlace(ghost.x,ghost.y)&&G.gold>=bc&&G.towers.length<towerCap();
+  card.innerHTML=`<div class="t"><canvas class="icon sm" data-icon="${mode?mode.kind:sel.kind}"></canvas> ${D.name} · <i class="coin"></i>${bc}<button class="x" data-a="cancel">${SVI.close}</button></div><div class="d">${D.desc}<br><b>Türme ${G.towers.length}/${towerCap()}</b>${nOf(mode.kind)?' · '+nOf(mode.kind)+'× gebaut, jeder weitere kostet mehr':''}<br>${ghost?(canPlace(ghost.x,ghost.y)?'Nochmal auf den Turm tippen oder „Bauen“ drücken. Ziehen zum Verschieben.':SVI.no+' Hier nicht möglich (Weg, Baum oder anderer Turm).'):SVI.tap+' Tippe auf eine freie Stelle neben dem Weg.'}</div>
   <div class="row"><button class="cbtn ok" data-a="build" ${ok?'':'disabled'}>${SVI.check} Bauen</button><button class="cbtn no" data-a="cancel">Abbrechen</button></div>`;}
  else if(key==='s'){card.innerHTML=`<div class="t"><canvas class="icon sm" data-icon="fire"></canvas> Feuerregen<button class="x" data-a="cancel">${SVI.close}</button></div><div class="d">Tippe auf die Karte, um einen Meteoritenhagel herabregnen zu lassen (Schaden ${Math.round(20*hpMul(G.wave||1))} im Umkreis, kostet ${spellCost('fire')} Gold).</div>`;}
  else if(key[0]==='a'){const H=HEROES[G.hero.kind];card.innerHTML=`<div class="t"><canvas class="icon sm" data-icon="hero_${G.hero.kind}"></canvas> ${H.ab} · ${H.cost} Mana<button class="x" data-a="cancel">${SVI.close}</button></div><div class="d">${H.abDesc(G.hero)}<br>${SVI.tap} Tippe auf eine Stelle am Weg.</div>`;}
  else if(key[0]==='h'){const h=G.hero,H=HEROES[h.kind];card.innerHTML=`<div class="t"><canvas class="icon sm" data-icon="hero_${h.kind}"></canvas> ${H.name} · Stufe ${h.lvl}<button class="x" data-a="cancel">${SVI.close}</button></div><div class="d">LP ${Math.ceil(h.hp)}/${h.maxhp} · Schaden ${h.dmg.toFixed(1)} · EP ${Math.floor(h.xp)}/${h.need}<br>${SVI.tap} Tippe aufs Feld, um ihn hinzuschicken (oder ziehen).</div><div class="row"><button class="cbtn up" data-a="ab" ${h.mana>=H.cost&&!h.dead?'':'disabled'}>${H.ab} · ${H.cost} Mana</button><button class="cbtn no" data-a="cancel">Fertig</button></div>`;}
  else{const t=sel,D=TDEF[t.kind],s=stat(t),n=D.lv[t.lvl+1];
-  let info=t.kind==='mine'?`Erzeugt ${s.gold}<i class="coin"></i> alle ${s.every} Sek. (nur während Wellen)`:t.kind==='mage'?`Feuerball ${s.dmg} Schaden · Fläche ${s.splash} · Brand ${s.burn} Sek.${s.aura?' · Aura +'+Math.round(s.aura*100)+'% Tempo':''}`:t.kind==='alch'?`Pfütze ${s.pr} · ${s.dps} Gift/Sek. · bremst ${Math.round(s.slow*100)}% · ${s.pl} Sek.${s.acid?' · Säure':''}${s.spread?' · Giftwolke':''}`:t.kind==='catapult'?`${s.orcs} ${s.orcs>1?'Orks':'Ork'} pro Wurf · ${s.unit}: ${s.hp} LP, ${s.dmg} Schaden · max. ${s.max} gleichzeitig`:`Schaden ${s.dmg} · Reichweite ${s.range} · ${(1/s.rate).toFixed(1)} Schuss/Sek.${s.splash?' · Fläche '+s.splash:''}${s.multi>1?' · '+s.multi+' Pfeile':''}${s.ap?' · rüstungsbrechend':''}`;
+  let info=t.kind==='mine'?`Erzeugt ${gAdj(s.gold,G.wave)}<i class="coin"></i> alle ${s.every} Sek. (nur während Wellen)`:t.kind==='mage'?`Feuerball ${s.dmg} Schaden · Fläche ${s.splash} · Brand ${s.burn} Sek.${s.aura?' · Aura +'+Math.round(s.aura*100)+'% Tempo':''}`:t.kind==='alch'?`Pfütze ${s.pr} · ${s.dps} Gift/Sek. · bremst ${Math.round(s.slow*100)}% · ${s.pl} Sek.${s.acid?' · Säure':''}${s.spread?' · Giftwolke':''}`:t.kind==='catapult'?`${s.orcs} ${s.orcs>1?'Orks':'Ork'} pro Wurf · ${s.unit}: ${s.hp} LP, ${s.dmg} Schaden · max. ${s.max} gleichzeitig`:`Schaden ${s.dmg} · Reichweite ${s.range} · ${(1/s.rate).toFixed(1)} Schuss/Sek.${s.splash?' · Fläche '+s.splash:''}${s.multi>1?' · '+s.multi+' Pfeile':''}${s.ap?' · rüstungsbrechend':''}`;
   const a=t.kind!=='mine'&&t.kind!=='mage'?auraFor(t):0;if(a)info+=` · ${SVI.spark} Magier-Aura +${Math.round(a*100)}%`;
   card.innerHTML=`<div class="t"><canvas class="icon sm" data-icon="${mode?mode.kind:sel.kind}"></canvas> ${D.name} <span style="color:#ffd040">${SVI.gem.repeat(t.lvl+1)}</span>${t.kind!=='mine'?`<button class="tmb" data-a="tm">Ziel: ${TMN[t.tm||0]}</button>`:''}<button class="x" data-a="close">${SVI.close}</button></div><div class="d">${info}</div>
   <div class="row">${n?`<button class="cbtn up" data-a="up" ${G.gold>=n.cost?'':'disabled'}>${SVI.up} ${n.name} · <i class="coin"></i>${n.cost}<small>${n.desc}</small></button>`:`<button class="cbtn up" disabled>Max. Stufe erreicht</button>`}
-  <button class="cbtn sell" data-a="sell">Verkaufen<small>+${Math.floor(t.spent*.7)}<i class="coin"></i></small></button></div>`;}
+  <button class="cbtn sell" data-a="sell">Verkaufen<small>+${Math.floor(t.spent*BAL.sell)}<i class="coin"></i></small></button></div>`;}
  renderIcons(card);
 }
 card.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
@@ -1164,27 +1200,69 @@ card.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b)r
  else if(a==='up'&&sel)upgrade(sel);else if(a==='tm'&&sel)sel.tm=((sel.tm||0)+1)%3;else if(a==='sell'&&sel)sell(sel);uiKey=null;});
 let toastT=0;function toast(s){const t=$('toast');t.textContent=s;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
 const ov=$('ov');function hideOv(){ov.classList.add('hide');}
+// ---------- v3.3: Eigene Einheiten- & Feind-Übersicht ----------
+const VERSION='3.3';
+const OVS={own:LS.get('ovOwn',false),foe:LS.get('ovFoe',true)};let ovKey={own:'',foe:''},ovT=0;
+const TNAME={archer:'Bogenschützen',catapult:'Katapulte',mage:'Magier',alch:'Alchemisten',mine:'Goldminen'};
+function chip(k,n,o){o=o||{};const u=iconURL(k);return `<span class="chip${o.cls?' '+o.cls:''}"${o.col?` style="--c:${o.col}"`:''} title="${o.t||''}">${u?`<img src="${u}" alt="">`:''}<b>${n}</b></span>`;}
+function ownHTML(){const c={};for(const t of G.towers)c[t.kind]=(c[t.kind]||0)+1;const orcs=G.units.length,h=G.hero,H=HEROES[h.kind];
+ const head=`<button class="ovb" data-ov="own" aria-expanded="${OVS.own}">🛡 ${G.towers.length}/${towerCap()}${orcs?' · '+orcs+' Orks':''} <span class="ar">${OVS.own?'▲':'▼'}</span></button>`;
+ if(!OVS.own)return head;
+ const list=Object.keys(TDEF).filter(k=>c[k]).map(k=>{const mx=G.towers.filter(t=>t.kind===k&&!TDEF[k].lv[t.lvl+1]).length;return chip(k,c[k]+(mx?`<small style="color:#ffd040"> ★${mx}</small>`:''),{t:TNAME[k]+(mx?' · '+mx+' voll ausgebaut':'')});}).join('')
+  +(orcs?chip('orc',orcs,{t:'Orks auf dem Weg'}):'')+chip('hero_'+h.kind,h.dead?'✝':'St.'+h.lvl,{t:H.name,cls:h.dead?'dead':''});
+ return head+`<div class="ovl">${list||'<span class="ovt">Noch keine Türme</span>'}${list?'':chip('hero_'+h.kind,'St.'+h.lvl,{t:H.name})}<span class="ovt">Limit ${towerCap()} · +1 alle ${BAL.capW} Wellen</span></div>`;}
+function foeCounts(){const m=new Map(),add=(t,aff,boss)=>{const k=t+(aff?'*':'');const o=m.get(k)||{t,aff,boss,n:0};o.n++;m.set(k,o);};
+ if(G.state==='wave'){for(const e of G.enemies)if(e.hp>0)add(e.type,e.aff,e.D.boss);for(const q of G.spawnQ)add(q.type,q.aff,EDEF[q.type].boss);return{m,title:'Welle '+G.wave,live:true};}
+ const n=G.wave+1,mod=waveMod(n);let tot=0;for(const[t,cnt]of genWave(n)){const o=m.get(t)||{t,n:0,boss:EDEF[t].boss};o.n+=cnt;tot+=cnt;m.set(t,o);}
+ return{m,title:'Nächste: Welle '+n,mod,live:false,tot};}
+function foeHTML(){const f=foeCounts(),arr=[...f.m.values()];const tot=arr.reduce((a,o)=>a+o.n,0);
+ const head=`<button class="ovb" data-ov="foe" aria-expanded="${OVS.foe}">${f.live?'⚔ '+tot+' übrig':'👁 Welle '+(G.wave+1)} <span class="ar">${OVS.foe?'▲':'▼'}</span></button>`;
+ if(!OVS.foe)return head;
+ const list=arr.map(o=>chip(o.t,o.n,{t:EDEF[o.t].name+(o.aff?' · Elite: '+AFX[o.aff].name:''),cls:(o.boss?'boss':'')+(o.aff?' el':''),col:o.aff?AFX[o.aff].col:''})).join('');
+ const sub=f.live?(G.mod?`<span class="ovt" style="color:${AFX[G.mod].col}">Elite: ${AFX[G.mod].name}</span>`:''):`<span class="ovt">${f.title}${f.mod?` · <span style="color:${AFX[f.mod].col}">Elite: ${AFX[f.mod].name}</span>`:''}${(G.wave+1)%5===0?' · Boss!':''}</span>`;
+ return head+`<div class="ovl">${list||'<span class="ovt">Alle besiegt</span>'}${sub}</div>`;}
+function overviewUI(dt){ovT-=dt;if(ovT>0)return;ovT=.25;if(!G)return;
+ for(const[id,fn]of[['own',ownHTML],['foe',foeHTML]]){const h=fn();if(h!==ovKey[id]){ovKey[id]=h;$(id).innerHTML=h;}}}
+for(const id of['own','foe'])$(id).addEventListener('click',ev=>{const b=ev.target.closest('[data-ov]');if(!b)return;ev.stopPropagation();const k=b.dataset.ov;OVS[k]=!OVS[k];LS.set(k==='own'?'ovOwn':'ovFoe',OVS[k]);ovT=0;overviewUI(0);});
+for(const id of['own','foe'])$(id).addEventListener('pointerdown',ev=>ev.stopPropagation());
+// ---------- v3.3: Lokale Bestenliste (Top 10) ----------
+function fmtT(t){if(t==null)return'–';t=Math.round(t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(s).padStart(2,'0');}
+function fmtD(d){if(!d)return'–';const x=new Date(d);return x.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});}
+function escH(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function getScores(){let a=LS.get('scores',null);if(!Array.isArray(a)){a=[];const b=LS.get('best',0);if(b>0)a.push({id:'alt',name:'Bisheriger Rekord',wave:b,time:null,date:null,kills:null});LS.set('scores',a);}return a;}
+function sortScores(a){return a.sort((x,y)=>y.wave-x.wave||(x.time==null)-(y.time==null)||(x.time||0)-(y.time||0)).slice(0,10);}
+function addScore(e){const a=sortScores(getScores().concat([e]));LS.set('scores',a);return a.some(x=>x.id===e.id);}
+function qualifies(w){const a=getScores();return w>0&&(a.length<10||w>a[a.length-1].wave);}
+function scoreTable(hl){const a=getScores();if(!a.length)return'<p style="text-align:center">Noch keine Einträge – spiel eine Runde!</p>';
+ return `<table class="hs"><tr><th>#</th><th>Name</th><th class="n">Welle</th><th class="n">Zeit</th><th class="n">Datum</th></tr>${a.map((x,i)=>`<tr class="${x.id===hl?'me':''}"><td>${i+1}</td><td>${escH(x.name)}${x.hero&&HEROES[x.hero]?` <small style="opacity:.7">· ${HEROES[x.hero].name}</small>`:''}</td><td class="n">${x.wave}</td><td class="n">${fmtT(x.time)}</td><td class="n">${fmtD(x.date)}</td></tr>`).join('')}</table>`;}
+function showScores(back,hl){ov.classList.remove('hide');ov.innerHTML=`<div class="box"><h1>Bestenliste</h1><h2>Top 10 auf diesem Gerät</h2>${scoreTable(hl)}<div style="text-align:center"><button class="big" id="hsBack">${SVI.play} Zurück</button></div></div>`;$('hsBack').onclick=back;}
+
 const TRACKS=[['tavern','Taverne (flott)','Fröhliche Schenke, 100 bpm'],['calm','Kaminfeuer (ruhig)','Harfe & Flöte am Feuer, 76 bpm']];
 function pickTrack(k){SFX.resume();const t=SFX.setTrack(k);if(!SFX.on.music)SFX.toggle('music');toast('Musik: '+TRACKS.find(x=>x[0]===t)[1]);renderPm();}
 const pm=$('pmenu');
 function renderPm(){pm.innerHTML=`<div class="pt">Pause</div><div class="heroes mus">${TRACKS.map(([k,n,d])=>`<button data-m="${k}" class="${SFX.track===k?'on':''}"><b>${n}</b><small>${d}</small></button>`).join('')}</div><button class="big" data-a="go">${SVI.play} Weiter</button>`;}
 pm.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;if(b.dataset.m)pickTrack(b.dataset.m);else if(b.dataset.a==='go'){G.paused=false;G.pmenu=false;pm.classList.remove('show');}});
 function showStart(){ov.classList.remove('hide');ov.innerHTML=`<div class="box"><h1>Turmwacht</h1><h2>Der Schattenpass</h2>
- <p>Das Schattenheer marschiert auf deine Burg! Endlose Wellen – alle 5 Wellen ein Boss. Wie weit kommst du? <b>Rekord: Welle ${LS.get('best',0)}</b></p><ul>
+ <p>Das Schattenheer marschiert auf deine Burg! Endlose Wellen – alle 5 Wellen ein Boss. Wie weit kommst du? <b>Rekord: Welle ${Math.max(LS.get('best',0),...getScores().map(x=>x.wave),0)}</b></p><ul>
  <li><canvas class="icon sm" data-icon="archer"></canvas><span><b>Elfen-Bogenschützen</b>: schnelle Pfeile</span></li><li><canvas class="icon sm" data-icon="catapult"></canvas><span><b>Ork-Katapult</b>: schleudert Orks, die auf dem Weg kämpfen</span></li><li><canvas class="icon sm" data-icon="mage"></canvas><span><b>Magier</b>: Feuerbälle mit Flächenschaden & Brand</span></li><li><canvas class="icon sm" data-icon="mine"></canvas><span><b>Goldmine</b>: Gold während der Wellen</span></li><li><canvas class="icon sm" data-icon="alch"></canvas><span><b>Alchemist</b>: Giftpfützen bremsen & vergiften</span></li><li><canvas class="icon sm" data-icon="fire"></canvas><canvas class="icon sm" data-icon="frost"></canvas><span>Feuerregen & Frost: mächtige Zauber (kosten Gold)</span></li>
  <li style="margin-top:6px;font-size:13px;opacity:.9">Feinde: <canvas class="icon sm" data-icon="skel"></canvas><canvas class="icon sm" data-icon="wolf"></canvas><canvas class="icon sm" data-icon="knight"></canvas><canvas class="icon sm" data-icon="ogre"></canvas><canvas class="icon sm" data-icon="bat"></canvas><canvas class="icon sm" data-icon="shaman"></canvas><canvas class="icon sm" data-icon="dragon"></canvas><canvas class="icon sm" data-icon="lich"></canvas></li>
  <li>${SVI.tap} Held antippen, dann auf den Weg tippen, um ihn zu bewegen. Spezialfähigkeit unten im Menü (kostet Mana).</li><li>${SVI.tap} Turm wählen → auf die Karte tippen → nochmal tippen zum Bauen. Turm antippen zum Aufwerten.</li></ul>
  <p style="text-align:center;margin:6px 0 0"><b>Wähle deinen Helden</b></p><div class="heroes">${Object.keys(HEROES).map(k=>`<button data-h="${k}" class="${G.hero.kind===k?'on':''}"><canvas class="icon" data-icon="hero_${k}"></canvas><b>${HEROES[k].name}</b><small>${HEROES[k].short}</small></button>`).join('')}</div>
  <p style="text-align:center;margin:6px 0 0"><b>Hintergrundmusik</b></p><div class="heroes mus">${TRACKS.map(([k,n,d])=>`<button data-m="${k}" class="${SFX.track===k?'on':''}"><b>${n}</b><small>${d}</small></button>`).join('')}</div>
- <div style="text-align:center"><button class="big" id="playBtn">${SVI.swords} In die Schlacht</button></div></div>`;renderIcons(ov);
+ <div style="text-align:center"><button class="big" id="playBtn">${SVI.swords} In die Schlacht</button><br><button class="sm2" id="hsBtn" style="margin-top:8px">🏆 Bestenliste</button></div><div class="ver">Turmwacht v${VERSION}</div></div>`;renderIcons(ov);$('hsBtn').onclick=()=>showScores(showStart);
  ov.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{pickTrack(b.dataset.m);showStart();});
  ov.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{LS.set('hero',b.dataset.h);if(G.wave===0)G.hero=makeHero(b.dataset.h);showStart();});
  $('playBtn').onclick=()=>{hideOv();toast('Baue Türme und starte Welle 1!');};}
 function showEnd(){const reached=Math.max(0,G.wave-1),rec=reached>G.startBest;
- ov.classList.remove('hide');ov.innerHTML=`<div class="box"><h1>Niederlage</h1><div style="display:flex;justify-content:center"><canvas class="icon" style="width:90px;height:90px" data-icon="knight"></canvas></div>
+ let entry=null;if(!G.scored&&qualifies(reached)){entry={id:'s'+Date.now().toString(36)+Math.floor(Math.random()*1e4),name:LS.get('pname','Held'),wave:reached,time:Math.round(G.time),date:Date.now(),kills:G.kills,hero:G.hero.kind};addScore(entry);G.scored=entry;}else if(G.scored)entry=G.scored;
+ ov.classList.remove('hide');ov.innerHTML=`<div class="box"><h1>Niederlage</h1><div style="display:flex;justify-content:center"><canvas class="icon" style="width:72px;height:72px" data-icon="knight"></canvas></div>
  <h2>Das Schattenheer hat deine Burg überrannt.</h2>${rec?'<p style="text-align:center;font-size:22px;color:#ffd040;font-weight:700;text-shadow:0 0 12px #ff9a20">Neuer Rekord!</p>':''}
- <p style="text-align:center">Geschafft: <b>${reached} Wellen</b> · Rekord: <b>${G.best}</b> · ${G.kills} Gegner besiegt</p>
- <div style="text-align:center"><button class="big" id="againBtn">${SVI.retry} Nochmal spielen</button></div></div>`;renderIcons(ov);$('againBtn').onclick=()=>{init();showStart();};}
+ <p style="text-align:center">Geschafft: <b>${reached} Wellen</b> · Zeit <b>${fmtT(G.time)}</b> · ${G.kills} Gegner besiegt</p>
+ ${entry?`<p style="text-align:center;margin:4px 0 0;color:#ffd040"><b>Du bist in den Top 10!</b> Dein Name:</p><div class="hsin"><input id="hsName" maxlength="16" value="${escH(entry.name)}" autocomplete="nickname" enterkeyhint="done"><button class="sm2" id="hsSave">Speichern</button></div>`:''}
+ ${scoreTable(entry&&entry.id)}
+ <div style="text-align:center"><button class="big" id="againBtn">${SVI.retry} Nochmal spielen</button></div></div>`;renderIcons(ov);$('againBtn').onclick=()=>{init();showStart();};
+ if(entry){const inp=$('hsName'),save=()=>{const v=(inp.value||'').trim().slice(0,16)||'Held';LS.set('pname',v);const a=getScores();const x=a.find(o=>o.id===entry.id);if(x){x.name=v;LS.set('scores',a);}entry.name=v;showEnd();toast('Gespeichert: '+v);};
+  $('hsSave').onclick=save;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();save();}});}}
 
 
 // ---------- Klang: prozedurale Web-Audio-Musik & Effekte ----------
@@ -1285,11 +1363,11 @@ let last=performance.now();
 function frame(now){let dt=Math.min(.05,(now-last)/1000);last=now;
  if(!G.paused&&G.state!=='lost'){for(let i=0;i<G.speed;i++)update(dt);}
  else if(G.state==='lost'){for(const f of G.fx)f.life-=dt;G.fx=G.fx.filter(f=>f.life>0);}
- draw();updateUI();sndUI();requestAnimationFrame(frame);}
+ draw();updateUI();sndUI();overviewUI(dt);requestAnimationFrame(frame);}
 window.addEventListener('resize',resize);window.addEventListener('orientationchange',()=>setTimeout(resize,200));
 if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);
 init();resize();showStart();renderIcons(panel);requestAnimationFrame(frame);
-window.TD={get G(){return G},makeElite,waveMod,AFX,dropBomb,toScreen:(x,y)=>{const r=cv.getBoundingClientRect(),[vx,vy]=portrait?[y,x]:[x,y];return{x:r.left+ox+vx*scale,y:r.top+oy+vy*scale};},get mode(){return mode},SFX,heroMove,heroCast,makeHero,HEROES,posAt,END_D,coverage:(x,y,r)=>{let c=0;for(let d=0;d<END_D;d+=10){const q=posAt(d);if(dist(q[0],q[1],x,y)<=r)c++;}return c;},genWave,hpMul,spawn,EDEF,spellCost,LS,canPlace,deselect:()=>{sel=null;mode=null;ghost=null;},place,startWave,upgrade,castFire,castFrost,init,TDEF,update};
+window.TD={iconURL,getScores,VERSION,get G(){return G},BAL,buildCost,towerCap,goldMul,lateMul,eliteFrac,makeElite,waveMod,AFX,dropBomb,toScreen:(x,y)=>{const r=cv.getBoundingClientRect(),[vx,vy]=portrait?[y,x]:[x,y];return{x:r.left+ox+vx*scale,y:r.top+oy+vy*scale};},get mode(){return mode},SFX,heroMove,heroCast,makeHero,HEROES,posAt,END_D,coverage:(x,y,r)=>{let c=0;for(let d=0;d<END_D;d+=10){const q=posAt(d);if(dist(q[0],q[1],x,y)<=r)c++;}return c;},genWave,hpMul,spawn,EDEF,spellCost,LS,canPlace,deselect:()=>{sel=null;mode=null;ghost=null;},place,startWave,upgrade,castFire,castFrost,init,TDEF,update};
 })();
 </script>
 </body>
