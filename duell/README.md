@@ -17,6 +17,24 @@ Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfa
 
 Bauen: `python3 src/build.py` → `index.html`.
 
+## Neu in 0.6.1 – Brücken-Stau behoben, Gruppen laufen individueller
+- **Fix Brücken-Stau (Tester-Feedback „Orks bleiben an der Brücke hängen“):** Ursache war die Brückensteuerung. Eine Einheit,
+  die *neben* der Brücke direkt am Ufer stand (z. B. von der eigenen Gruppe seitlich weggeschoben oder per Formation an den Rand
+  gesetzt), galt fälschlich schon als „auf der Brücke“ und lief senkrecht ins Wasser. Die Uferkorrektur setzte sie zurück, und
+  das wiederholte sich endlos. Jetzt zählt nur der echte Brückenstreifen. Wer daneben steht, fädelt erst seitlich auf die Brücke ein.
+- Weitere Brücken-Fälle: Wer auf der Brücke steht und ein Ziel schräg daneben hat, läuft erst vom Steg herunter, statt gegen
+  den Rand zu drücken. Am Brückenkopf gilt Vorfahrt: Kommt ein großer Gegner (der nicht mein Ziel ist) über die Brücke,
+  trete ich zur Seite, statt frontal zu schieben. Verbündete reihen sich auf der Brücke enger ein (weichere Trennung).
+- **Stau-Erkennung:** Kommt eine Einheit ~1,5 s kaum voran, weicht sie kurz seitlich aus (weg vom Blockierer). Ein Nahkämpfer
+  im Gedränge, der das Ziel schon fast berührt, schlägt „über die Schulter“ zu.
+- **Fernkämpfer-Fix:** Driftete ein Ziel knapp aus der Reichweite, wurde die Ausholzeit bisher immer wieder neu gesetzt, und es
+  fiel nie ein Schuss.
+- **Individuelle Gruppenmitglieder:** Die Formation gilt nur beim Ausspielen. Danach hat jedes Mitglied ein eigenes, geseedetes
+  Tempo (±7 %) und eine eigene Spur über die Brücke. Ziele, die schon von Verbündeten angegriffen werden, sind etwas
+  unattraktiver. Dadurch verteilen sich z. B. Ork-Krieger ×3 auf mehrere nahe Gegner. Alles bleibt deterministisch.
+- Neue Tests: `bridges.js` (zufällige Gruppen-Brückenszenarien), `matchstalls.js` (KI-gegen-KI-Matches),
+  `testerfall.js` (Gruppen am Brückenkopf) und `individual.js`.
+
 ## Neu in 0.6 – Bewegung & Zielerfassung nach Clash-Royale-Vorbild
 - Lenkverhalten statt eckiger Wegpunkte: Einheiten steuern einen Vorausschau-Punkt in der Brückenachse an (Abstand wächst mit dem seitlichen Versatz) und laufen in weichen Kurven über die Brücke; Geschwindigkeit wird träge nachgeführt. Türme/Gebäude werden vorausschauend umlaufen (z. B. hinter dem eigenen Turm gesetzte Truppen).
 - Deutlichere Tempo-Unterschiede: Fledermäuse 50, Wölfe 48, Orks/Skelette 30, Ritter 24, Riese & Oger 15.

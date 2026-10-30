@@ -72,7 +72,9 @@ function deploy(S,side,id,x,y){const C=CARDS[id];
  for(const[dx,dy]of f){const e=spawnUnit(S,side,id,x+dx,y+(side?-dy:dy),DEP,ln);if(C.type==='hero'){S.p[side].heroId=e.id;S.p[side].heroCharge=.4;e.hero=true;}}}
 function spawnUnit(S,side,id,x,y,dep,lane){const C=CARDS[id],u=C.u;if(!C.air&&inRiver(x,y))y=(side===0)?RY1+3:RY0-3;
  if(lane==null)lane=laneOf(x);x=laneClamp(x);
- return addEnt(S,{side,cls:'unit',card:id,lane,x,y,r:u.r,hp:u.hp,maxhp:u.hp,st:u,air:!!C.air,mass:u.mass||1,dep:dep==null?DEP:dep});}
+ // 0.6.1: jedes Gruppenmitglied bekommt ein eigenes (geseedetes) Tempo und eine eigene Spur-Neigung -> läuft für sich
+ const sf=.93+.14*rnd(S),po=rnd(S)*2-1;
+ return addEnt(S,{side,cls:'unit',card:id,lane,x,y,r:u.r,hp:u.hp,maxhp:u.hp,st:u,air:!!C.air,mass:u.mass||1,dep:dep==null?DEP:dep,sf,po,stk:0,unst:0,pt:0,px:x,py:y});}
 // ---------- Zauber & Fähigkeiten ----------
 const ghost=e=>e.cls==='unit'&&e.dep>0;
 function enemiesIn(S,side,x,y,r,o){o=o||{};const out=[];for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(o.noAir&&e.air)continue;if(o.unitsOnly&&e.cls!=='unit')continue;if(d2(e.x,e.y,x,y)<=r+e.r*.5)out.push(e);}return out;}
@@ -106,18 +108,38 @@ function fixPos(e,prevY){e.x=clamp(e.x,5,FW-5);e.y=clamp(e.y,5,FH-5);if(e.air)re
 // 0.6: Lenkverhalten statt eckiger Wegpunkte. Ziel-Punkt mit Vorausschau: vor der Brücke ein Punkt in der
 // Brückenachse (Abstand wächst mit dem seitlichen Versatz -> weiche Kurve), auf der Brücke geradeaus zum anderen Ufer.
 // Geschwindigkeit wird träge nachgeführt (STEER), Verbündete, die schon kämpfen, werden seitlich umlaufen (Halbkreis).
-function steerGoal(e,tx,ty,chase){if(e.air||!needCross(e.y,ty))return[tx,ty];const bx=laneBridge(e,tx,chase),up=e.y>MIDY,inR=e.y>RY0-1&&e.y<RY1+1,ox=Math.abs(e.x-bx);
- if(inR||ox<BW/2-7){const ex=up?RY0-14:RY1+14;return[bx+(e.x-bx)*.5,ex];}
- const by=up?e.y-RY1:RY0-e.y,look=Math.max(6,Math.min(44,8+ox*.45,by));return[bx,up?RY1+look:RY0-look];}
-function moveTo(S,e,tx,ty,spd,chase,tid){const[gx,gy]=steerGoal(e,tx,ty,chase);
+function steerGoal(e,tx,ty,chase){if(e.air)return[tx,ty];
+ // 0.6.1: schon auf der Brücke (im Fluss-Band) und Ziel schräg daneben -> erst in Brückenrichtung vom Steg herunter,
+ // statt seitlich gegen den Rand gedrückt zu werden (Ziel diesseits der Flussmitte, aber neben der Brücke)
+ if(e.y>RY0-1&&e.y<RY1+1){const ob=onBridge(e.x);if(ob!=null&&Math.abs(tx-ob)>BW/2-e.r-2&&(ty<RY0-1||ty>RY1+1)){const w=BW/2-e.r-2;return[Math.max(ob-w,Math.min(ob+w,tx)),ty>e.y?RY1+14:RY0-14];}}
+ if(!needCross(e.y,ty))return[tx,ty];const bx=laneBridge(e,tx,chase),up=e.y>MIDY,ox=Math.abs(e.x-bx),lx=bx+(e.po||0)*(BW/2-e.r-4);
+ // 0.6.1-Fix: früher galt jede Einheit mit y am Ufer (±1 px) als 'auf der Brücke' – auch neben der Brücke. Die steuerte dann
+ // senkrecht ins Wasser, fixPos setzte sie aufs Ufer zurück -> Dauerstau. Jetzt nur im echten Brückenstreifen.
+ const by0=up?e.y-RY1:RY0-e.y;// Abstand zum Ufer (≤0 = schon im Fluss-Band)
+ if(ox<BW/2-7||(by0<=0&&ox<=BW/2)){const ex=up?RY0-14:RY1+14;return[lx+(e.x-lx)*.4,ex];}
+ // direkt am Ufer, aber neben dem Brückenstreifen: erst seitlich auf die Brücke einfädeln, nicht ins Wasser drücken
+ if(by0<10&&ox<=BW/2+e.r+6)return[lx,e.y];
+ const by=up?e.y-RY1:RY0-e.y,look=Math.max(6,Math.min(44,8+ox*.45,by));return[lx,up?RY1+look:RY0-look];}
+function moveTo(S,e,tx,ty,spd,chase,tid){let[gx,gy]=steerGoal(e,tx,ty,chase);
+ // 0.6.1 Vorfahrt am Brückenkopf: wer schon auf der Brücke ist, darf zuerst herunter. Passt ein entgegenkommender Gegner
+ // (nicht mein Ziel) nicht neben mich auf den Steg, trete ich seitlich an den Brückenkopf statt frontal zu schieben.
+ if(!e.air&&(e.y<RY0-1||e.y>RY1+1)&&needCross(e.y,ty)){const bx=laneBridge(e,tx,chase),up=e.y>MIDY,bk=up?e.y-RY1:RY0-e.y;
+  if(bk<40)for(const o of S.ents){if(o.side===e.side||o.cls!=='unit'||o.air||o.hp<=0||o.id===tid||o.lock)continue;if(Math.abs(o.x-bx)>BW/2||!(o.y>RY0-2&&o.y<RY1+2))continue;
+   if(e.r+o.r<BW/2+2)continue;const cs=e.x>=o.x?1:-1;gx=bx+cs*(BW/2+e.r+3);gy=up?Math.max(e.y,RY1+e.r+4):Math.min(e.y,RY0-e.r-4);break;}}
  let dx=gx-e.x,dy=gy-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d<1e-6)return;dx/=d;dy/=d;
  // seitliches Ausweichen um kämpfende Verbündete (fächert Gruppen am Ziel auf)
  let lx=0,ly=0;for(const o of S.ents){if(o===e||o.side!==e.side||o.cls!=='unit'||o.air!==e.air||o.hp<=0||!o.lock)continue;const ax=o.x-e.x,ay=o.y-e.y,m=e.r+o.r+8;if(ax>m||ax<-m||ay>m||ay<-m)continue;
   const ad=Math.sqrt(ax*ax+ay*ay);if(ad>=m||ad<1e-4)continue;const fw=(ax*dx+ay*dy)/ad;if(fw<=.2)continue;let cr=ax*dy-ay*dx;if(Math.abs(cr)<1e-3)cr=(e.id%2)?1:-1;const k=(1-ad/m)*fw*1.6,sg=cr>0?1:-1;lx+=-dy*sg*k;ly+=dx*sg*k;}
+ // 0.6.1: entgegenkommende Gegner, die nicht mein Ziel sind (z. B. Gebäude-Jäger), seitlich passieren statt frontal zu schieben
+ if(!e.air)for(const o of S.ents){if(o.side===e.side||o.cls!=='unit'||o.air||o.hp<=0||o.id===tid)continue;const ax=o.x-e.x,ay=o.y-e.y,m=e.r+o.r+10;if(ax>m||ax<-m||ay>m||ay<-m)continue;
+  const ad=Math.sqrt(ax*ax+ay*ay);if(ad>=m||ad<1e-4)continue;const fw=(ax*dx+ay*dy)/ad;if(fw<=.3)continue;let cr=ax*dy-ay*dx;if(Math.abs(cr)<1e-3)cr=(e.side?1:-1);const k=(1-ad/m)*fw*1.3,sg=cr>0?1:-1;lx+=-dy*sg*k;ly+=dx*sg*k;}
+ e.gdx=dx;e.gdy=dy;
  // Hindernisse (Türme/Gebäude) vorausschauend seitlich umlaufen statt hineinzulaufen
  if(!e.air)for(const o of S.ents){if((o.cls!=='tower'&&o.cls!=='bld')||o.hp<=0||o.id===tid)continue;const ax=o.x-e.x,ay=o.y-e.y,m=e.r+o.r*.85+3,along=ax*dx+ay*dy;
   if(along<=0||along>m+26)continue;const perp=ax*dy-ay*dx;if(Math.abs(perp)>=m)continue;if(e.avdId!==o.id){e.avdId=o.id;const wantX=Math.abs(gx-o.x)>4?gx:FW/2,cand=-dy;e.avdS=Math.abs(perp)>2?(perp>0?1:-1):((wantX-o.x)*cand>=0?1:-1);}const sg=e.avdS,k=(1-Math.abs(perp)/m)*2.2*(1-Math.max(0,along-m)/26);
   lx+=-dy*sg*k;ly+=dx*sg*k;}
+ // Stau-Auflösung: kurz seitlich ausweichen (Richtung fest pro Versuch)
+ if(e.unst>0){e.unst--;lx+=-dy*e.unsd*1.4;ly+=dx*e.unsd*1.4;}
  if(lx||ly){dx+=lx;dy+=ly;const n=Math.sqrt(dx*dx+dy*dy)||1;dx/=n;dy/=n;}
  const s=spd*TICK;e.vx+=(dx*s-e.vx)*STEER*2;e.vy+=(dy*s-e.vy)*STEER*2;const v=Math.sqrt(e.vx*e.vx+e.vy*e.vy);if(v>s){e.vx*=s/v;e.vy*=s/v;}
  if(d<=s&&!(lx||ly)){e.x=gx;e.y=gy;}else{e.x+=e.vx;e.y+=e.vy;}if(Math.abs(e.vx)>.08)e.face=e.vx<0?-1:1;e.mv=true;}
@@ -130,12 +152,12 @@ function acquire(S,e){const st=e.st,sight=st.sight||st.range+60;let best=null,bd
  for(const o of S.ents){if(o.side===e.side||!canHit(st,o))continue;
   const ed=edge(e,o);if(st.tg!=='bld'&&ed>sight)continue;
   if(st.tg!=='bld'&&o.cls==='tower'&&ed>st.range+2)continue;// Türme nur als Lauf-Ziel (unten), nicht per Sicht über die Spur
-  let d=e.cls==='unit'?navDist(e,o.x,o.y):ed;if(o.cls==='unit')d-=8;if(d<bd){bd=d;best=o;}}
+  let d=e.cls==='unit'?navDist(e,o.x,o.y):ed;if(o.cls==='unit'){d-=8;if(e.cls==='unit'&&S.tc)d+=9*(S.tc[o.id]||0);}if(d<bd){bd=d;best=o;}}
  if(!best&&e.cls==='unit'){// Lauf-Ziel: Wachturm der Spur, sonst Bergfried. Wer (z.B. nach Abfangen) klar auf der anderen Seite steht, nimmt diese Spur.
   if(e.lane==null||Math.abs(e.x-FW/2)>MIDW/2+6)e.lane=laneOf(e.x);const lane=e.lane;let g=tower(S,1-e.side,'guard',lane);if(!alive(g))g=tower(S,1-e.side,'keep');
   if(alive(g))best=g;}
  return best;}
-function inRange(e,t){return edge(e,t)<=e.st.range+(t.cls!=='unit'?2:0);}
+function inRange(e,t){return edge(e,t)<=e.st.range+(e.xr||0)+(t.cls!=='unit'?2:0);}// xr: 'über die Schulter' im Gedränge
 function reach(e,t){if(e.lock||e.st.range>MELEE)return inRange(e,t);return edge(e,t)<=CONTACT+(t.cls!=='unit'?2:0);}
 // ---------- Angriff ----------
 function attack(S,e,t){const st=e.st;e.atk++;e.atkT=S.tick;if(t.x!==e.x)e.face=t.x<e.x?-1:1;
@@ -169,10 +191,16 @@ function updUnit(S,e){
  let t=byId(S,e.tgt);if(t&&!canHit(st,t))t=null;
  if(t&&e.lock&&t.cls==='unit'&&edge(e,t)>(st.sight||st.range+60)+20)t=null;
  if(!t)e.lock=false;
- if(!e.lock){const n=acquire(S,e);t=n;e.tgt=t?t.id:0;}
+ if(!e.lock){e.xr=0;const n=acquire(S,e);t=n;e.tgt=t?t.id:0;}
  if(!t){e.vx*=.5;e.vy*=.5;return;}
- if(reach(e,t)){e.lock=true;e.vx*=.3;e.vy*=.3;if(t.x!==e.x)e.face=t.x<e.x?-1:1;e.cd-=TICK*sm;if(e.cd<=0){attack(S,e,t);e.cd=st.hit;}}
- else{e.cd=Math.max(e.cd-TICK,st.hit*.35);moveTo(S,e,t.x,t.y,st.spd*sm,t.cls!=='tower',t.id);fixPos(e,e.oy);}}
+ if(reach(e,t)){e.lock=true;e.inr=S.tick;e.vx*=.3;e.vy*=.3;if(t.x!==e.x)e.face=t.x<e.x?-1:1;e.cd-=TICK*sm;if(e.cd<=0){attack(S,e,t);e.cd=st.hit;}}
+ else{// Ausholzeit nur nach echtem Laufen – nicht, wenn das Ziel gerade knapp aus der Reichweite driftet (sonst nie ein Schuss)
+  e.cd=S.tick-(e.inr??-99)<=10?e.cd-TICK:Math.max(e.cd-TICK,st.hit*.35);moveTo(S,e,t.x,t.y,st.spd*sm*(e.sf||1),t.cls!=='tower',t.id);fixPos(e,e.oy);
+  // 0.6.1 Stau-Erkennung: kaum Fortschritt über 0,75 s -> Nahkämpfer in Waffenreichweite schlagen zu, sonst Ausweichmanöver
+  if(++e.pt>=15){const mv=d2(e.x,e.y,e.px,e.py);e.px=e.x;e.py=e.y;e.pt=0;
+   if(mv<st.spd*sm*.75*.25){e.stk++;if(st.range<=MELEE&&edge(e,t)<=st.range+e.r+(t.cls!=='unit'?2:0)){e.lock=true;e.xr=e.r;e.stk=0;}
+    else if(e.stk>=2){e.unst=18;e.stk=0;e.unsd=((e.id+(S.tick/15|0))%2)?1:-1;// Seite weg vom nächsten Blockierer, sonst abwechselnd
+     let bd=1e9;for(const o of S.ents){if(o===e||o.cls!=='unit'||o.air!==e.air||o.hp<=0)continue;const ax=o.x-e.x,ay=o.y-e.y,dd=Math.sqrt(ax*ax+ay*ay);if(dd<e.r+o.r+4&&dd<bd&&(ax*(e.gdx||0)+ay*(e.gdy||0))>0){bd=dd;const cr=ax*(e.gdy||0)-ay*(e.gdx||0);if(Math.abs(cr)>.5)e.unsd=cr>0?1:-1;}}}}else e.stk=0;}}}
 function updStatic(S,e){// Türme & Gebäude
  if(e.dep>0){e.dep-=TICK;return;}
  const fr=e.frz>0;if(fr)e.frz-=TICK;
@@ -201,7 +229,7 @@ function separate1(S){const U=[];for(const e of S.ents)if(e.cls==='unit'&&e.hp>0
  for(const e of U){e.wall=1;if(!e.air)for(const o of S.ents){if((o.cls!=='tower'&&o.cls!=='bld')||o.hp<=0)continue;if(d2(e.x,e.y,o.x,o.y)<e.r+o.r*.85+.6){e.wall=30;break;}}}
  for(let i=0;i<U.length;i++){const a=U[i];for(let j=i+1;j<U.length;j++){const b=U[j];if(a.air!==b.air)continue;let dx=b.x-a.x,dy=b.y-a.y;const m=a.r+b.r;if(dx>m||dx<-m||dy>m||dy<-m)continue;
    let d=Math.sqrt(dx*dx+dy*dy);if(d>=m)continue;if(d<1e-4){dx=((a.id+b.id)%2?1:-1)*.01;dy=.01;d=Math.sqrt(dx*dx+dy*dy);}
-   const ma=a.mass*a.wall,mb=b.mass*b.wall,o=(m-d)*.5,wa=mb/(ma+mb),wb=1-wa;a.x-=dx/d*o*wa;a.y-=dy/d*o*wa;b.x+=dx/d*o*wb;b.y+=dy/d*o*wb;}}
+   if(a.side===b.side&&!a.air&&a.y>RY0-6&&a.y<RY1+6&&b.y>RY0-6&&b.y<RY1+6&&d>=m*.8)continue;const ma=a.mass*a.wall,mb=b.mass*b.wall,o=(m-d)*.5,wa=mb/(ma+mb),wb=1-wa;a.x-=dx/d*o*wa;a.y-=dy/d*o*wa;b.x+=dx/d*o*wb;b.y+=dy/d*o*wb;}}
  for(const e of U){if(!e.air)for(const o of S.ents){if((o.cls!=='tower'&&o.cls!=='bld')||o.hp<=0)continue;const dx=e.x-o.x,dy=e.y-o.y,m=e.r+o.r*.85,d=Math.sqrt(dx*dx+dy*dy);if(d<m&&d>1e-4){e.x=o.x+dx/d*m;e.y=o.y+dy/d*m;}}fixPos(e,e.oy);}}
 function cleanup(S){const keep=[];for(const e of S.ents){if(e.hp>0){keep.push(e);continue;}onDeath(S,e);}S.ents=keep;}
 function onDeath(S,e){const C=CARDS[e.card];
@@ -222,7 +250,7 @@ function step(S){if(S.over)return;S.ev.length=0;
  if(S.over){S.tick++;return;}
  const rate=TICK/(S.dbl||S.phase==='sudden'?REGEN/2:REGEN);
  for(const p of S.p){const m=p.mana+rate*p.regen;if(m>MAXM)p.leak+=m-MAXM;p.mana=Math.min(MAXM,m);const h=p.heroId&&byId(S,p.heroId);if(h&&p.heroCharge<1)p.heroCharge=Math.min(1,p.heroCharge+TICK/CARDS[h.card].abil.charge);}
- const list=S.ents.slice();
+ const list=S.ents.slice();S.tc={};for(const e of list)if(e.cls==='unit'&&e.tgt&&e.hp>0)S.tc[e.tgt]=(S.tc[e.tgt]||0)+1;
  for(const e of list){if(e.hp<=0)continue;if(e.cls==='unit')updUnit(S,e);else updStatic(S,e);}
  updProj(S);updZones(S);updBombs(S);separate(S);cleanup(S);
  S.tick++;S.t+=TICK;}

@@ -59,7 +59,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.6',I=DUELL_INFO;
+const VERSION='0.6.1',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
