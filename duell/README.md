@@ -1,4 +1,4 @@
-# Turmwacht Duell (Offline-Testversion 0.7)
+# Turmwacht Duell (Offline-Testversion 0.7.1)
 
 Kartenduell am Schattenpass – Einzelspieler-Kampagne gegen Computergegner.
 Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfade → später unter `/duell/` im Turmwacht-Repo).
@@ -17,6 +17,16 @@ Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfa
 - `headless-match.js` – KI-gegen-KI in Node (`node src/headless-match.js 30 morvath`)
 
 Bauen: `python3 src/build.py` → `index.html`.
+
+## Neu in 0.7.1 – Bugfix: Scrollen über Karten am Handy
+
+- **Problem:** Im Deck-Editor (und in der Sammlung) ließ sich die Liste am iPhone nicht scrollen, wenn der Finger auf einer Karte aufsetzte.
+- **Ursache:** Alle Karten (`.cd`) hatten global `touch-action:none` (eigentlich nur für das Ziehen der Handkarten im Match gedacht), und die Editor-Karten waren `draggable="true"` – iOS behandelt sie dann als Drag-Quelle statt zu scrollen.
+- **Änderung:**
+  - Menükarten: `touch-action:manipulation` → natives Scrollen inkl. Schwung. `touch-action:none` nur noch für `#hand .cd` (Match, Ziehen aufs Spielfeld unverändert).
+  - HTML5-Drag&Drop im Deck-Editor nur noch bei Maus/Trackpad (`pointer:coarse` = aus). Auf Touch: Tippen-zum-Tauschen.
+  - Tipp-Schutz in Menüs und Detailkarte: ein Tipp zählt nur bei < 10 px Fingerbewegung; nach einem Scroll wird kein Klick ausgelöst.
+- **Test:** `duelltest/scroll071.js` (Touch-Emulation, 360 px und iPhone 390 px): Wischen auf Karte scrollt hoch/runter ohne Karte zu öffnen, Tipp öffnet, 5 px Zittern zählt als Tipp, 14 px nicht, Tauschen per Tipp, Kampagnen-Liste scrollt. Mit 0.7 schlägt der Wisch-Test fehl (Bug reproduziert). Backup der Vorversion: `index-v07.html`.
 
 ## Neu in 0.7 – Drei neue Kapitel, 13 neue Karten, Drachen
 Inspiration: Warcraft 3 und „Schlacht um Mittelerde“ 1/2 – eigene Namen, eigene Vektorgrafik, nichts 1:1 übernommen.

@@ -58,6 +58,19 @@ function phaseWatch(S,ev){let fell=false;
    snd('tick',sec<=3);const c=$('cdown');c.textContent=sec;c.className='';void c.offsetWidth;c.className='go'+(sec<=3?' hot':'');}}}
 // ---------- Bildschirme ----------
 const ov=$('ov');
+// 0.7.1: HTML5-Drag&Drop nur mit Maus/Trackpad (iOS behandelt draggable-Elemente als Ziehquelle und blockiert das Wischen).
+// Auf Touch-Geräten genügt Tippen-zum-Tauschen.
+const FINE=!(window.matchMedia&&matchMedia('(pointer:coarse)').matches),DRAGA=FINE?'<div draggable="true" ':'<div ';
+// 0.7.1: Tap-Schutz für scrollbare Menüs – ein Klick zählt nur, wenn sich der Finger < 10 px bewegt hat und nichts gescrollt wurde.
+function tapGuard(root){let t0=null;
+ const pos=ev=>ev.touches&&ev.touches[0]?[ev.touches[0].clientX,ev.touches[0].clientY]:[ev.clientX,ev.clientY];
+ const down=ev=>{if(ev.pointerType==='mouse')return t0=null;const[x,y]=pos(ev);t0={x,y,bad:false};};
+ const move=ev=>{if(!t0||t0.bad)return;const[x,y]=pos(ev);if(Math.hypot(x-t0.x,y-t0.y)>=10)t0.bad=true;};
+ root.addEventListener('pointerdown',down,{capture:true,passive:true});root.addEventListener('touchstart',ev=>{if(!t0)down(ev);},{capture:true,passive:true});
+ root.addEventListener('pointermove',move,{capture:true,passive:true});root.addEventListener('touchmove',move,{capture:true,passive:true});
+ root.addEventListener('scroll',()=>{if(t0)t0.bad=true;},{capture:true,passive:true});
+ root.addEventListener('click',ev=>{const g=t0;t0=null;if(g&&g.bad&&ev.detail!==0){ev.stopPropagation();ev.preventDefault();}},true);}
+tapGuard(ov);
 function show(html,cls){ov.className='ov show '+(cls||'');ov.innerHTML=html;ov.scrollTop=0;}
 function hide(){closeCard();ov.className='ov';ov.innerHTML='';}
 function cardHTML(id,o){o=o||{};const C=CARDS[id];const t=C.type;
@@ -67,7 +80,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.7',I=DUELL_INFO;
+const VERSION='0.7.1',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
@@ -120,7 +133,7 @@ function free(){
  ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const k=b.dataset.o,sc=scenOf(k);if(sc&&!unlocked(sc.id)){toast(DUELL_OPP[k].name+' wartet in der Kampagne (Kapitel '+sc.id+').');return;}audio();start({mode:'free',opp:k});});
  $('bBack').onclick=menu;$('bEd').onclick=()=>deckEditor(free);}
 // ----- Detailkarte -----
-const dc=el('div','dcwrap');dc.id='dcard';$('app').appendChild(dc);let dcAnim=0,dcOpen=null;
+const dc=el('div','dcwrap');dc.id='dcard';$('app').appendChild(dc);tapGuard(dc);let dcAnim=0,dcOpen=null;
 function closeCard(){if(!dcOpen)return;const f=dcOpen.onClose;dcOpen=null;dc.className='dcwrap';dc.innerHTML='';cancelAnimationFrame(dcAnim);if(f)f();}
 G.closeCard=closeCard;
 function bar(f){return f==null?'':`<i class="sb"><i style="width:${Math.max(4,Math.min(1,f)*100).toFixed(0)}%"></i></i>`;}
@@ -197,13 +210,13 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
  const render=()=>{const e=err(),h=heroOf(),o=others(),avg=I.avg(d);
   const slot=(id,i,hs)=>{if(!id)return `<div class="cd empty${hs?' hslot':''}${swap&&swap.from==='coll'&&isHero(swap.id)===!!hs?' tgt':''}" data-slot="${hs?'h':'e'}" data-i="${i}">${hs?'<i class="crown">👑</i><span>Held wählen</span>':'<i class="plus">+</i><span>frei</span>'}</div>`;
    const tg=swap&&swap.from==='coll'&&compatible(swap.id,id),me=swap&&swap.from==='deck'&&swap.id===id;
-   return cardHTML(id,{cls:'in'+(hs?' hslot':'')+(tg?' tgt':'')+(me?' me':'')+(flash===id?' pop':''),i}).replace('<div ','<div draggable="true" ');};
+   return cardHTML(id,{cls:'in'+(hs?' hslot':'')+(tg?' tgt':'')+(me?' me':'')+(flash===id?' pop':''),i}).replace('<div ',DRAGA);};
   const slots=[slot(h,0,true)].concat(Array.from({length:7},(_,k)=>slot(o[k],k+1,false))).join('');
   let list=B.playerSet.filter(id=>VIEW.f==='all'||CARDS[id].type===VIEW.f);const nOpen=ownSet().length;
   const TO={hero:0,unit:1,bld:2,spell:3};
   list.sort((a,b)=>(VIEW.s==='name'?CARDS[a].name.localeCompare(CARDS[b].name,'de'):VIEW.s==='type'?(TO[CARDS[a].type]-TO[CARDS[b].type])||CARDS[a].cost-CARDS[b].cost:VIEW.s==='cost-'?CARDS[b].cost-CARDS[a].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'):CARDS[a].cost-CARDS[b].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de')));
   const cnt=t=>B.playerSet.filter(id=>t==='all'||CARDS[id].type===t).length;
-  const coll=list.map(id=>{if(!cardOpen(id))return cardHTML(id,{cls:'lockd'}).replace('</div>',`<i class="lkb">🔒 Kapitel ${CARDS[id].unlock}</i></div>`);const inD=d.includes(id),tg=swap&&swap.from==='deck'&&!inD&&compatible(swap.id,id);return cardHTML(id,{cls:(inD?'used':'')+(tg?' tgt':'')+(swap&&!tg&&swap.from==='deck'?' dim':'')}).replace('<div ','<div draggable="true" ').replace('</div>',inD?'<i class="ind">Im Deck</i></div>':'</div>');}).join('');
+  const coll=list.map(id=>{if(!cardOpen(id))return cardHTML(id,{cls:'lockd'}).replace('</div>',`<i class="lkb">🔒 Kapitel ${CARDS[id].unlock}</i></div>`);const inD=d.includes(id),tg=swap&&swap.from==='deck'&&!inD&&compatible(swap.id,id);return cardHTML(id,{cls:(inD?'used':'')+(tg?' tgt':'')+(swap&&!tg&&swap.from==='deck'?' dim':'')}).replace('<div ',DRAGA).replace('</div>',inD?'<i class="ind">Im Deck</i></div>':'</div>');}).join('');
   const hint=swap?(swap.from==='coll'?`⇄ Tippe den Platz, den <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll${isHero(swap.id)?' (Held-Platz)':''}.`:`⇄ Wähle in der Sammlung die Karte, die <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll.`):
    (e?esc(e):'✓ Deck bereit! Tippe eine Karte an, um sie dir anzusehen oder zu tauschen.');
   show(`<div class="box deck scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Deck &amp; Sammlung</h2></div>
