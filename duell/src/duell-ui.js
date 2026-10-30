@@ -5,7 +5,12 @@ const $=id=>document.getElementById(id);
 const el=(t,cls,html)=>{const e=document.createElement(t);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 // ---------- Speicher ----------
-function loadDeck(){const d=LS.get('duell_deck',null);return(d&&!Sim.validateDeck(d)&&d.every(id=>B.playerSet.includes(id)))?d:B.defaultDeck.slice();}
+function loadDeck(){const d=LS.get('duell_deck',null);return(d&&!Sim.validateDeck(d)&&d.every(id=>B.playerSet.includes(id)&&cardOpen(id)))?d:B.defaultDeck.slice();}
+// 0.7: neue Kreaturen werden durch Kampagnensiege freigeschaltet (Karte.unlock = Kapitel-Nr.)
+function cardOpen(id){const u=CARDS[id].unlock;return !u||prog().won.includes(u);}
+function ownSet(){return B.playerSet.filter(cardOpen);}
+function scenOf(oppKey){return DUELL_SCEN.find(s=>s.opp===oppKey);}
+function diffCls(tag){return tag==='schwer'?'hard':tag==='sehr schwer'?'hard2':tag==='Drache'?'dragon':'';}
 function saveDeck(d){LS.set('duell_deck',d);}
 function prog(){const p=LS.get('duell_progress',null);return p&&Array.isArray(p.won)?p:{won:[]};}
 function unlocked(id){return id===1||prog().won.includes(id-1);}
@@ -16,7 +21,10 @@ window.DUELL=G;
 // ---------- Audio ----------
 let audioOn=false;function audio(){if(!audioOn){audioOn=true;try{SFX.init();}catch(e){}}try{SFX.resume();}catch(e){}}
 function sfxEvents(evs){if(!audioOn)return;for(const e of evs){try{switch(e.k){
- case 'shot':if(e.kind==='arrow'||e.kind==='tarrow')SFX.shot('archer');else if(e.kind==='fireball')SFX.shot('mage');else SFX.shot('alch');break;
+ case 'shot':if(e.kind==='arrow'||e.kind==='tarrow'||e.kind==='thorn')SFX.shot('archer');else if(e.kind==='fireball')SFX.shot('mage');else if(e.kind==='zap')SFX.zap();else if(e.kind==='net')SFX.net();else if(e.kind==='flame')SFX.breath(false);else if(e.kind==='icebreath')SFX.breath(true);else SFX.shot('alch');break;
+ // 0.7 neue Mechaniken
+ case 'chain':SFX.zap();break;case 'roar':SFX.roar();break;case 'fear':SFX.screech();break;case 'burrow':case 'unburrow':SFX.burrow();break;
+ case 'chant':SFX.chant();break;case 'roots':SFX.roots();break;case 'fireline':SFX.fireline();break;case 'burn':SFX.shot('mage');break;
  case 'hit':SFX.hit();break;case 'boom':SFX.boom();break;case 'splash':SFX.splash();break;
  case 'firerain':SFX.cast('fire');break;case 'fireboom':SFX.boom();break;case 'frost':SFX.cast('frost');break;
  case 'nova':SFX.hero('frost');break;case 'leap':SFX.hero('blade');break;case 'slam':SFX.slam();break;case 'cloud':SFX.hero('poison');break;
@@ -59,7 +67,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.6.1',I=DUELL_INFO;
+const VERSION='0.7',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
@@ -72,18 +80,18 @@ function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const
   <div class="tiles">
    <button class="tile camp" id="bCamp"><img src="${DR.icon('lichP',72)}" alt=""><b>Kampagne</b><small>${P.won.length}/${DUELL_SCEN.length} Szenarien geschafft</small><i class="pb"><i style="width:${P.won.length/DUELL_SCEN.length*100}%"></i></i></button>
    <button class="tile free" id="bFree"><img src="${DR.icon('chief',72)}" alt=""><b>Freier Kampf</b><small>Üben ohne Fortschritt</small></button>
-   <button class="tile deck" id="bDeck"><img src="${DR.icon('blade',72)}" alt=""><b>Deck &amp; Sammlung</b><small>${B.playerSet.length} Karten · Infos zu jeder Kreatur</small></button>
+   <button class="tile deck" id="bDeck"><img src="${DR.icon('blade',72)}" alt=""><b>Deck &amp; Sammlung</b><small>${ownSet().length}/${B.playerSet.length} Karten · Infos zu jeder Kreatur</small></button>
    <button class="tile set" id="bSet"><span class="gear">⚙️</span><b>Einstellungen</b><small>Musik &amp; Effekte</small></button></div>
   <p class="foot">Turmwacht Duell · Offline-Testversion ${VERSION} · Fortschritt wird im Browser gespeichert</p></div>`,'m');
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
 function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
   <div class="parch"><h3>Klang</h3>${soundRow()}</div>
-  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p></div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p><p>Jeder Sieg in der Kampagne ab Kapitel 3 schaltet neue Kreaturen für deine Sammlung frei – Trolle, Baumriesen und sogar Drachen.</p></div>
   <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
 // ----- Kampagne -----
 function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';
  return `<div class="scen sc2 ${st}${u?'':' locked'}" data-s="${sc.id}" role="button" tabindex="0" ${u?'':'aria-disabled="true"'}>
-  <div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${O.tag==='schwer'?'hard':''}">${esc(O.tag)}</i></div>
+  <div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${diffCls(O.tag)}">${esc(O.tag)}</i></div>
   <div class="sci"><small>Kapitel ${sc.id}</small><b>${esc(sc.title)}</b><em>gegen ${esc(O.name)}, ${esc(O.title)}</em>
    ${u?'':`<p class="lk">🔒 Besiege zuerst „${esc(DUELL_SCEN.find(s=>s.id===sc.id-1).title)}“</p>`}</div>
   ${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}
@@ -105,11 +113,11 @@ function story(id){const sc=DUELL_SCEN.find(s=>s.id===id),O=DUELL_OPP[sc.opp];
  bindCardTaps(ov);$('bBack').onclick=campaign;$('bEd').onclick=()=>deckEditor(()=>story(id));$('bGo').onclick=()=>{audio();start({mode:'camp',scen:id});};}
 function free(){
  show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><h2>Freier Kampf</h2><p class="sub">Ein Übungskampf ohne Kampagnenfortschritt.</p></div></div>
-  ${Object.entries(DUELL_OPP).map(([k,O])=>{const u=k==='grimm'||unlocked(2);return `<div class="scen sc2 ${u?'open':'locked locked'}" data-o="${k}" role="button" tabindex="0"><div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${O.tag==='schwer'?'hard':''}">${esc(O.tag)}</i></div>
-   <div class="sci"><small>Gegner</small><b>${esc(O.name)}</b><em>${esc(O.title)}</em>${u?'':'<p class="lk">🔒 Erst in der Kampagne besiegen</p>'}</div>${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}<i class="seal ${u?'open':'locked'}">${u?'⚔<small>Kämpfen</small>':'🔒<small>Gesperrt</small>'}</i></div>`;}).join('')}
+  ${Object.entries(DUELL_OPP).map(([k,O])=>{const sc=scenOf(k),u=!sc||unlocked(sc.id);return `<div class="scen sc2 ${u?'open':'locked locked'}" data-o="${k}" role="button" tabindex="0"><div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${diffCls(O.tag)}">${esc(O.tag)}</i></div>
+   <div class="sci"><small>Gegner</small><b>${esc(O.name)}</b><em>${esc(O.title)}</em>${u?'':`<p class="lk">🔒 Wartet in der Kampagne (Kapitel ${sc.id})</p>`}</div>${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}<i class="seal ${u?'open':'locked'}">${u?'⚔<small>Kämpfen</small>':'🔒<small>Gesperrt</small>'}</i></div>`;}).join('')}
   <div class="row stick"><button id="bEd">🃏 Deck ändern</button></div></div>`);
  bindCardTaps(ov);
- ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const k=b.dataset.o;if(k!=='grimm'&&!unlocked(2)){toast('Morvath wartet in der Kampagne (Szenario 2).');return;}audio();start({mode:'free',opp:k});});
+ ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const k=b.dataset.o,sc=scenOf(k);if(sc&&!unlocked(sc.id)){toast(DUELL_OPP[k].name+' wartet in der Kampagne (Kapitel '+sc.id+').');return;}audio();start({mode:'free',opp:k});});
  $('bBack').onclick=menu;$('bEd').onclick=()=>deckEditor(free);}
 // ----- Detailkarte -----
 const dc=el('div','dcwrap');dc.id='dcard';$('app').appendChild(dc);let dcAnim=0,dcOpen=null;
@@ -181,6 +189,7 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
  function replace(oldId,newId){const i=d.indexOf(oldId);if(i<0||d.includes(newId))return;d[i]=newId;flash=newId;swap=null;toast(CARDS[newId].name+' ersetzt '+CARDS[oldId].name+'.');render();}
  function compatible(a,b){return isHero(a)===isHero(b);}
  function detail(id){const inD=d.includes(id),C=CARDS[id],acts=[];let note='';
+  if(!cardOpen(id)){const sc=DUELL_SCEN.find(s=>s.id===C.unlock);openCard(id,{note:`🔒 Noch gesperrt – besiege Kapitel ${C.unlock}${sc?' „'+esc(sc.title)+'“':''}, um diese Karte freizuschalten.`});return;}
   if(inD){acts.push({label:'➖ Entfernen',cls:'rm',fn:()=>remove(id)});acts.push({label:'⇄ Tauschen',fn:()=>{swap={from:'deck',id};render();}});note='✓ Im Deck'+(isHero(id)?' – dein Held':'');}
   else if(isHero(id)){const h=heroOf();acts.push({label:h?'👑 Als Held einsetzen':'👑 Als Held einsetzen',cls:'go',fn:()=>add(id)});if(h)note='Ersetzt deinen Helden '+esc(CARDS[h].name)+' (nur 1 Held pro Deck).';}
   else{const full=others().length>=7;if(!full)acts.push({label:'➕ Ins Deck',cls:'go',fn:()=>add(id)});acts.push({label:'⇄ Tauschen',cls:full?'go':'',fn:()=>{swap={from:'coll',id};render();}});if(full)note='Deck ist voll – tausche eine Karte aus.';}
@@ -190,18 +199,18 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
    const tg=swap&&swap.from==='coll'&&compatible(swap.id,id),me=swap&&swap.from==='deck'&&swap.id===id;
    return cardHTML(id,{cls:'in'+(hs?' hslot':'')+(tg?' tgt':'')+(me?' me':'')+(flash===id?' pop':''),i}).replace('<div ','<div draggable="true" ');};
   const slots=[slot(h,0,true)].concat(Array.from({length:7},(_,k)=>slot(o[k],k+1,false))).join('');
-  let list=B.playerSet.filter(id=>VIEW.f==='all'||CARDS[id].type===VIEW.f);
+  let list=B.playerSet.filter(id=>VIEW.f==='all'||CARDS[id].type===VIEW.f);const nOpen=ownSet().length;
   const TO={hero:0,unit:1,bld:2,spell:3};
-  list.sort((a,b)=>VIEW.s==='name'?CARDS[a].name.localeCompare(CARDS[b].name,'de'):VIEW.s==='type'?(TO[CARDS[a].type]-TO[CARDS[b].type])||CARDS[a].cost-CARDS[b].cost:VIEW.s==='cost-'?CARDS[b].cost-CARDS[a].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'):CARDS[a].cost-CARDS[b].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'));
+  list.sort((a,b)=>(VIEW.s==='name'?CARDS[a].name.localeCompare(CARDS[b].name,'de'):VIEW.s==='type'?(TO[CARDS[a].type]-TO[CARDS[b].type])||CARDS[a].cost-CARDS[b].cost:VIEW.s==='cost-'?CARDS[b].cost-CARDS[a].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'):CARDS[a].cost-CARDS[b].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de')));
   const cnt=t=>B.playerSet.filter(id=>t==='all'||CARDS[id].type===t).length;
-  const coll=list.map(id=>{const inD=d.includes(id),tg=swap&&swap.from==='deck'&&!inD&&compatible(swap.id,id);return cardHTML(id,{cls:(inD?'used':'')+(tg?' tgt':'')+(swap&&!tg&&swap.from==='deck'?' dim':'')}).replace('<div ','<div draggable="true" ').replace('</div>',inD?'<i class="ind">Im Deck</i></div>':'</div>');}).join('');
+  const coll=list.map(id=>{if(!cardOpen(id))return cardHTML(id,{cls:'lockd'}).replace('</div>',`<i class="lkb">🔒 Kapitel ${CARDS[id].unlock}</i></div>`);const inD=d.includes(id),tg=swap&&swap.from==='deck'&&!inD&&compatible(swap.id,id);return cardHTML(id,{cls:(inD?'used':'')+(tg?' tgt':'')+(swap&&!tg&&swap.from==='deck'?' dim':'')}).replace('<div ','<div draggable="true" ').replace('</div>',inD?'<i class="ind">Im Deck</i></div>':'</div>');}).join('');
   const hint=swap?(swap.from==='coll'?`⇄ Tippe den Platz, den <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll${isHero(swap.id)?' (Held-Platz)':''}.`:`⇄ Wähle in der Sammlung die Karte, die <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll.`):
    (e?esc(e):'✓ Deck bereit! Tippe eine Karte an, um sie dir anzusehen oder zu tauschen.');
   show(`<div class="box deck scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Deck &amp; Sammlung</h2></div>
    <div class="dstat"><span class="pill">🃏 <b>${d.length}/8</b></span><span class="pill">💧 Ø <b id="avgM">${I.fx(avg,1)}</b> Mana</span><span class="pill ${d.filter(isHero).length===1?'ok':'bad'}" id="heroRule">👑 Held ${d.filter(isHero).length===1?'✓':'fehlt'}</span></div>
    <div class="slots">${slots}</div>
    <p class="msg ${swap?'sw':e?'bad':'ok'}" id="deckMsg">${hint}${swap?' <button class="sm2" id="bSwX">Abbrechen</button>':''}</p>
-   <div class="colh"><h3>Sammlung <small>${B.playerSet.length} Karten</small></h3>
+   <div class="colh"><h3>Sammlung <small>${nOpen}/${B.playerSet.length} Karten</small></h3>
     <label class="sort">Sortieren <select id="dSort"><option value="cost">Kosten ↑</option><option value="cost-">Kosten ↓</option><option value="type">Typ</option><option value="name">Name</option></select></label></div>
    <div class="flt">${['all','hero','unit','spell','bld'].map(t=>`<button class="chipb${VIEW.f===t?' on':''}" data-f="${t}">${t==='all'?'Alle':TICON[t]+' '+(t==='hero'?'Helden':t==='unit'?'Einheiten':t==='spell'?'Zauber':'Gebäude')} <small>${cnt(t)}</small></button>`).join('')}</div>
    <div class="coll">${coll||'<p class="sub">Keine Karten.</p>'}</div>
@@ -222,6 +231,7 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
    if(swap&&swap.from==='coll'&&swap.id!==id){swap=null;}
    detail(id);});
   // Drag & Drop (Maus am PC)
+  ov.querySelectorAll('.cd.lockd').forEach(c=>c.removeAttribute('draggable'));
   ov.querySelectorAll('.cd[draggable]').forEach(c=>{c.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',JSON.stringify({id:c.dataset.id,inD:!!c.closest('.slots')}));ev.dataTransfer.effectAllowed='move';c.classList.add('drg');});
    c.addEventListener('dragend',()=>c.classList.remove('drg'));});
   const rd=ev=>{try{return JSON.parse(ev.dataTransfer.getData('text/plain'));}catch(_){return null;}};
@@ -336,7 +346,9 @@ function resume(){hide();G.paused=false;G.last=performance.now();}
 G.pause=pause;G.resume=resume;
 function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let extra='';
  if(G.mode==='camp'){const sc=DUELL_SCEN.find(s=>s.id===G.scen);if(win){const fresh=markWon(sc.id);extra=`<p class="story">${esc(sc.win)}</p>`;
-   const nx=DUELL_SCEN.find(s=>s.id===sc.id+1);if(nx&&fresh)extra+=`<p class="unlock">🔓 Szenario ${nx.id} „${esc(nx.title)}“ freigeschaltet!</p>`;}
+   const nx=DUELL_SCEN.find(s=>s.id===sc.id+1);if(nx&&fresh)extra+=`<p class="unlock">🔓 Szenario ${nx.id} „${esc(nx.title)}“ freigeschaltet!</p>`;
+   const nc=fresh?B.playerSet.filter(id=>CARDS[id].unlock===sc.id):[];if(nc.length)extra+=`<p class="unlock">🔓 Neue Karten für deine Sammlung:</p><div class="newc">${nc.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b><span>${esc(CARDS[id].name)}</span></button>`).join('')}</div>`;
+   if(!nx&&fresh)extra+=`<p class="unlock">🏆 Du hast die Kampagne abgeschlossen!</p>`;}
   else extra=`<p class="story">${esc(sc.lose)}</p>`;}
  try{audio();if(!PW.endSnd){PW.endSnd=true;snd(win?'fanfare':'darkHorn');}}catch(_){}
  const nx=G.mode==='camp'&&win&&DUELL_SCEN.find(s=>s.id===G.scen+1);
@@ -344,7 +356,7 @@ function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let
   <div class="crowns"><div><small>Du</small>${[0,1,2].map(i=>`<i class="${i<S.p[0].crowns?'on b':''}">♛</i>`).join('')}</div><div><small>${esc(DUELL_OPP[G.opp].name)}</small>${[0,1,2].map(i=>`<i class="${i<S.p[1].crowns?'on r':''}">♛</i>`).join('')}</div></div>
   <p class="sub">${esc(S.reason||'')} · ${fmt(S.t-3)} gespielt · ${S.p[0].plays} Karten</p>${extra}
   <div class="col">${nx?`<button class="big go" id="bNext">▶ Weiter: ${esc(nx.title)}</button>`:''}<button class="big${nx?'':' go'}" id="bAgain">↻ Revanche</button><button class="big" id="bMenu">☰ Menü</button></div></div>`,'e');
- if(nx)$('bNext').onclick=()=>story(nx.id);$('bAgain').onclick=()=>G.mode==='camp'?story(G.scen):start({mode:'free',opp:G.opp});$('bMenu').onclick=()=>{G.S=null;menu();};}
+ bindCardTaps(ov);if(nx)$('bNext').onclick=()=>story(nx.id);$('bAgain').onclick=()=>G.mode==='camp'?story(G.scen):start({mode:'free',opp:G.opp});$('bMenu').onclick=()=>{G.S=null;menu();};}
 G.endScreen=endScreen;
 $('bPause').onclick=()=>{audio();G.paused?resume():pause();};
 $('bMus').onclick=()=>{audio();SFX.toggle('music');hudBtns();};$('bSfx').onclick=()=>{audio();SFX.toggle('sfx');hudBtns();};

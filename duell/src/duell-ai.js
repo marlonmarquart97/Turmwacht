@@ -6,6 +6,10 @@ const{CARDS,FW,FH,MIDY,RY0,RY1,BRIDGES,d2,clamp}=Sim;
 const PROFILES={
  grimm:{name:'Grimmzahn',react:1.6,think:.7,pushAt:9.5,smart:.3,jitter:45,spellMin:3,abil:.45,well:.15,split:.1,mid:.2},
  morvath:{name:'Morvath',react:.6,think:.3,pushAt:8,smart:.85,jitter:12,spellMin:2,abil:1,well:.6,split:.3,mid:.45},
+ // 0.7: neue Bosse – eigene Taktik über zusätzliche Parameter (chant = Kriegsgesang beim Angriff, air = Flieger als Angriffsspitze, hold = Mana-Reserve für Konter)
+ ugrak:{name:'Ugrak',react:.65,think:.35,pushAt:7.5,smart:.72,jitter:16,spellMin:2,abil:1,well:0,split:.4,mid:.55,chant:1},
+ sylvara:{name:'Sylvara',react:.45,think:.3,pushAt:9.5,smart:.88,jitter:10,spellMin:2,abil:1,well:0,split:.2,mid:.3,hold:1},
+ vyrthax:{name:'Vyrthax',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:0,split:.3,mid:.4,air:1,chant:1},
  bot:{name:'Autopilot',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:.5,split:.25,mid:.4}};
 // Spurgrenzen für die KI-Platzierung (ohne Mittelzone, die ist fürs bewusste Aufteilen reserviert)
 const HM=Sim.MIDW/2+3,LXA=[[12,FW/2-HM],[FW/2+HM,FW-12]];
@@ -15,7 +19,8 @@ const isTank=id=>{const C=CARDS[id];return C.u&&(C.u.hp>=1000)&&C.u.range<40;};
 const isSwarm=id=>{const C=CARDS[id];return C.type==='unit'&&(C.count||1)>=3;};
 const isRanged=id=>{const C=CARDS[id];return C.u&&C.u.range>=60;};
 const hitsAir=id=>{const C=CARDS[id];if(C.type==='spell')return true;const s=C.u||C.b;return s&&s.tg==='any'&&(s.dmg||0)>0;};
-const splashy=id=>['firemage','alch','firerain','poisonhero'].includes(id);
+const splashy=id=>['firemage','alch','firerain','poisonhero','storm','troll','trollking','whelp','frostwyrm','dragonlord'].includes(id);
+const isBuff=id=>{const C=CARDS[id];return C.type==='spell'&&C.s&&C.s.buff;};
 function dps(e){const s=e.st;return s&&s.dmg?s.dmg/(s.hit||1):0;}
 function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)return null;ai.next=S.tick+Math.max(1,Math.round(ai.P.think/Sim.TICK));
  const side=ai.side,me=S.p[side],P=ai.P,fwd=side===0?-1:1,my=y=>side===0?y>MIDY:y<MIDY;
@@ -39,7 +44,7 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
  const L=lanes[0];
  if(L&&L.need>0){
   // Zauber auf Gruppen
-  for(const o of hand){if(o.C.type!=='spell')continue;const best=clusterAt(S,side,L.T,o.C.s.r);if(!best)continue;
+  for(const o of hand){if(o.C.type!=='spell'||isBuff(o.id))continue;const best=clusterAt(S,side,L.T,o.C.s.r);if(!best)continue;
    const val=o.id==='firerain'?best.val:(L.hp>1400&&my(L.lead.y)?best.val*.7:0);if(best.n>=P.spellMin&&val>=420+o.C.cost*40){const c=tryPlay(o,best.x,best.y);if(c)return c;}}
   let best=null,bs=-1e9;
   for(const o of hand){if(o.C.type==='spell')continue;let s=0;const C=o.C,u=C.u;
@@ -60,23 +65,28 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
    if(canSplit(best)&&(both||midT)&&R(ai)<P.smart+.1){const c=tryPlay(best,FW/2,y,L.l,true);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
    const c=tryPlay(best,x,y,C.type==='bld'?null:L.l);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
   if(L.need>800)return null;}
+ // --- 0.7 Kriegsgesang auf eigene Gruppe im Kampf ---
+ {const ch=hand.find(o=>isBuff(o.id));if(ch&&(P.chant||P.smart>.9)){const mine=S.ents.filter(e=>e.side===side&&e.cls==='unit'&&e.hp>0&&e.dep<=0);const b=clusterAt(S,side,mine,ch.C.s.r);
+  if(b&&b.n>=3&&b.val>=700&&S.ents.some(e=>e.side!==side&&e.hp>0&&e.cls!=='bld'&&!e.bur&&d2(e.x,e.y,b.x,b.y)<ch.C.s.r+70)){const c=tryPlay(ch,b.x,b.y);if(c)return c;}}}
  // --- Angriff / Druck ---
  const myTanks=S.ents.filter(e=>e.side===side&&e.cls==='unit'&&e.hp>0&&isTank(e.card));
  if(ai.push&&S.tick-ai.push.t>Math.round(14/Sim.TICK))ai.push=null;
  if(ai.push){// Unterstützung hinter dem Tank
   const t=myTanks.find(e=>e.lane===ai.push.l)||myTanks[0];
-  if(t&&(side===0?t.y<470:t.y>FH-470)){let best=null;for(const o of hand){if(o.C.type==='bld'||isTank(o.id))continue;if(o.C.type==='spell')continue;if(!best||(isRanged(o.id)&&!isRanged(best.id)))best=o;}
+  if(t&&(side===0?t.y<470:t.y>FH-470)){let best=null;for(const o of hand){if(o.C.type==='bld'||isTank(o.id))continue;if(o.C.type==='spell')continue;if(!best||(isRanged(o.id)&&!isRanged(best.id))||(o.id==='banner'&&best.id!=='banner'))best=o;}
    if(best&&me.mana>=best.C.cost+(P.smart>.5?0:1)){const c=tryPlay(best,t.x+jit()*.4,t.y-fwd*45,t.lane);if(c)return c;}}
   // Zauber auf Verteidiger am Turm
   for(const o of hand){if(o.C.type!=='spell'||o.id!=='firerain')continue;const foes=S.ents.filter(e=>e.side!==side&&e.cls==='unit'&&e.hp>0&&!my(e.y));const b=clusterAt(S,side,foes,o.C.s.r,true);if(b&&b.n>=P.spellMin&&b.val>=380){const c=tryPlay(o,b.x,b.y);if(c)return c;}}}
  // Zauber zum Turm-Abschluss
  for(const o of hand){if(o.id!=='firerain')continue;for(const e of S.ents)if(e.cls==='tower'&&e.side!==side&&e.hp>0&&e.hp<=o.C.s.dmg*o.C.s.tower*1.05&&(S.matchT<60||S.phase==='sudden'||e.hp<90)){const c=tryPlay(o,e.x,e.y);if(c)return c;}}
  const pushAt=(S.dbl||S.phase==='sudden')?Math.min(P.pushAt,7):P.pushAt;
+ if(P.hold&&thr.length&&me.mana<9.7)return null;// Sylvara: spart bei Bedrohung Mana für den Konter
  if(me.mana>=pushAt||me.mana>=9.7){
   // Brunnen bei Ruhe
   const well=hand.find(o=>o.id==='well');if(well&&!thr.length&&R(ai)<P.well&&!S.ents.some(e=>e.side===side&&e.card==='well')){const c=tryPlay(well,FW/2+(R(ai)<.5?-60:60),toMy(612));if(c)return c;}
   const lane=chooseLane(S,side,ai);const lx=BRIDGES[lane];
-  const tank=hand.find(o=>isTank(o.id)&&!o.C.air)||hand.find(o=>o.id==='zepp');
+  const airT=hand.find(o=>o.C.air&&o.C.cost>=5);
+  const tank=(P.air&&airT)||hand.find(o=>isTank(o.id)&&!o.C.air)||hand.find(o=>o.id==='zepp')||airT;
   if(tank){ai.push={l:lane,t:S.tick};const c=tryPlay(tank,tank.C.type==='hero'?lx:(lx*.55+FW/2*.45),tank.C.type==='hero'?bankY-fwd*60:backY-fwd*10);if(c)return c;}
   const sl=hand.find(o=>o.id==='sling');if(sl&&R(ai)<.6){const c=tryPlay(sl,FW/2+(lane?40:-40),toMy(420));if(c)return c;}
   // sonst günstigste sinnvolle Einheit an die Brücke
@@ -96,6 +106,7 @@ function clusterAt(S,side,list,r,incTower){let best=null;for(const c of list){le
   if(!best||val>best.val)best={n,val,x:sx/n,y:sy/n};}return best;}
 function abilTarget(S,ai,h){const A=CARDS[h.card].abil,side=ai.side;
  const foes=S.ents.filter(e=>e.side!==side&&e.cls==='unit'&&e.hp>0&&!e.thrown);
+ if(A.key==='roar'){let n=0,hp=0,own=0;for(const e of foes)if(d2(e.x,e.y,h.x,h.y)<=A.r){n++;hp+=e.hp;}for(const e of S.ents)if(e.side===side&&e.cls==='unit'&&e.hp>0&&d2(e.x,e.y,h.x,h.y)<=A.r)own++;return(n>=2&&own>=2)||hp>=1100||(n>=1&&own>=4)?{a:'abil',side,x:h.x,y:h.y}:null;}
  if(A.key==='nova'){let n=0,hp=0;for(const e of foes)if(d2(e.x,e.y,h.x,h.y)<=A.r){n++;hp+=e.hp;}return(n>=2||hp>=900)?{a:'abil',side,x:h.x,y:h.y}:null;}
  const near=foes.filter(e=>d2(e.x,e.y,h.x,h.y)<=A.reach+20);
  if(A.key==='summon'){if(near.length||(side===0?h.y<MIDY+40:h.y>MIDY-40)){const t=near[0]||{x:h.x,y:h.y+(side===0?-60:60)};return{a:'abil',side,x:(t.x+h.x)/2,y:(t.y+h.y)/2};}return null;}

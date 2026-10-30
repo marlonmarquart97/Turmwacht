@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#24160b"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>Turmwacht Duell – Kartenduell am Schattenpass</title>
-<!-- Turmwacht Duell 0.6.1 -->
+<!-- Turmwacht Duell 0.7 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 html,body{height:100%;overflow:hidden;background:#0c0804;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;color:#f3e2b0;overscroll-behavior:none}
@@ -178,7 +178,9 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 .sort{font-size:12px;color:#c8b088;white-space:nowrap}.sort select{font:inherit;font-size:13px;background:#2a1a10;color:#f3e2b0;border:1.5px solid var(--gold);border-radius:6px;padding:3px 4px;margin-left:3px}
 .flt{display:flex;flex-wrap:wrap;gap:5px;padding:6px 0 8px;scrollbar-width:none}.flt::-webkit-scrollbar{display:none}
 .chipb{flex:0 0 auto;font-size:12.5px;padding:5px 9px;border-radius:14px;background:rgba(0,0,0,.35);border:1.5px solid #8a6a26;white-space:nowrap}.chipb small{opacity:.7;font-size:10.5px}.chipb.on{background:linear-gradient(#ffe070,#c8901a);color:#2a1600;border-color:#fff0b0;font-weight:700}
-.coll .cd.used{opacity:.62;filter:saturate(.45)}.cd .ind{position:absolute;left:0;right:0;top:40%;font:900 9px system-ui,sans-serif;font-style:normal;text-align:center;background:rgba(40,90,20,.92);color:#e8ffd0;padding:2px 0;transform:rotate(-12deg);letter-spacing:.5px;pointer-events:none}
+.coll .cd.used{opacity:.62;filter:saturate(.45)}.coll .cd.lockd{opacity:.55;filter:grayscale(.85) brightness(.8)}.cd .lkb{position:absolute;left:0;right:0;bottom:16px;font:800 8.5px system-ui,sans-serif;font-style:normal;text-align:center;background:rgba(20,14,8,.9);color:#ffd890;padding:2px 0;pointer-events:none}
+.sc2 .diff.hard2{background:#6a1a5a;border-color:#e070c0}.sc2 .diff.dragon{background:linear-gradient(90deg,#7a1a08,#c84a10);border-color:#ffb040;box-shadow:0 0 8px rgba(255,120,30,.6)}
+.newc{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 10px}.newc .mi{position:relative;width:64px;display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.25);border:1.5px solid #9ad860;border-radius:10px;padding:4px 2px;color:#fff}.newc .mi img{width:44px;height:44px}.newc .mi b{position:absolute;top:2px;left:4px;font-size:11px;color:#bfe0ff}.newc .mi span{font-size:9px;line-height:1.1;text-align:center}.cd .ind{position:absolute;left:0;right:0;top:40%;font:900 9px system-ui,sans-serif;font-style:normal;text-align:center;background:rgba(40,90,20,.92);color:#e8ffd0;padding:2px 0;transform:rotate(-12deg);letter-spacing:.5px;pointer-events:none}
 .coll .cd:not(.used):hover{transform:translateY(-2px)}
 /* Detailkarte */
 .dcwrap{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:10px;background:rgba(6,3,1,.78);backdrop-filter:blur(3px)}
@@ -268,6 +270,36 @@ const TW_BESTIARY={version:1,tile:20,
    desc:'Zauber. Flächenschaden an beliebiger Stelle (Türme 35 %).',s:{r:52,dmg:360,tower:.35,delay:.8}},
   frost:{name:'Frost',type:'spell',cost:3,art:'frost',td:'Zauber Frost',
    desc:'Zauber. Friert Einheiten und Türme 3 s ein.',s:{r:62,dmg:60,freeze:3,tower:.35}},
+  // --- 0.7: neue Kreaturen (Kampagne Kapitel 3–5; durch Siege freischaltbar: unlock = Szenario-Nr.) ---
+  storm:{name:'Sturmrufer',type:'unit',cost:4,count:1,art:'storm',unlock:3,td:'Vorbild WC3: Kettenblitz',
+   desc:'Ruft Blitze, die auf bis zu drei weitere Gegner überspringen.',u:{hp:560,dmg:100,hit:1.6,range:95,sight:125,spd:24,r:9,mass:4,tg:'any',proj:'zap',chain:{n:3,r:62,f:.72}}},
+  netter:{name:'Netzwerfer',type:'unit',cost:3,count:2,art:'netter',unlock:3,td:'Vorbild WC3: Fangnetz',
+   desc:'Zwei Jäger mit Wurfnetzen. Gefangene stehen still – Flieger werden zu Boden gezogen.',u:{hp:300,dmg:44,hit:1.2,range:80,sight:120,spd:30,r:8,mass:2,tg:'any',proj:'net',net:{t:1.8,every:3}}},
+  troll:{name:'Baumtroll',type:'unit',cost:5,count:1,art:'troll',unlock:3,td:'Vorbild SuM: Bergtroll mit Baum',
+   desc:'Schwingt einen ausgerissenen Baum: trifft alles um sein Ziel herum.',u:{hp:1650,dmg:150,hit:1.6,range:16,sight:110,spd:20,r:13,mass:14,tg:'ground',cleave:{r:32,f:.6}}},
+  warchant:{name:'Kriegsgesang',type:'spell',cost:3,art:'chant',unlock:3,td:'Vorbild SuM: Kriegsgesang',
+   desc:'Zauber. Eigene Truppen im Kreis kämpfen 7 s lang stärker und schneller.',s:{r:72,t:7,buff:.35,haste:.25,dmg:0,tower:0}},
+  trollking:{name:'Ugrak Baumbrecher',type:'hero',cost:5,count:1,art:'trollking',unlock:3,td:'Boss Kapitel 3',
+   desc:'Held. Spaltet mit der Keule. Fähigkeit Kriegsschrei: stärkt Verbündete und lässt Feinde fliehen.',u:{hp:1500,dmg:135,hit:1.2,range:16,sight:120,spd:24,r:13,mass:12,tg:'ground',cleave:{r:28,f:.5}},
+   abil:{key:'roar',name:'Kriegsschrei',charge:15,self:true,r:95,buff:.4,haste:.2,t:6,fear:1.3}},
+  banner:{name:'Bannerträger',type:'unit',cost:3,count:1,art:'banner',unlock:4,td:'Vorbild SuM: Bannerträger',
+   desc:'Sein Banner stärkt und heilt alle Verbündeten in der Nähe.',u:{hp:560,dmg:50,hit:1.2,range:12,sight:110,spd:26,r:9,mass:4,tg:'ground',aura:{r:72,dmg:.25,hps:14}}},
+  burrow:{name:'Grubenkriecher',type:'unit',cost:4,count:1,art:'beetle',unlock:4,td:'Vorbild WC3: Eingraben',
+   desc:'Gräbt sich beim Laufen ein – unangreifbar, nur Zauber und Flächenschaden treffen ihn. Taucht mit einem Überraschungsbiss auf.',u:{hp:720,dmg:110,hit:1.2,range:12,sight:120,spd:28,r:11,mass:6,tg:'ground',burrow:{stun:1,bonus:130,cd:2.5}}},
+  treant:{name:'Borkenhüter',type:'unit',cost:6,count:1,art:'treant',unlock:4,td:'Vorbild SuM: Ent',
+   desc:'Uralter Baumriese. Zerschmettert nur Gebäude und Türme – aber Feuer setzt ihm schwer zu.',u:{hp:2400,dmg:300,hit:2.0,range:14,sight:999,spd:15,r:15,mass:22,tg:'bld',firevul:{f:1.8,burn:3,dps:45}}},
+  thorn:{name:'Sylvara',type:'hero',cost:4,count:1,art:'thorn',unlock:4,td:'Boss Kapitel 4',
+   desc:'Heldin. Dornenaura verletzt Nahkämpfer. Fähigkeit Wurzelgriff fesselt Feinde im Gebiet.',u:{hp:950,dmg:85,hit:1.2,range:95,sight:125,spd:24,r:10,mass:6,tg:'any',proj:'thorn',thorns:{r:75,f:.3}},
+   abil:{key:'roots',name:'Wurzelgriff',charge:14,reach:135,r:56,t:2.8,dmg:120}},
+  shade:{name:'Schattenschwinge',type:'unit',cost:5,count:1,art:'shade',air:true,unlock:5,td:'Vorbild SuM: Schreckensschwinge',
+   desc:'Flieger mit Reiter. Sein Schrei lässt Bodentruppen in Panik fliehen.',u:{hp:1080,dmg:125,hit:1.25,range:12,sight:120,spd:32,r:13,mass:8,tg:'ground',fear:{r:72,t:1.4,every:8}}},
+  whelp:{name:'Glutwelpen',type:'unit',cost:4,count:2,art:'whelp',air:true,unlock:5,td:'Vorbild WC3/SuM: Rotdrache, Feuerdrache',
+   desc:'Zwei junge Drachen. Spucken Feuer auf Boden und Luft.',u:{hp:340,dmg:58,hit:1.2,range:40,sight:120,spd:38,r:10,mass:3,tg:'any',proj:'flame',splash:20,fire:1}},
+  frostwyrm:{name:'Frostwyrm',type:'unit',cost:6,count:1,art:'frostwyrm',air:true,unlock:5,td:'Vorbild WC3: Frostwyrm',
+   desc:'Knochendrache. Eisatem mit Flächenschaden verlangsamt alles am Boden.',u:{hp:1500,dmg:150,splash:34,hit:2.0,range:70,sight:125,spd:18,r:16,mass:14,tg:'ground',proj:'icebreath',slow:{t:2.5,f:.45}}},
+  dragonlord:{name:'Vyrthax',type:'hero',cost:6,count:1,art:'dragonlord',air:true,unlock:5,td:'Boss Kapitel 5',
+   desc:'Held. Der Aschenkönig. Feueratem mit Flächenschaden. Fähigkeit Feuerflug: eine Flammenbahn über das Feld.',u:{hp:1550,dmg:115,hit:1.7,range:60,sight:130,spd:24,r:17,mass:16,tg:'any',proj:'flame',splash:30,fire:1},
+   abil:{key:'fireline',name:'Feuerflug',charge:16,reach:170,r:40,w:24,dmg:300,tower:.35}},
   // --- Gegner-Karten (Kampagne; später freischaltbar) ---
   skels:{name:'Knochenrotte',type:'unit',cost:3,count:4,art:'skel',npc:true,td:'Skelett-Gegner',
    desc:'Vier klapprige Skelette.',u:{hp:115,dmg:58,hit:1.0,range:11,sight:110,spd:30,r:8,mass:1,tg:'ground'}},
@@ -284,9 +316,10 @@ const TW_BESTIARY={version:1,tile:20,
    abil:{key:'summon',name:'Knochenruf',charge:15,reach:120,summon:{card:'skels',n:4}}}
  },
  towers:{guard:{name:'Wachturm',hp:1500,r:20,dmg:62,hit:.8,range:150,tg:'any',proj:'tarrow'},keep:{name:'Bergfried',hp:2600,r:27,dmg:80,hit:1.0,range:140,tg:'any',proj:'tarrow'}},
- projectiles:{arrow:{spd:430},tarrow:{spd:460},fireball:{spd:300},flask:{spd:250,arc:1},frostbolt:{spd:360},poison:{spd:340},bolt:{spd:420},shadow:{spd:300}},
- // Spielerkarten (Startset, 16 Karten) und Standarddeck
- playerSet:['orcs','archers','firemage','alch','sling','ranger','well','blade','frosthero','poisonhero','zepp','giant','shaman','bats','firerain','frost'],
+ projectiles:{arrow:{spd:430},tarrow:{spd:460},fireball:{spd:300},flask:{spd:250,arc:1},frostbolt:{spd:360},poison:{spd:340},bolt:{spd:420},shadow:{spd:300},zap:{spd:900},net:{spd:320,arc:1},flame:{spd:380},icebreath:{spd:340},thorn:{spd:380}},
+ // Spielerkarten (Startset 16 Karten + 13 freischaltbare aus 0.7) und Standarddeck
+ playerSet:['orcs','archers','firemage','alch','sling','ranger','well','blade','frosthero','poisonhero','zepp','giant','shaman','bats','firerain','frost',
+  'storm','netter','troll','warchant','trollking','banner','burrow','treant','thorn','shade','whelp','frostwyrm','dragonlord'],
  defaultDeck:['orcs','archers','firemage','blade','giant','bats','firerain','frost']
 };
 
@@ -770,6 +803,17 @@ const SFX=(()=>{let A=null,master,mus,fx,noiseBuf,on={music:LS.get('music',true)
   level(){if(!ok('level',.3))return;const t=A.currentTime+.02;[62,66,69,74,78].forEach((m,i)=>osc('triangle',mtof(m),t+i*.08,.35,.18,fx,.005));},
   life(){if(!ok('life',.25))return;const t=T();osc('square',220,t,.18,.1,fx,.005,110);osc('sine',110,t+.1,.3,.25,fx,.005,70);},
   over(){if(!A)return;const t=A.currentTime+.05;if(on.music){mus.gain.setTargetAtTime(0,t,.15);mus.gain.setTargetAtTime(.25,t+6,.8);}if(!on.sfx)return;[[62,0],[60,.4],[58,.8],[57,1.2],[50,1.7]].forEach(([m,d])=>osc('triangle',mtof(m),t+d,d>1.5?1.6:.45,.2,fx,.02));}};
+ // 0.7 (Duell): Klänge für neue Kreaturen – rein additiv, der Tower-Defense-Teil nutzt sie nicht
+ Object.assign(api,{
+  zap(){if(!ok('zap',.09))return;const t=T();noise(t,.12,.22,fx,'highpass',3200,1);for(let i=0;i<4;i++)osc('square',1800+Math.random()*1400,t+i*.022,.025,.05,fx,.001,600);osc('sawtooth',90,t,.14,.12,fx,.002,60);},
+  net(){if(!ok('net',.12))return;const t=T();noise(t,.18,.14,fx,'bandpass',900,1.4,300);osc('triangle',320,t,.1,.06,fx,.004,180);},
+  breath(ice){if(!ok(ice?'ice':'breath',.14))return;const t=T();noise(t,.42,.26,fx,ice?'highpass':'bandpass',ice?2200:520,1,ice?5200:1500,.04);if(!ice)osc('sawtooth',70,t,.3,.08,fx,.03,55);else osc('sine',1900,t,.3,.04,fx,.02,1200);},
+  roar(){if(!ok('roar',.6))return;const t=T();for(const[f,d]of[[95,0],[120,6]]){const o=A.createOscillator(),bp=A.createBiquadFilter(),g=A.createGain();o.type='sawtooth';o.frequency.setValueAtTime(f*1.4,t);o.frequency.exponentialRampToValueAtTime(f*.7,t+.8);o.detune.value=d;bp.type='bandpass';bp.frequency.value=520;bp.Q.value=1.6;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.32,t+.08);g.gain.exponentialRampToValueAtTime(.0001,t+.9);o.connect(bp);bp.connect(g);g.connect(fx);o.start(t);o.stop(t+1);}noise(t,.7,.14,fx,'lowpass',900,1,200);fdrum(t,.6);},
+  screech(){if(!ok('screech',.8))return;const t=T();const o=A.createOscillator(),g=A.createGain(),bp=A.createBiquadFilter();o.type='sawtooth';o.frequency.setValueAtTime(1300,t);o.frequency.exponentialRampToValueAtTime(2300,t+.25);o.frequency.exponentialRampToValueAtTime(900,t+.7);bp.type='bandpass';bp.frequency.value=1800;bp.Q.value=4;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.05);g.gain.exponentialRampToValueAtTime(.0001,t+.75);o.connect(bp);bp.connect(g);g.connect(fx);o.start(t);o.stop(t+.8);noise(t,.6,.08,fx,'highpass',3000,1);},
+  burrow(){if(!ok('burrow',.2))return;const t=T();noise(t,.3,.2,fx,'lowpass',500,1,140);osc('sine',70,t,.2,.18,fx,.01,40);},
+  chant(){if(!ok('chant',.8))return;const t=T();[0,.22,.44,.66].forEach((d,i)=>fdrum(t+d,i%2?.55:.8));api.hornNotes&&api.hornNotes([[48,0,.4],[52,.45,.6]],.12);},
+  roots(){if(!ok('roots',.5))return;const t=T();noise(t,.5,.25,fx,'lowpass',700,1,120);for(let i=0;i<5;i++)osc('square',140+Math.random()*120,t+.05+i*.06,.05,.06,fx,.002,60);},
+  fireline(){if(!ok('fline',.6))return;const t=T();noise(t,.9,.4,fx,'bandpass',300,.8,1600,.08);osc('sawtooth',60,t,.8,.14,fx,.05,40);}});
  return api;})();
 window.SFX=SFX;
 
@@ -1148,6 +1192,330 @@ DART.wolf.fn=drawWolfFront;
 // Figuren-Sicht wählen: eigene Seite (0) = Rücken
 function viewKey(key,side){return side===0&&DART[key+'_b']?key+'_b':key;}
 
+// ---- duell-art07.js ----
+// ===== Turmwacht Duell 0.7 – neue Kreaturen (eigene Vektorgrafik) =====
+// Alle Figuren schauen nach rechts (+x), Ursprung = Fußpunkt. Flieger: Ursprung = Schattenpunkt, Figur schwebt darüber.
+// ---- Drachen-Grundform (parametrisiert): Glutwelpe, Frostwyrm, Vyrthax, Schattenschwinge ----
+function drawWyrm(g,o){const s=o.s||1,fl=o.flap;g.save();g.scale(s,s);
+ const wing=(near)=>{const up=!fl,sx=0,sy=-36;
+  const T=up?[[-6,-86],[-26,-80],[-42,-62],[-46,-44]]:[[-4,-8],[-24,-12],[-40,-22],[-46,-32]];
+  const back=[-16,-34];g.save();if(!near){g.translate(8,-3);g.scale(.86,.92);}
+  g.beginPath();g.moveTo(sx,sy);g.lineTo(T[0][0],T[0][1]);
+  for(let i=1;i<T.length;i++){const p=T[i-1],q=T[i],mx=(p[0]+q[0])/2+(up?4:2),my=(p[1]+q[1])/2+(up?6:-5);g.quadraticCurveTo(mx,my,q[0],q[1]);}
+  g.quadraticCurveTo(-30,up?-38:-30,back[0],back[1]);g.closePath();
+  const wc=o.wing;F(g,o.bone?'rgba(150,215,255,.38)':LG(g,0,up?-86:-8,0,-34,near?wc[0]:wc[2]||wc[1],wc[1]),1.5,o.bone?'#d8f0ff':OL);
+  for(const t of T)L(g,sx,sy,t[0],t[1],o.bone?'#e8f4ff':o.arm||'#2a1408',o.bone?2.4:1.6);
+  if(o.bone)for(const t of T){E(g,t[0],t[1],1.8);F(g,'#e8f4ff',.8);}
+  g.restore();};
+ wing(false);
+ // Schwanz
+ g.beginPath();g.moveTo(-10,-34);g.quadraticCurveTo(-34,-34,-48,-20);g.quadraticCurveTo(-56,-12,-64,-16);g.quadraticCurveTo(-54,-6,-44,-14);g.quadraticCurveTo(-30,-24,-8,-24);g.closePath();
+ F(g,o.bone?'#d8dcd0':LG(g,0,-36,0,-14,o.body[0],o.body[1]),1.5);
+ P(g,[[-64,-16],[-72,-22],[-68,-12]]);F(g,o.horn,1);
+ if(o.bone)for(let i=0;i<5;i++){const x=-14-i*9,y=-29+i*2.4;L(g,x,y-3,x-2,y+3,'#7a8a96',1.2);}
+ // Beine (angezogen)
+ for(const x of[-8,10]){P(g,[[x-4,-26],[x+4,-26],[x+5,-14],[x+9,-11],[x+1,-11],[x-3,-17]]);F(g,o.bone?'#d8dcd0':o.body[1],1.4);
+  for(let k=0;k<3;k++){P(g,[[x+2+k*2.5,-11],[x+3.5+k*2.5,-7.5],[x+4+k*2.5,-11]]);F(g,'#f0e8d8',.6);}}
+ // Rumpf
+ if(o.bone){E(g,0,-30,20,10);F(g,'rgba(120,190,240,.25)',1.2,'#a8d8ff');
+  L(g,-18,-34,20,-36,'#e0e4d8',4);L(g,-18,-34,20,-36,'#8a96a0',1);
+  for(let i=0;i<6;i++){const x=-12+i*5.6;g.beginPath();g.moveTo(x,-35);g.quadraticCurveTo(x+5,-26,x+1,-20);g.strokeStyle=OL;g.lineWidth=3.2;g.stroke();g.strokeStyle='#e4e6da';g.lineWidth=1.8;g.stroke();}
+  g.save();g.shadowColor='#7fd8ff';g.shadowBlur=10;E(g,2,-29,4.5,4);F(g,'rgba(160,230,255,.9)',0);g.restore();}
+ else{E(g,0,-30,22,11.5);F(g,LG(g,0,-42,0,-18,o.body[0],o.body[1]),1.8);
+  g.save();E(g,0,-30,22,11.5);g.clip();E(g,3,-21,18,6);F(g,o.belly,0);for(let i=0;i<5;i++)L(g,-10+i*6,-25,-8+i*6,-16,'rgba(0,0,0,.28)',1);g.restore();
+  for(let i=0;i<6;i++){const x=-16+i*6.4;P(g,[[x,-40.5],[x+2.6,-46.5],[x+5,-40.5]]);F(g,o.horn,1);}
+  if(o.lava){g.save();g.shadowColor='#ff6a10';g.shadowBlur=6;for(const[a,b,c,d]of[[-12,-34,-4,-30],[-4,-30,2,-35],[6,-32,14,-28]])L(g,a,b,c,d,'#ffa030',1.4);g.restore();}}
+ // Hals + Kopf
+ g.beginPath();g.moveTo(12,-38);g.quadraticCurveTo(22,-50,30,-54);g.lineTo(36,-48);g.quadraticCurveTo(26,-42,20,-26);g.closePath();
+ F(g,o.bone?'#d8dcd0':LG(g,12,-54,22,-26,o.body[0],o.body[1]),1.6);
+ if(o.bone)for(let i=0;i<4;i++)L(g,16+i*4,-40-i*3.4,20+i*4,-37-i*3.4,'#7a8a96',1.2);
+ const hc=o.bone?'#ecebe0':o.head||o.body[0];
+ P(g,[[26,-56],[34,-60],[44,-57],[52,-52],[50,-48],[40,-47],[32,-44],[27,-48]]);F(g,LG(g,26,-60,26,-44,hc,o.bone?'#9aa4a8':o.body[1]),1.6);
+ P(g,[[32,-46],[40,-47],[49,-46],[44,-41],[34,-41]]);F(g,o.bone?'#c8ccc0':o.body[1],1.3);// Unterkiefer
+ for(let k=0;k<3;k++){P(g,[[38+k*4,-47],[39.5+k*4,-44.5],[41+k*4,-47]]);F(g,'#fff',.5);}
+ P(g,[[28,-57],[16,-68],[22,-66],[31,-59]]);F(g,o.horn,1.1);P(g,[[33,-59],[26,-70],[31,-68],[36,-60]]);F(g,o.horn,1.1);
+ g.save();g.shadowColor=o.eye;g.shadowBlur=6;E(g,38,-54,2.2,1.4);F(g,o.eye,0);g.restore();
+ E(g,50.5,-51,1,.7);F(g,'#000',0);
+ if(o.rider){// Reiter: Kapuzengestalt mit Klinge
+  P(g,[[-4,-38],[-8,-52],[-4,-64],[2,-68],[7,-62],[8,-50],[6,-38]]);F(g,LG(g,-8,-68,8,-38,'#3a3a42','#141418'),1.5);
+  P(g,[[-2,-62],[2,-68],[6,-62],[4,-57],[-1,-57]]);F(g,'#0a0a0c',1);
+  g.save();g.shadowColor='#d0f0ff';g.shadowBlur=5;E(g,1,-61,.9);F(g,'#e8f8ff',0);E(g,4,-61,.9);F(g,'#e8f8ff',0);g.restore();
+  L(g,6,-50,20,-66,OL,3.4);L(g,6,-50,20,-66,'#c8ccd4',1.8);L(g,4,-48,9,-52,'#6a4a2a',3);
+  P(g,[[-8,-46],[-18,-40],[-14,-36],[-5,-40]]);F(g,'#24242a',1.2);}
+ wing(true);
+ g.restore();}
+const WYRM={
+ whelp:{s:.62,body:['#e0502a','#6a1408'],belly:'#f0b060',wing:['#c83a20','#4a0c06','#8a2010'],horn:'#f4e2b0',eye:'#ffe040',head:'#ea6a34'},
+ frostwyrm:{s:1.08,bone:1,body:['#e8ecf0','#8a96a0'],belly:'#fff',wing:['#bfe8ff','#5a8ab0'],horn:'#e8f4ff',eye:'#9fe8ff'},
+ dragonlord:{s:1.28,body:['#3a2a2a','#120808'],belly:'#5a3020',wing:['#4a2418','#140604','#2a100a'],horn:'#d8c49a',eye:'#ff8a10',head:'#4a3030',lava:1,arm:'#ff7a20'},
+ shade:{s:.92,body:['#5a5658','#1e1c1e'],belly:'#6e6a66',wing:['#4a4446','#141214','#2a2628'],horn:'#9a9488',eye:'#e0ff80',head:'#5e5a58',rider:1}};
+// Kronen-Detail für Vyrthax
+function drawDragonlord(g,fl){drawWyrm(g,Object.assign({flap:fl},WYRM.dragonlord));g.save();g.scale(1.28,1.28);
+ for(const[x,y,h]of[[30,-60,7],[35,-61,9],[40,-59,7]]){P(g,[[x-1.6,y],[x,y-h],[x+1.6,y]]);F(g,'#ffc040',.8);}g.restore();}
+// ---- Baumtroll / Ugrak ----
+function drawTroll(g,king){
+ // Beine
+ for(const s of[-1,1]){P(g,[[s*4,-24],[s*13,-24],[s*14,-4],[s*16,0],[s*3,0],[s*4,-6]]);F(g,LG(g,0,-24,0,0,'#6a8a6a','#3a5a40'),1.6);}
+ P(g,[[-15,-26],[15,-26],[12,-16],[0,-13],[-12,-16]]);F(g,king?'#5a2a1a':'#5a4228',1.5);// Lendenschurz
+ if(king){P(g,[[-22,-52],[-30,-30],[-24,-14],[-12,-22],[-10,-50]]);F(g,LG(g,-30,0,-10,0,'#6a4a2a','#3a2414'),1.5);for(let i=0;i<4;i++)L(g,-28+i*4,-30,-26+i*4,-18,'#2a180c',1);}
+ // Rumpf, nach vorn gebeugt
+ P(g,[[-18,-24],[-22,-46],[-12,-62],[10,-64],[22,-52],[20,-30],[12,-22]]);F(g,LG(g,-22,-60,20,-24,'#86a882','#4a6a50'),2);
+ E(g,2,-36,11,9);F(g,'rgba(200,220,180,.35)',0);
+ for(const[x,y]of[[-10,-50],[4,-56],[-4,-42]]){E(g,x,y,2.6,1.8);F(g,'rgba(40,70,40,.55)',0);}
+ if(king){L(g,-14,-56,14,-30,'#c8c0a8',3);for(let i=0;i<4;i++){E(g,-10+i*7,-52+i*6.5,2.2,3);F(g,'#ece4cc',1);}// Knochenkette
+  L(g,-8,-48,-2,-40,'#c03020',2);L(g,4,-50,10,-42,'#c03020',2);}
+ // hinterer Arm
+ P(g,[[-14,-58],[-24,-44],[-22,-30],[-16,-30],[-16,-44]]);F(g,'#5a7a5a',1.5);E(g,-19,-28,5);F(g,'#5a7a5a',1.4);
+ // Kopf (tief sitzend, Hauer)
+ P(g,[[6,-60],[10,-74],[20,-78],[30,-72],[32,-62],[26,-54],[12,-54]]);F(g,LG(g,6,-78,30,-54,'#9ab894','#5a7a5a'),1.7);
+ L(g,14,-70,24,-69,OL,2.2);g.save();g.shadowColor='#ffc020';g.shadowBlur=4;E(g,22,-67,1.5,1.1);F(g,'#ffe060',0);g.restore();
+ P(g,[[27,-68],[34,-66],[29,-63]]);F(g,'#7a9a74',1.1);// Nase
+ for(const x of[20,26]){P(g,[[x,-58],[x+1,-65],[x+3,-58]]);F(g,'#f4ecd2',.8);}
+ P(g,[[8,-72],[2,-80],[10,-77]]);F(g,'#5a7a5a',1);// Ohr
+ if(king){P(g,[[9,-75],[11,-86],[15,-79],[19,-89],[22,-79],[27,-86],[28,-74]]);F(g,LG(g,0,-89,0,-74,'#f0e6c8','#a08a5a'),1.3);
+  for(const[x,y]of[[13,-60],[17,-62]])L(g,x,y,x+3,y-6,'#c03020',1.6);}
+ // Waffe: ausgerissener Baum (Troll) bzw. Stachelkeule (Ugrak)
+ g.save();g.translate(22,-40);g.rotate(-.55);
+ if(king){P(g,[[-3,8],[3,8],[6,-44],[-6,-44]]);F(g,LG(g,-6,0,6,0,'#4a2e16','#8a5a2a','#4a2e16'),1.6);
+  E(g,0,-46,10,13);F(g,LG(g,-10,-58,10,-34,'#7a5a3a','#3a2414'),1.8);
+  for(const[x,y]of[[-10,-46],[10,-46],[-6,-56],[6,-56],[0,-60],[-8,-38],[8,-38]]){const a=Math.atan2(y+46,x),X=Math.cos(a)*15,Y=-46+Math.sin(a)*15;P(g,[[x*.8-1.5,y],[X,Y],[x*.8+1.5,y]]);F(g,'#d8d0c0',.8);}}
+ else{P(g,[[-3,8],[3,8],[5,-48],[-5,-48]]);F(g,LG(g,-5,0,5,0,'#3a2414','#7a5028','#3a2414'),1.6);
+  for(const[a,b]of[[-4,10],[4,12],[0,13]])L(g,0,8,a,b+4,'#4a2e16',1.6);// Wurzeln unten
+  L(g,0,-30,-10,-40,'#4a2e16',2.4);L(g,0,-40,9,-48,'#4a2e16',2);
+  for(const[x,y,r]of[[0,-54,11],[-10,-46,8],[9,-50,8],[-4,-62,8],[6,-60,7]]){E(g,x,y,r);F(g,LG(g,0,y-r,0,y+r,'#5a9a3a','#244a18'),1.3);}}
+ g.restore();
+ // vorderer Arm hält die Waffe
+ P(g,[[12,-58],[22,-50],[26,-40],[20,-36],[14,-46]]);F(g,LG(g,12,-58,26,-36,'#86a882','#4a6a50'),1.6);E(g,23,-38,5.5);F(g,'#7a9a74',1.5);}
+// ---- Sturmrufer ----
+function drawStorm(g){
+ L(g,14,-2,18,-60,OL,4);L(g,14,-2,18,-60,'#6a4a2a',2.2);
+ g.save();g.shadowColor='#8ac8ff';g.shadowBlur=10;P(g,[[18,-60],[14,-66],[18,-74],[22,-66]]);F(g,LG(g,0,-74,0,-60,'#e8f8ff','#4a9aff'),1.2);g.restore();
+ L(g,18,-74,24,-80,'#cfe8ff',1);L(g,24,-80,21,-84,'#cfe8ff',1);L(g,14,-68,9,-74,'#cfe8ff',1);
+ P(g,[[-11,0],[-13,-16],[-9,-34],[9,-34],[13,-16],[11,0]]);F(g,LG(g,-13,0,13,0,'#1a2a5a','#3a5aa8','#1a2a5a'),1.6);
+ for(let i=0;i<3;i++)L(g,-9+i*2,-4-i*9,9-i*2,-4-i*9,'rgba(160,200,255,.45)',1.2);
+ L(g,-9,-20,9,-20,'#c8a040',2.4);
+ P(g,[[-12,-34],[-10,-44],[10,-44],[12,-34]]);F(g,'#7a6a5a',1.3);// Fellkragen
+ for(let i=0;i<6;i++)L(g,-10+i*4,-34,-9+i*4,-38,'#4a3a2a',1);
+ E(g,0,-48,6.5,7);F(g,LG(g,0,-55,0,-41,'#8ab07a','#5a7a4a'),1.4);
+ P(g,[[-8,-46],[-7,-56],[0,-62],[7,-56],[8,-46],[4,-50],[-4,-50]]);F(g,LG(g,0,-62,0,-46,'#5a6a8a','#2a3a5a'),1.4);// Kapuze
+ for(const s of[-1,1]){P(g,[[s*3,-43],[s*4,-39],[s*5,-43]]);F(g,'#f4ecd2',.6);}
+ g.save();g.shadowColor='#9fe0ff';g.shadowBlur=4;E(g,-2.4,-48,1.1);F(g,'#d8f4ff',0);E(g,2.4,-48,1.1);F(g,'#d8f4ff',0);g.restore();
+ P(g,[[8,-38],[16,-34],[17,-28],[12,-30]]);F(g,'#3a5aa8',1.2);E(g,16,-30,3);F(g,'#8ab07a',1.1);}
+// ---- Netzwerfer ----
+function drawNetter(g){
+ for(const s of[-1,1]){P(g,[[s*2,-14],[s*7,-14],[s*7,-2],[s*9,0],[s*2,0]]);F(g,'#5a4a2a',1.3);}
+ P(g,[[-9,-12],[-11,-26],[9,-26],[9,-12]]);F(g,LG(g,-11,0,9,0,'#4a5a2a','#7a8a3a'),1.5);
+ L(g,-9,-16,9,-16,'#3a2414',2.4);
+ // Netzbündel auf dem Rücken
+ E(g,-10,-26,7,8);F(g,'#b8a878',1.3);g.save();E(g,-10,-26,7,8);g.clip();for(let i=-3;i<4;i++){L(g,-17+i*4,-34,-3+i*4,-18,'#6a5a3a',.8);L(g,-3+i*4,-34,-17+i*4,-18,'#6a5a3a',.8);}g.restore();
+ E(g,0,-31,6,6);F(g,LG(g,0,-37,0,-25,'#9aa864','#5a6a3a'),1.4);
+ for(const s of[-1,1]){P(g,[[s*5,-33],[s*12,-37],[s*6,-30]]);F(g,'#8a9a58',1);}// Ohren
+ P(g,[[-6,-34],[0,-40],[6,-34],[4,-36],[-4,-36]]);F(g,'#4a3a2a',1.1);
+ g.save();g.shadowColor='#ffd040';g.shadowBlur=3;E(g,-2,-31,1);F(g,'#ffe070',0);E(g,2.2,-31,1);F(g,'#ffe070',0);g.restore();
+ // Wurfnetz in der Hand
+ L(g,6,-24,14,-30,'#7a8a3a',3.4);
+ g.save();g.translate(18,-34);E(g,0,0,7,6);F(g,'rgba(200,184,130,.35)',1,'#8a7a4a');for(let i=-2;i<=2;i++){L(g,i*3,-5.5,i*3,5.5,'#8a7a4a',.7);L(g,-6.5,i*2.6,6.5,i*2.6,'#8a7a4a',.7);}
+ for(const a of[0,1.6,3.2,4.7]){E(g,Math.cos(a)*7,Math.sin(a)*6,1.4);F(g,'#5a5a62',.6);}g.restore();}
+// ---- Kriegsgesang (Zauber-Icon): Kriegstrommel ----
+function drawChant(g){g.save();g.translate(0,-10);
+ for(let i=0;i<3;i++){g.beginPath();g.arc(0,-6,16+i*7,-2.6,-.54);g.strokeStyle=`rgba(255,${120+i*30},60,${.9-i*.25})`;g.lineWidth=2.4-i*.5;g.stroke();}
+ P(g,[[-12,-8],[-10,10],[10,10],[12,-8]]);F(g,LG(g,-12,0,12,0,'#5a2e16','#a86a34','#5a2e16'),1.6);
+ E(g,0,-8,12,4);F(g,LG(g,0,-12,0,-4,'#f0dcb0','#c8a878'),1.4);
+ for(let i=0;i<4;i++)L(g,-11+i*7.3,-6,-8+i*7.3,9,'#e0c890',1);
+ L(g,-14,-24,2,-10,OL,3.4);L(g,-14,-24,2,-10,'#c8a060',1.8);E(g,-14,-24,2.6);F(g,'#e8d8b0',1);
+ L(g,14,-24,-2,-10,OL,3.4);L(g,14,-24,-2,-10,'#c8a060',1.8);E(g,14,-24,2.6);F(g,'#e8d8b0',1);g.restore();}
+// ---- Bannerträger ----
+function drawBanner(g){
+ L(g,-6,4,-6,-84,OL,4);L(g,-6,4,-6,-84,'#7a5028',2.2);P(g,[[-8,-84],[-6,-90],[-4,-84]]);F(g,'#e0c060',1);
+ g.beginPath();g.moveTo(-5,-82);g.lineTo(18,-80);g.quadraticCurveTo(14,-70,20,-60);g.lineTo(10,-56);g.lineTo(4,-62);g.lineTo(-5,-58);g.closePath();F(g,LG(g,-5,-82,20,-58,'#2a7a3a','#1a4a24'),1.4);
+ g.save();g.translate(6,-70);for(let i=0;i<5;i++){const a=-1.57+i*1.257;P(g,[[0,0],[Math.cos(a)*5,Math.sin(a)*5],[Math.cos(a+.6)*2,Math.sin(a+.6)*2]]);F(g,'#e8c860',.6);}g.restore();
+ L(g,-5,-82,18,-80,'#e8c860',1.4);
+ for(const s of[-1,1]){P(g,[[s*2,-14],[s*7,-14],[s*7,-2],[s*9,0],[s*2,0]]);F(g,'#4a3a2a',1.3);}
+ P(g,[[-10,-12],[-12,-34],[10,-34],[10,-12]]);F(g,LG(g,-12,0,10,0,'#6a6a72','#b0b0b8','#6a6a72'),1.6);
+ P(g,[[-6,-32],[6,-32],[4,-14],[-4,-14]]);F(g,'#2a7a3a',1.1);L(g,0,-30,0,-16,'#e8c860',1.4);
+ L(g,-10,-14,10,-14,'#4a2e16',2.6);
+ E(g,0,-40,6,6.5);F(g,'#e3c29a',1.3);
+ P(g,[[-7,-40],[-7,-46],[0,-51],[7,-46],[7,-40],[4,-43],[-4,-43]]);F(g,LG(g,0,-51,0,-40,'#c8c8d0','#6a6a72'),1.3);L(g,0,-51,0,-56,'#c83020',2);
+ E(g,2,-39,.9);F(g,OL,0);E(g,-2,-39,.9);F(g,OL,0);
+ E(g,-6,-28,3.4);F(g,'#e3c29a',1.1);
+ P(g,[[8,-32],[14,-26],[11,-22],[6,-26]]);F(g,'#9a9aa2',1.1);L(g,12,-24,22,-34,OL,3);L(g,12,-24,22,-34,'#d8dce2',1.4);}
+// ---- Grubenkriecher (Käfer) ----
+function drawBeetle(g){
+ for(let i=0;i<3;i++)for(const s of[-1,1]){const x=-10+i*9;L(g,x,-8,x+s*3+2,0,OL,3);L(g,x,-8,x+s*3+2,0,'#3a2a1a',1.6);}
+ E(g,-2,-12,18,10);F(g,LG(g,0,-22,0,-2,'#6a5a8a','#241a34'),1.8);
+ g.save();E(g,-2,-12,18,10);g.clip();L(g,-2,-22,-2,-2,'rgba(0,0,0,.5)',1.4);for(const x of[-12,-6,4,10])L(g,x,-21,x+1,-4,'rgba(255,255,255,.1)',2);g.restore();
+ for(const[x,y]of[[-10,-16],[6,-16],[-4,-19],[12,-12]]){P(g,[[x-2,y],[x,y-5],[x+2,y]]);F(g,'#b8a8d8',.8);}
+ E(g,17,-10,7,6);F(g,LG(g,0,-16,0,-4,'#5a4a7a','#1e1630'),1.5);
+ g.beginPath();g.moveTo(22,-12);g.quadraticCurveTo(30,-16,32,-8);g.lineTo(28,-10);g.quadraticCurveTo(26,-12,22,-9);F(g,'#d8c8a0',1.1);
+ g.beginPath();g.moveTo(22,-8);g.quadraticCurveTo(30,-4,31,-12);g.lineTo(27,-9);g.quadraticCurveTo(25,-6,22,-6);F(g,'#c8b890',1.1);
+ g.save();g.shadowColor='#ff5030';g.shadowBlur=4;E(g,19,-13,1.3);F(g,'#ff8050',0);g.restore();
+ L(g,20,-15,26,-24,'#3a2a4a',1);L(g,18,-15,20,-25,'#3a2a4a',1);}
+function drawMound(g){E(g,0,-2,16,6);F(g,LG(g,0,-8,0,4,'#8a6a42','#4a3420'),1.4);for(const[x,y]of[[-8,-4],[3,-6],[9,-2],[-2,-1]]){E(g,x,y,2.4,1.4);F(g,'#6a4e30',.6);}}
+// ---- Borkenhüter (Baumriese) ----
+function drawTreant(g){
+ for(const s of[-1,1]){P(g,[[s*3,-30],[s*14,-30],[s*16,-8],[s*22,0],[s*12,0],[s*8,-4],[s*4,0],[s*3,-12]]);F(g,LG(g,0,-30,0,0,'#6a4a2a','#3a2414'),1.6);}
+ P(g,[[-16,-28],[-20,-62],[-12,-80],[12,-82],[20,-62],[16,-28]]);F(g,LG(g,-20,0,20,0,'#4a3018','#8a6034','#4a3018'),2);
+ for(const x of[-10,-3,5,12]){g.beginPath();g.moveTo(x,-30);g.quadraticCurveTo(x+3,-55,x-1,-78);g.strokeStyle='rgba(30,18,6,.55)';g.lineWidth=1.3;g.stroke();}
+ E(g,0,-66,10,5);F(g,'#2a1a0a',0);// Mund-Höhle
+ L(g,-8,-75,-1,-72,OL,2.4);L(g,8,-75,1,-72,OL,2.4);
+ g.save();g.shadowColor='#c0ff60';g.shadowBlur=7;E(g,-5,-71,2,1.4);F(g,'#d8ff80',0);E(g,5,-71,2,1.4);F(g,'#d8ff80',0);g.restore();
+ // Krone
+ for(const[x,y,r]of[[-14,-92,13],[12,-94,14],[0,-102,15],[-22,-80,9],[22,-80,9],[0,-88,11]]){E(g,x,y,r);F(g,LG(g,0,y-r,0,y+r,'#6aa83a','#2a5a1a'),1.4);}
+ for(const[x,y]of[[-10,-98],[8,-100],[16,-88],[-18,-86]]){E(g,x,y,2.4);F(g,'#a8e070',0);}
+ // Ast-Arme
+ P(g,[[-16,-60],[-30,-44],[-34,-26],[-28,-24],[-24,-40],[-14,-50]]);F(g,'#5a3a1c',1.5);for(const[a,b]of[[-34,-26],[-30,-22],[-26,-24]])L(g,-30,-28,a-2,b+4,'#5a3a1c',2);
+ P(g,[[16,-60],[30,-50],[38,-34],[32,-30],[26,-44],[14,-50]]);F(g,'#6a4422',1.5);for(const[a,b]of[[40,-30],[36,-26],[32,-27]])L(g,35,-32,a,b,'#6a4422',2.2);
+ E(g,-26,-62,5,3.5);F(g,'#4a8a2a',1);E(g,28,-58,5,3.5);F(g,'#4a8a2a',1);}
+// ---- Sylvara (Dornenmutter) ----
+function drawThorn(g){
+ // Dornenranken-Bogen
+ g.beginPath();g.arc(8,-28,16,-1.3,1.3);g.strokeStyle=OL;g.lineWidth=3.6;g.stroke();g.strokeStyle='#4a6a24';g.lineWidth=2.2;g.stroke();
+ for(let i=0;i<6;i++){const a=-1.2+i*.48,x=8+Math.cos(a)*16,y=-28+Math.sin(a)*16;P(g,[[x,y-1],[x+Math.cos(a)*4,y+Math.sin(a)*4],[x,y+1]]);F(g,'#c8d890',.5);}
+ L(g,8+Math.cos(-1.3)*16,-28+Math.sin(-1.3)*16,8+Math.cos(1.3)*16,-28+Math.sin(1.3)*16,'#e0f0c0',.8);
+ P(g,[[-12,0],[-14,-12],[-9,-30],[9,-30],[13,-12],[11,0]]);F(g,LG(g,-14,0,13,0,'#2a4a1a','#5a8a34','#2a4a1a'),1.6);
+ for(let i=0;i<5;i++){const x=-10+i*5;P(g,[[x,0],[x+2.5,-7],[x+5,0]]);F(g,'#3a6a24',1);}
+ P(g,[[-8,-30],[-9,-42],[9,-42],[8,-30]]);F(g,LG(g,0,-42,0,-30,'#8a6a42','#5a4024'),1.4);// Rinde
+ L(g,-6,-40,-2,-32,'rgba(30,18,6,.5)',1);L(g,4,-41,6,-33,'rgba(30,18,6,.5)',1);
+ E(g,0,-48,6,7);F(g,LG(g,0,-55,0,-41,'#b8a070','#7a6040'),1.4);
+ // Blätter-/Geweihhaar
+ for(const[x,y,a]of[[-8,-52,-.6],[-6,-57,-.3],[0,-58,0],[6,-57,.3],[8,-52,.6],[-9,-46,-.9]]){g.save();g.translate(x,y);g.rotate(a);E(g,0,-3,2.6,5);F(g,'#4a9a2a',1);g.restore();}
+ for(const s of[-1,1]){L(g,s*4,-55,s*9,-66,'#6a4a2a',2);L(g,s*7,-62,s*12,-64,'#6a4a2a',1.6);}
+ g.save();g.shadowColor='#c0ff60';g.shadowBlur=5;E(g,-2.3,-48,1.1,.9);F(g,'#e0ffa0',0);E(g,2.3,-48,1.1,.9);F(g,'#e0ffa0',0);g.restore();
+ P(g,[[6,-38],[12,-32],[9,-28],[5,-33]]);F(g,'#8a6a42',1.1);}
+// ---- Registrierung ----
+Object.assign(DART,{
+ storm:{fn:drawStorm,m:.86},netter:{fn:drawNetter,m:.92},troll:{fn:g=>drawTroll(g,0),m:.82},trollking:{fn:g=>drawTroll(g,1),m:.8},
+ chant:{fn:drawChant,m:1,spell:1},banner:{fn:drawBanner,m:.78},beetle:{fn:drawBeetle,m:.95},mound:{fn:drawMound,m:1},
+ treant:{fn:drawTreant,m:.78},thorn:{fn:drawThorn,m:.84},
+ whelp:{fn:g=>drawWyrm(g,WYRM.whelp),m:.9,head:[50*.62,-50*.62]},whelp_f:{fn:g=>drawWyrm(g,Object.assign({flap:1},WYRM.whelp)),m:.9},
+ frostwyrm:{fn:g=>drawWyrm(g,WYRM.frostwyrm),m:.72,head:[50*1.08,-50*1.08]},frostwyrm_f:{fn:g=>drawWyrm(g,Object.assign({flap:1},WYRM.frostwyrm)),m:.72},
+ dragonlord:{fn:g=>drawDragonlord(g,0),m:.68,head:[50*1.28,-50*1.28]},dragonlord_f:{fn:g=>drawDragonlord(g,1),m:.68},
+ shade:{fn:g=>drawWyrm(g,WYRM.shade),m:.74,head:[50*.92,-50*.92]},shade_f:{fn:g=>drawWyrm(g,Object.assign({flap:1},WYRM.shade)),m:.74},
+ ugrakP:{fn:g=>drawTroll(g,1),m:1},sylvaraP:{fn:drawThorn,m:1},vyrthaxP:{fn:g=>drawDragonlord(g,0),m:1}});
+
+// ---- duell-back07.js ----
+// ===== Turmwacht Duell 0.7 – Rückenansichten der neuen Kreaturen (eigene Truppen laufen nach oben) =====
+// Symmetrisch von hinten: kein Gesicht, Rücken/Umhang/Waffe sichtbar. Drachen: von hinten-oben, Flügel zu beiden Seiten.
+function drawWyrmBack(g,o){const s=o.s||1,fl=o.flap;g.save();g.scale(s,s);
+ const bc=o.bone?'#d8dcd0':null;
+ // Schwanz zum Betrachter (nach unten), leicht geschwungen
+ g.beginPath();g.moveTo(-6,-26);g.quadraticCurveTo(-10,-12,2,-6);g.quadraticCurveTo(14,-1,10,6);g.quadraticCurveTo(16,-2,8,-10);g.quadraticCurveTo(2,-16,6,-26);g.closePath();
+ F(g,bc||LG(g,-8,0,8,0,o.body[1],o.body[0],o.body[1]),1.5);P(g,[[10,6],[16,10],[12,2]]);F(g,o.horn,1);
+ if(o.bone)for(let i=0;i<4;i++)L(g,-3+i*2.5,-22+i*4,3+i*2.5,-22+i*4,'#7a8a96',1.1);
+ // Flügel
+ for(const sd of[-1,1]){g.save();g.scale(sd,1);
+  const T=fl?[[20,-50],[40,-42],[54,-26],[56,-8]]:[[10,-70],[30,-74],[48,-62],[58,-46]];
+  g.beginPath();g.moveTo(6,-40);g.lineTo(T[0][0],T[0][1]);for(let i=1;i<T.length;i++){const p=T[i-1],q=T[i];g.quadraticCurveTo((p[0]+q[0])/2+(fl?-2:3),(p[1]+q[1])/2+(fl?-5:5),q[0],q[1]);}
+  g.quadraticCurveTo(fl?28:36,fl?-14:-40,8,-30);g.closePath();
+  const wc=o.wing;F(g,o.bone?'rgba(150,215,255,.38)':LG(g,0,fl?-46:-74,0,fl?-6:-30,wc[0],wc[1]),1.5,o.bone?'#d8f0ff':OL);
+  for(const t of T)L(g,6,-40,t[0],t[1],o.bone?'#e8f4ff':o.arm||'#2a1408',o.bone?2.2:1.5);
+  if(o.bone)for(const t of T){E(g,t[0],t[1],1.7);F(g,'#e8f4ff',.8);}
+  g.restore();}
+ // Hinterbeine
+ for(const sd of[-1,1]){P(g,[[sd*6,-26],[sd*13,-24],[sd*14,-14],[sd*11,-10],[sd*6,-16]]);F(g,bc||o.body[1],1.3);}
+ // Rumpf von hinten
+ if(o.bone){E(g,0,-34,10,14);F(g,'rgba(120,190,240,.25)',1.2,'#a8d8ff');L(g,0,-48,0,-22,'#e0e4d8',4);L(g,0,-48,0,-22,'#8a96a0',1);
+  for(let i=0;i<5;i++){const y=-44+i*5;for(const sd of[-1,1]){g.beginPath();g.moveTo(0,y);g.quadraticCurveTo(sd*10,y+1,sd*9,y+6);g.strokeStyle=OL;g.lineWidth=3;g.stroke();g.strokeStyle='#e4e6da';g.lineWidth=1.6;g.stroke();}}}
+ else{E(g,0,-34,12,15);F(g,LG(g,-12,0,12,0,o.body[1],o.body[0],o.body[1]),1.8);
+  for(let i=0;i<6;i++){const y=-46+i*4.6;P(g,[[-2.4,y],[0,y-5],[2.4,y]]);F(g,o.horn,.9);}
+  if(o.lava){g.save();g.shadowColor='#ff6a10';g.shadowBlur=6;for(const[a,b,c,d]of[[-8,-38,-3,-30],[8,-40,3,-32],[-6,-26,5,-24]])L(g,a,b,c,d,'#ffa030',1.4);g.restore();}}
+ // Hals + Hinterkopf (Hörner nach hinten, kein Gesicht)
+ P(g,[[-5,-46],[-4,-56],[4,-56],[5,-46]]);F(g,bc||LG(g,-5,0,5,0,o.body[1],o.head||o.body[0],o.body[1]),1.4);
+ E(g,0,-60,7,6);F(g,o.bone?'#ecebe0':LG(g,0,-66,0,-54,o.head||o.body[0],o.body[1]),1.5);
+ for(const sd of[-1,1]){P(g,[[sd*4,-63],[sd*12,-72],[sd*9,-64],[sd*6,-58]]);F(g,o.horn,1.1);}
+ if(o.crown)for(const x of[-4,0,4]){P(g,[[x-1.6,-64],[x,-64-(x?6:8)],[x+1.6,-64]]);F(g,'#ffc040',.8);}
+ if(o.rider){P(g,[[-6,-36],[-8,-50],[-4,-60],[0,-63],[4,-60],[8,-50],[6,-36]]);F(g,LG(g,-8,0,8,0,'#141418','#3a3a42','#141418'),1.5);
+  L(g,0,-61,0,-40,'rgba(0,0,0,.4)',1.1);L(g,5,-48,16,-70,OL,3.2);L(g,5,-48,16,-70,'#c8ccd4',1.6);}
+ g.restore();}
+const WYRMB={whelp:WYRM.whelp,frostwyrm:WYRM.frostwyrm,dragonlord:Object.assign({crown:1},WYRM.dragonlord),shade:WYRM.shade};
+// ---- Troll / Ugrak von hinten ----
+function drawTrollBack(g,king){
+ for(const s of[-1,1]){P(g,[[s*4,-24],[s*13,-24],[s*14,-4],[s*16,0],[s*3,0],[s*4,-6]]);F(g,LG(g,0,-24,0,0,'#6a8a6a','#3a5a40'),1.6);}
+ P(g,[[-15,-26],[15,-26],[12,-14],[0,-11],[-12,-14]]);F(g,king?'#5a2a1a':'#5a4228',1.5);
+ // Waffe über der rechten Schulter (hinter dem Rücken)
+ g.save();g.translate(14,-52);g.rotate(.5);
+ if(king){P(g,[[-3,8],[3,8],[5,-34],[-5,-34]]);F(g,LG(g,-6,0,6,0,'#4a2e16','#8a5a2a','#4a2e16'),1.5);E(g,0,-38,9,11);F(g,LG(g,-9,-48,9,-28,'#7a5a3a','#3a2414'),1.7);
+  for(const a of[0,1,2,3,4,5]){const an=a*1.05,X=Math.cos(an)*13,Y=-38+Math.sin(an)*13;P(g,[[Math.cos(an)*8-1.5,-38+Math.sin(an)*8],[X,Y],[Math.cos(an)*8+1.5,-38+Math.sin(an)*8]]);F(g,'#d8d0c0',.8);}}
+ else{P(g,[[-3,8],[3,8],[5,-36],[-5,-36]]);F(g,LG(g,-5,0,5,0,'#3a2414','#7a5028','#3a2414'),1.5);
+  for(const[x,y,r]of[[0,-42,10],[-9,-36,7],[8,-38,7],[-3,-50,7]]){E(g,x,y,r);F(g,LG(g,0,y-r,0,y+r,'#5a9a3a','#244a18'),1.3);}}
+ g.restore();
+ // breiter Rücken
+ P(g,[[-18,-24],[-22,-48],[-12,-64],[12,-64],[22,-48],[18,-24],[0,-20]]);F(g,LG(g,-22,0,22,0,'#4a6a50','#86a882','#4a6a50'),2);
+ L(g,0,-62,0,-26,'rgba(30,50,30,.45)',1.6);for(const s of[-1,1]){E(g,s*8,-50,5,7);F(g,'rgba(200,220,180,.18)',0);}
+ for(const[x,y]of[[-12,-40],[10,-34],[6,-56]]){E(g,x,y,2.4,1.6);F(g,'rgba(40,70,40,.5)',0);}
+ if(king){P(g,[[-16,-62],[16,-62],[20,-30],[10,-24],[0,-28],[-10,-24],[-20,-30]]);F(g,LG(g,0,-62,0,-24,'#6a4a2a','#3a2414'),1.5);for(let i=0;i<5;i++)L(g,-14+i*7,-56,-15+i*7.4,-30,'#2a180c',1);}
+ // Arme
+ for(const s of[-1,1]){P(g,[[s*14,-60],[s*25,-46],[s*24,-30],[s*18,-30],[s*16,-44]]);F(g,'#5a7a5a',1.5);E(g,s*21,-28,5);F(g,'#5a7a5a',1.4);}
+ // Hinterkopf, tief zwischen den Schultern
+ E(g,0,-66,10,8);F(g,LG(g,0,-74,0,-58,'#9ab894','#5a7a5a'),1.6);
+ for(const s of[-1,1]){P(g,[[s*8,-68],[s*15,-74],[s*10,-64]]);F(g,'#5a7a5a',1);}
+ if(king){P(g,[[-9,-70],[-8,-80],[-4,-74],[0,-83],[4,-74],[8,-80],[9,-70]]);F(g,LG(g,0,-83,0,-70,'#f0e6c8','#a08a5a'),1.3);}}
+// ---- Sturmrufer von hinten ----
+function drawStormBack(g){
+ L(g,14,-2,16,-60,OL,4);L(g,14,-2,16,-60,'#6a4a2a',2.2);
+ g.save();g.shadowColor='#8ac8ff';g.shadowBlur=10;P(g,[[16,-60],[12,-66],[16,-74],[20,-66]]);F(g,LG(g,0,-74,0,-60,'#e8f8ff','#4a9aff'),1.2);g.restore();
+ P(g,[[-11,0],[-13,-16],[-9,-34],[9,-34],[13,-16],[11,0]]);F(g,LG(g,-13,0,13,0,'#1a2a5a','#3a5aa8','#1a2a5a'),1.6);
+ P(g,[[-9,-34],[9,-34],[11,-6],[0,-2],[-11,-6]]);F(g,LG(g,0,-34,0,-2,'#2a3a6a','#141e44'),1.3);// Umhang
+ bSeam(g,-3,-32,-5,-6);bSeam(g,3,-32,5,-6);
+ for(let i=0;i<5;i++){const x=-8+i*4;P(g,[[x,-8],[x+2,-3],[x+4,-8]]);F(g,'rgba(160,200,255,.35)',0);}
+ P(g,[[-12,-34],[-10,-44],[10,-44],[12,-34]]);F(g,'#7a6a5a',1.3);for(let i=0;i<6;i++)L(g,-10+i*4,-34,-9+i*4,-38,'#4a3a2a',1);
+ P(g,[[-8,-44],[-7,-56],[0,-62],[7,-56],[8,-44]]);F(g,LG(g,-8,0,8,0,'#2a3a5a','#5a6a8a','#2a3a5a'),1.4);bSeam(g,0,-60,0,-45);
+ for(const s of[-1,1]){E(g,s*13,-32,3.2);F(g,'#3a5aa8',1.1);}}
+// ---- Netzwerfer von hinten ----
+function drawNetterBack(g){
+ for(const s of[-1,1]){P(g,[[s*2,-14],[s*7,-14],[s*7,-2],[s*9,0],[s*2,0]]);F(g,'#5a4a2a',1.3);}
+ P(g,[[-9,-12],[-10,-26],[10,-26],[9,-12]]);F(g,LG(g,-10,0,10,0,'#4a5a2a','#7a8a3a','#4a5a2a'),1.5);L(g,-9,-15,9,-15,'#3a2414',2.4);
+ E(g,0,-30,6,6);F(g,LG(g,0,-36,0,-24,'#9aa864','#5a6a3a'),1.4);for(const s of[-1,1]){P(g,[[s*5,-32],[s*12,-36],[s*6,-29]]);F(g,'#8a9a58',1);}
+ P(g,[[-6,-33],[0,-38],[6,-33],[4,-30],[-4,-30]]);F(g,'#4a3a2a',1.1);
+ // Netzbündel mittig auf dem Rücken
+ E(g,0,-19,7.5,7);F(g,'#b8a878',1.3);g.save();E(g,0,-19,7.5,7);g.clip();for(let i=-3;i<4;i++){L(g,-7+i*4,-27,7+i*4,-11,'#6a5a3a',.8);L(g,7+i*4,-27,-7+i*4,-11,'#6a5a3a',.8);}g.restore();
+ L(g,-8,-25,8,-13,'#4a2e16',1.6);
+ L(g,8,-22,14,-28,'#7a8a3a',3.2);g.save();g.translate(17,-31);E(g,0,0,6,5);F(g,'rgba(200,184,130,.35)',1,'#8a7a4a');for(let i=-1;i<=1;i++){L(g,i*3,-4.5,i*3,4.5,'#8a7a4a',.7);L(g,-5.5,i*2.4,5.5,i*2.4,'#8a7a4a',.7);}g.restore();}
+// ---- Bannerträger von hinten ----
+function drawBannerBack(g){
+ for(const s of[-1,1]){P(g,[[s*2,-14],[s*7,-14],[s*7,-2],[s*9,0],[s*2,0]]);F(g,'#4a3a2a',1.3);}
+ P(g,[[-10,-12],[-11,-34],[11,-34],[10,-12]]);F(g,LG(g,-11,0,11,0,'#6a6a72','#b0b0b8','#6a6a72'),1.6);
+ L(g,0,-33,0,-14,'rgba(0,0,0,.3)',1.2);L(g,-10,-14,10,-14,'#4a2e16',2.6);
+ // Fahnenstange auf dem Rücken, Banner flattert darüber
+ L(g,-4,-6,-4,-84,OL,4);L(g,-4,-6,-4,-84,'#7a5028',2.2);P(g,[[-6,-84],[-4,-90],[-2,-84]]);F(g,'#e0c060',1);
+ g.beginPath();g.moveTo(-3,-82);g.lineTo(-24,-80);g.quadraticCurveTo(-20,-70,-26,-60);g.lineTo(-16,-56);g.lineTo(-10,-62);g.lineTo(-3,-58);g.closePath();F(g,LG(g,-26,-82,-3,-58,'#1a4a24','#2a7a3a'),1.4);
+ L(g,-3,-82,-24,-80,'#e8c860',1.4);
+ E(g,0,-40,6,6.5);F(g,LG(g,0,-47,0,-34,'#c8c8d0','#6a6a72'),1.3);P(g,[[-7,-40],[-6,-35],[6,-35],[7,-40]]);F(g,'#5a5a62',1);L(g,0,-47,0,-53,'#c83020',2.2);
+ E(g,-12,-28,3.2);F(g,'#9a9aa2',1.1);E(g,12,-28,3.2);F(g,'#9a9aa2',1.1);L(g,13,-26,22,-36,OL,3);L(g,13,-26,22,-36,'#d8dce2',1.4);}
+// ---- Grubenkriecher von hinten ----
+function drawBeetleBack(g){
+ for(let i=0;i<3;i++)for(const s of[-1,1]){const y=-6-i*6;L(g,s*8,y,s*16,y+5,OL,3);L(g,s*8,y,s*16,y+5,'#3a2a1a',1.6);}
+ E(g,0,-26,7,5);F(g,LG(g,0,-31,0,-21,'#5a4a7a','#1e1630'),1.4);
+ for(const s of[-1,1]){g.beginPath();g.moveTo(s*3,-29);g.quadraticCurveTo(s*8,-36,s*3,-38);F(g,'#d8c8a0',1);}
+ E(g,0,-14,12,13);F(g,LG(g,-12,0,12,0,'#241a34','#6a5a8a','#241a34'),1.8);L(g,0,-27,0,-1,'rgba(0,0,0,.55)',1.4);
+ for(const[x,y]of[[-6,-18],[6,-18],[-5,-8],[5,-8]]){P(g,[[x-2,y],[x,y-5],[x+2,y]]);F(g,'#b8a8d8',.8);}}
+// ---- Borkenhüter von hinten ----
+function drawTreantBack(g){
+ for(const s of[-1,1]){P(g,[[s*3,-30],[s*14,-30],[s*16,-8],[s*22,0],[s*12,0],[s*8,-4],[s*4,0],[s*3,-12]]);F(g,LG(g,0,-30,0,0,'#6a4a2a','#3a2414'),1.6);}
+ for(const s of[-1,1]){P(g,[[s*16,-60],[s*30,-46],[s*34,-28],[s*28,-26],[s*24,-42],[s*14,-50]]);F(g,'#5a3a1c',1.5);for(const d of[-3,0,3])L(g,s*31,-29,s*(32+d),-22,'#5a3a1c',2);}
+ P(g,[[-16,-28],[-20,-62],[-12,-80],[12,-82],[20,-62],[16,-28]]);F(g,LG(g,-20,0,20,0,'#4a3018','#7a5430','#4a3018'),2);
+ for(const x of[-12,-5,2,9,14]){g.beginPath();g.moveTo(x,-30);g.quadraticCurveTo(x-2,-55,x+1,-78);g.strokeStyle='rgba(30,18,6,.55)';g.lineWidth=1.3;g.stroke();}
+ E(g,-4,-50,4,6);F(g,'#3a2410',1);E(g,-4,-50,2,3);F(g,'#2a1a0a',0);// Astloch
+ for(const[x,y]of[[8,-40],[-10,-36]]){E(g,x,y,3.4,2);F(g,'#4a8a2a',.8);}// Moos
+ for(const[x,y,r]of[[-14,-92,13],[12,-94,14],[0,-104,15],[-22,-80,9],[22,-80,9],[0,-86,13]]){E(g,x,y,r);F(g,LG(g,0,y-r,0,y+r,'#5a982e','#24501a'),1.4);}
+ for(const[x,y]of[[-10,-98],[8,-100],[16,-88],[-18,-86]]){E(g,x,y,2.2);F(g,'#98d060',0);}}
+// ---- Sylvara von hinten ----
+function drawThornBack(g){
+ g.save();g.translate(-8,-28);g.rotate(Math.PI);g.beginPath();g.arc(0,0,15,-1.3,1.3);g.strokeStyle=OL;g.lineWidth=3.4;g.stroke();g.strokeStyle='#4a6a24';g.lineWidth=2;g.stroke();g.restore();
+ P(g,[[-12,0],[-14,-12],[-9,-30],[9,-30],[13,-12],[11,0]]);F(g,LG(g,-14,0,13,0,'#2a4a1a','#5a8a34','#2a4a1a'),1.6);
+ for(let i=0;i<5;i++){const x=-10+i*5;P(g,[[x,0],[x+2.5,-7],[x+5,0]]);F(g,'#3a6a24',1);}
+ P(g,[[-8,-30],[-9,-42],[9,-42],[8,-30]]);F(g,LG(g,0,-42,0,-30,'#8a6a42','#5a4024'),1.4);
+ // Blätterhaar fällt über den Rücken
+ P(g,[[-7,-50],[-9,-30],[0,-24],[9,-30],[7,-50]]);F(g,LG(g,0,-50,0,-24,'#3a7a22','#24501a'),1.2);
+ E(g,0,-49,6.5,7);F(g,LG(g,0,-56,0,-42,'#4a9a2a','#2a6a1a'),1.4);
+ for(const[x,y,a]of[[-6,-34,-.3],[0,-30,0],[6,-34,.3],[-4,-42,-.2],[4,-42,.2]]){g.save();g.translate(x,y);g.rotate(a);E(g,0,-2,2.2,4.2);F(g,'#5aaa34',.8);g.restore();}
+ for(const s of[-1,1]){L(g,s*4,-55,s*9,-66,'#6a4a2a',2);L(g,s*7,-62,s*12,-64,'#6a4a2a',1.6);}}
+Object.assign(DART,{
+ storm_b:{fn:drawStormBack,m:.86},netter_b:{fn:drawNetterBack,m:.92},troll_b:{fn:g=>drawTrollBack(g,0),m:.82},trollking_b:{fn:g=>drawTrollBack(g,1),m:.8},
+ banner_b:{fn:drawBannerBack,m:.78},beetle_b:{fn:drawBeetleBack,m:.95},treant_b:{fn:drawTreantBack,m:.78},thorn_b:{fn:drawThornBack,m:.84}});
+for(const k of['whelp','frostwyrm','dragonlord','shade']){const o=WYRMB[k],m=DART[k].m,hd=[0,-64*o.s];
+ DART[k+'_b']={fn:g=>drawWyrmBack(g,o),m,head:hd};DART[k+'_b_f']={fn:g=>drawWyrmBack(g,Object.assign({flap:1},o)),m};}
+
 // ---- duell-sim.js ----
 // ===== Turmwacht Duell – deterministische Spiellogik =====
 // Fester Tick (20/s), eigener Zufallsgenerator im Zustand, keine DOM-/Render-Abhängigkeit.
@@ -1180,7 +1548,7 @@ function create(cfg){cfg=cfg||{};const decks=cfg.decks||[B.defaultDeck,B.default
  for(const side of[0,1])for(const T of TPOS){const st=B.towers[T.sub];addEnt(S,{side,cls:'tower',card:T.sub,sub:T.sub,lane:T.lane,x:T.x,y:side?FH-T.y:T.y,r:st.r,hp:st.hp,maxhp:st.hp,st,active:T.sub!=='keep',mass:1e9});}
  for(const e of S.ents)if(e.cls==='tower'){const k=S.mods[e.side].towerHp;if(k){e.hp=e.maxhp=Math.round(e.hp*k);}}
  return S;}
-function addEnt(S,o){const e=Object.assign({id:S.nid++,ox:o.x,oy:o.y,tgt:0,cd:0,frz:0,stun:0,slowT:0,slowF:0,dot:0,dotT:0,dep:0,face:o.side?1:-1,atk:0,atkT:-99,air:false,mass:1,retg:0,lock:false,vx:0,vy:0,sw:0,swT:0,dep0:0,born:S.tick},o);if(e.dep>0)e.dep0=e.dep;S.ents.push(e);return e;}
+function addEnt(S,o){const e=Object.assign({id:S.nid++,ox:o.x,oy:o.y,tgt:0,cd:0,frz:0,stun:0,slowT:0,slowF:0,dot:0,dotT:0,dep:0,face:o.side?1:-1,atk:0,atkT:-99,air:false,mass:1,retg:0,lock:false,vx:0,vy:0,sw:0,swT:0,dep0:0,born:S.tick,rootT:0,gndT:0,fearT:0,bufT:0,bufF:0,hasteT:0,hasteF:0,auraT:0,auraF:0,thT:0,thF:0,bur:false,amb:false,burCd:0,fearCd:1},o);if(e.dep>0)e.dep0=e.dep;S.ents.push(e);return e;}
 function ev(S,k,o){S.ev.push(Object.assign({k},o||{}));}
 function byId(S,id){if(!id)return null;for(const e of S.ents)if(e.id===id)return e.hp>0?e:null;return null;}
 function tower(S,side,sub,lane){return S.ents.find(e=>e.cls==='tower'&&e.side===side&&e.sub===sub&&(lane==null||e.lane===lane))||null;}
@@ -1231,7 +1599,16 @@ const ghost=e=>e.cls==='unit'&&e.dep>0;
 function enemiesIn(S,side,x,y,r,o){o=o||{};const out=[];for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(o.noAir&&e.air)continue;if(o.unitsOnly&&e.cls!=='unit')continue;if(d2(e.x,e.y,x,y)<=r+e.r*.5)out.push(e);}return out;}
 function castSpell(S,side,id,x,y){const s=CARDS[id].s;
  if(id==='firerain'){S.zones.push({k:'firerain',side,x,y,r:s.r,t:s.delay,max:s.delay,dmg:s.dmg,tower:s.tower});ev(S,'firerain',{side,x,y,r:s.r});}
- else if(id==='frost'){for(const e of enemiesIn(S,side,x,y,s.r)){hurt(S,e,e.cls==='unit'?s.dmg:s.dmg*s.tower,side);e.frz=Math.max(e.frz,s.freeze);}ev(S,'frost',{side,x,y,r:s.r});}}
+ else if(id==='frost'){for(const e of enemiesIn(S,side,x,y,s.r)){hurt(S,e,e.cls==='unit'?s.dmg:s.dmg*s.tower,side);e.frz=Math.max(e.frz,s.freeze);}ev(S,'frost',{side,x,y,r:s.r});}
+ else if(s.buff){S.zones.push({k:'chant',side,x,y,r:s.r,t:s.t,max:s.t,buff:s.buff,haste:s.haste});ev(S,'chant',{side,x,y,r:s.r});}}
+// 0.7: Buffs (Kriegsgesang/Kriegsschrei/Banner) – Schadens- und Tempo-Multiplikator
+function setBuf(S,o,f,t){const cur=o.bufT>S.tick?o.bufF:0;o.bufF=Math.max(cur,f);o.bufT=Math.max(o.bufT,S.tick+Math.round(t/TICK));}
+function setHaste(S,o,f,t){const cur=o.hasteT>S.tick?o.hasteF:0;o.hasteF=Math.max(cur,f);o.hasteT=Math.max(o.hasteT,S.tick+Math.round(t/TICK));}
+function dmul(S,e){let m=1;if(e.bufT>S.tick)m+=e.bufF;if(e.auraT>S.tick)m+=e.auraF;return m;}
+function hmul(S,e){return e.hasteT>S.tick?1+e.hasteF:1;}
+function scare(S,o,src,t){if(o.cls!=='unit'||o.air||o.bur||o.hp<=0)return;const ft=o.hero?t*.5:t;if(ft>o.fearT){o.fearT=ft;o.fearX=src.x;o.fearY=src.y;}}
+function snare(S,o,t){if(o.cls!=='unit'||o.hp<=0)return;const d=o.hero?t*.5:t;o.rootT=Math.max(o.rootT,d);if(o.air)o.gndT=Math.max(o.gndT,d);}
+function segD(px,py,x0,y0,x1,y1){const dx=x1-x0,dy=y1-y0,l=dx*dx+dy*dy||1;let k=((px-x0)*dx+(py-y0)*dy)/l;k=clamp(k,0,1);return d2(px,py,x0+dx*k,y0+dy*k);}
 function ability(S,side,x,y){const p=S.p[side],h=byId(S,p.heroId);if(!h||p.heroCharge<1||h.leap||h.dep>0||h.frz>0||h.stun>0)return false;const A=CARDS[h.card].abil;
  let tx=x,ty=y;if(A.reach){const d=d2(h.x,h.y,x,y);if(d>A.reach){tx=h.x+(x-h.x)*A.reach/d;ty=h.y+(y-h.y)*A.reach/d;}}
  tx=clamp(tx,8,FW-8);ty=clamp(ty,8,FH-8);
@@ -1239,13 +1616,20 @@ function ability(S,side,x,y){const p=S.p[side],h=byId(S,p.heroId);if(!h||p.heroC
  else if(A.key==='nova'){for(const e of enemiesIn(S,side,h.x,h.y,A.r)){hurt(S,e,e.cls==='unit'?A.dmg:A.dmg*.4,side);e.frz=Math.max(e.frz,e.cls==='tower'?A.freeze*.5:A.freeze);}ev(S,'nova',{side,x:h.x,y:h.y,r:A.r});}
  else if(A.key==='cloud'){S.zones.push({k:'cloud',side,x:tx,y:ty,r:A.r,t:A.t,max:A.t,dps:A.dps,slow:A.slow,air:true});ev(S,'cloud',{side,x:tx,y:ty,r:A.r});}
  else if(A.key==='summon'){if(inRiver(tx,ty))ty=(ty>MIDY)?RY1+4:RY0-4;const f=FORM[4];for(const[dx,dy]of f)spawnUnit(S,side,A.summon.card,tx+dx*1.3,ty+dy*1.3,.5,laneOf(tx));ev(S,'summon',{side,x:tx,y:ty});}
+ else if(A.key==='roar'){for(const o of S.ents)if(o.side===side&&o.cls==='unit'&&o.hp>0&&!ghost(o)&&d2(o.x,o.y,h.x,h.y)<=A.r){setBuf(S,o,A.buff,A.t);setHaste(S,o,A.haste,A.t);}
+  for(const e of enemiesIn(S,side,h.x,h.y,A.r*.8,{noAir:true,unitsOnly:true}))scare(S,e,h,A.fear);ev(S,'roar',{side,x:h.x,y:h.y,r:A.r});}
+ else if(A.key==='roots'){for(const e of enemiesIn(S,side,tx,ty,A.r,{unitsOnly:true})){hurt(S,e,A.dmg,side);snare(S,e,A.t);}S.zones.push({k:'roots',side,x:tx,y:ty,r:A.r,t:A.t,max:A.t});ev(S,'roots',{side,x:tx,y:ty,r:A.r});}
+ else if(A.key==='fireline'){const x0=h.x,y0=h.y;for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(segD(e.x,e.y,x0,y0,tx,ty)<=A.w+e.r*.5)hurt(S,e,e.cls==='unit'?A.dmg:A.dmg*A.tower,side,true);}
+  ev(S,'fireline',{side,x0,y0,x1:tx,y1:ty,w:A.w});}
  p.heroCharge=0;ev(S,'abil',{side,key:A.key,hero:h.card});return true;}
 // ---------- Schaden ----------
-function hurt(S,e,amt,srcSide){if(!e||e.hp<=0||amt<=0||ghost(e))return;e.hp-=amt;e.hurtT=S.tick;
+function hurt(S,e,amt,srcSide,fire){if(!e||e.hp<=0||amt<=0||ghost(e))return;
+ if(fire&&e.st&&e.st.firevul){const fv=e.st.firevul;amt*=fv.f;if(!e.burn)ev(S,'burn',{id:e.id,x:e.x,y:e.y});e.burn=1;e.dot=fv.dps;e.dotT=Math.max(e.dotT,fv.burn);e.dotSide=srcSide;}// 0.7 Ent-Schwäche: Feuer
+ e.hp-=amt;e.hurtT=S.tick;
  if(e.cls==='tower'){S.stats[srcSide===0?0:1].dmgTower+=amt;if(e.sub==='keep')e.active=true;}
  if(e.hp<=0){e.hp=0;}}
 function splashAt(S,side,x,y,r,dmg,o){o=o||{};let n=0;for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(o.air===false&&e.air)continue;if(o.air===true&&!e.air)continue;
-  if(d2(e.x,e.y,x,y)<=r+e.r*.6){hurt(S,e,e.cls==='unit'?dmg:dmg*(o.tower==null?1:o.tower),side);n++;
+  if(d2(e.x,e.y,x,y)<=r+e.r*.6){hurt(S,e,e.cls==='unit'?dmg:dmg*(o.tower==null?1:o.tower),side,o.fire);n++;if(o.each)o.each(e);
    if(o.knock&&e.cls==='unit'&&!e.air){const d=d2(e.x,e.y,x,y)||1;const k=o.knock*(1-Math.min(1,d/(r*1.2)))+o.knock*.4;e.x+=(e.x-x)/d*k;e.y+=(e.y-y)/d*k;e.stun=Math.max(e.stun,.5);fixPos(e,e.oy);}
    if(o.stun)e.stun=Math.max(e.stun,o.stun);}}return n;}
 // ---------- Wegfindung ----------
@@ -1271,12 +1655,13 @@ function steerGoal(e,tx,ty,chase){if(e.air)return[tx,ty];
  // direkt am Ufer, aber neben dem Brückenstreifen: erst seitlich auf die Brücke einfädeln, nicht ins Wasser drücken
  if(by0<10&&ox<=BW/2+e.r+6)return[lx,e.y];
  const by=up?e.y-RY1:RY0-e.y,look=Math.max(6,Math.min(44,8+ox*.45,by));return[lx,up?RY1+look:RY0-look];}
-function moveTo(S,e,tx,ty,spd,chase,tid){let[gx,gy]=steerGoal(e,tx,ty,chase);
+function moveTo(S,e,tx,ty,spd,chase,tid){let[gx,gy]=steerGoal(e,tx,ty,chase);const y0=e.yT;
  // 0.6.1 Vorfahrt am Brückenkopf: wer schon auf der Brücke ist, darf zuerst herunter. Passt ein entgegenkommender Gegner
  // (nicht mein Ziel) nicht neben mich auf den Steg, trete ich seitlich an den Brückenkopf statt frontal zu schieben.
  if(!e.air&&(e.y<RY0-1||e.y>RY1+1)&&needCross(e.y,ty)){const bx=laneBridge(e,tx,chase),up=e.y>MIDY,bk=up?e.y-RY1:RY0-e.y;
-  if(bk<40)for(const o of S.ents){if(o.side===e.side||o.cls!=='unit'||o.air||o.hp<=0||o.id===tid||o.lock)continue;if(Math.abs(o.x-bx)>BW/2||!(o.y>RY0-2&&o.y<RY1+2))continue;
-   if(e.r+o.r<BW/2+2)continue;const cs=e.x>=o.x?1:-1;gx=bx+cs*(BW/2+e.r+3);gy=up?Math.max(e.y,RY1+e.r+4):Math.min(e.y,RY0-e.r-4);break;}}
+  if(bk<40)for(const o of S.ents){if(o.side===e.side||o.cls!=='unit'||o.air||o.hp<=0||o.id===tid||o.lock||o.rootT>0||o.frz>0||o.stun>0)continue;if(Math.abs(o.x-bx)>BW/2||!(o.y>RY0-2&&o.y<RY1+2))continue;
+   if(e.r+o.r<BW/2+2)continue;const cs=e.x>=o.x?1:-1;gx=bx+cs*(BW/2+e.r+3);gy=up?Math.max(e.y,RY1+e.r+4):Math.min(e.y,RY0-e.r-4);e.yld=o.id;e.yT=(e.yT||0)+1;break;}}
+ if(e.yT===y0)e.yT=0;
  let dx=gx-e.x,dy=gy-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d<1e-6)return;dx/=d;dy/=d;
  // seitliches Ausweichen um kämpfende Verbündete (fächert Gruppen am Ziel auf)
  let lx=0,ly=0;for(const o of S.ents){if(o===e||o.side!==e.side||o.cls!=='unit'||o.air!==e.air||o.hp<=0||!o.lock)continue;const ax=o.x-e.x,ay=o.y-e.y,m=e.r+o.r+8;if(ax>m||ax<-m||ay>m||ay<-m)continue;
@@ -1295,7 +1680,7 @@ function moveTo(S,e,tx,ty,spd,chase,tid){let[gx,gy]=steerGoal(e,tx,ty,chase);
  const s=spd*TICK;e.vx+=(dx*s-e.vx)*STEER*2;e.vy+=(dy*s-e.vy)*STEER*2;const v=Math.sqrt(e.vx*e.vx+e.vy*e.vy);if(v>s){e.vx*=s/v;e.vy*=s/v;}
  if(d<=s&&!(lx||ly)){e.x=gx;e.y=gy;}else{e.x+=e.vx;e.y+=e.vy;}if(Math.abs(e.vx)>.08)e.face=e.vx<0?-1:1;e.mv=true;}
 // ---------- Zielwahl ----------
-function canHit(st,o){if(o.thrown||o.leap||o.hp<=0||ghost(o))return false;if(st.tg==='bld'&&o.cls==='unit')return false;if(o.air&&st.tg!=='any')return false;return true;}
+function canHit(st,o){if(o.thrown||o.leap||o.hp<=0||ghost(o)||o.bur)return false;if(st.tg==='bld'&&o.cls==='unit')return false;if(o.air&&st.tg!=='any'&&!(o.gndT>0))return false;return true;}// 0.7: bur = eingegraben, gndT = per Netz zu Boden gezogen
 function edge(e,o){return d2(e.x,e.y,o.x,o.y)-e.r-o.r;}
 const CLOSE=14;
 function inLane(o,l){if(o.cls==='unit')return(o.lane!=null?o.lane:laneOf(o.x))===l;if(o.cls==='tower')return o.lane<0||o.lane===l;return laneOf(o.x)===l;}
@@ -1311,16 +1696,25 @@ function acquire(S,e){const st=e.st,sight=st.sight||st.range+60;let best=null,bd
 function inRange(e,t){return edge(e,t)<=e.st.range+(e.xr||0)+(t.cls!=='unit'?2:0);}// xr: 'über die Schulter' im Gedränge
 function reach(e,t){if(e.lock||e.st.range>MELEE)return inRange(e,t);return edge(e,t)<=CONTACT+(t.cls!=='unit'?2:0);}
 // ---------- Angriff ----------
-function attack(S,e,t){const st=e.st;e.atk++;e.atkT=S.tick;if(t.x!==e.x)e.face=t.x<e.x?-1:1;
- if(st.bomb){S.bombs.push({side:e.side,x:t.cls==='unit'?t.x:e.x,y:t.cls==='unit'?t.y:e.y+(t.y>e.y?6:-6),t:.45,max:.45,dmg:st.dmg,r:st.splash,tower:1,small:true});ev(S,'drop',{x:e.x,y:e.y});return;}
- if(st.proj){const P=B.projectiles[st.proj];S.proj.push({id:S.nid++,side:e.side,kind:st.proj,x:e.x,y:e.y,z:e.air?34:(e.cls==='tower'?(e.sub==='keep'?70:58):(e.cls==='bld'?50:18)),ox:e.x,oy:e.y,tid:t.id,tx:t.x,ty:t.y,tz:t.air?30:12,spd:P.spd,arc:P.arc||0,dmg:st.dmg,splash:st.splash||0,src:e.card,st,
+function attack(S,e,t){const st=e.st;e.atk++;e.atkT=S.tick;if(t.x!==e.x)e.face=t.x<e.x?-1:1;const dm=dmul(S,e);
+ if(st.bomb){S.bombs.push({side:e.side,x:t.cls==='unit'?t.x:e.x,y:t.cls==='unit'?t.y:e.y+(t.y>e.y?6:-6),t:.45,max:.45,dmg:st.dmg*dm,r:st.splash,tower:1,small:true});ev(S,'drop',{x:e.x,y:e.y});return;}
+ if(st.proj){const P=B.projectiles[st.proj];S.proj.push({id:S.nid++,side:e.side,kind:st.proj,x:e.x,y:e.y,z:e.air?34:(e.cls==='tower'?(e.sub==='keep'?70:58):(e.cls==='bld'?50:18)),ox:e.x,oy:e.y,tid:t.id,tx:t.x,ty:t.y,tz:t.air?30:12,spd:P.spd,arc:P.arc||0,dmg:st.dmg*dm,splash:st.splash||0,src:e.card,st,fire:!!(st.fire||st.proj==='fireball'),net:!!(st.net&&(e.atk-1)%st.net.every===0),
   d0:Math.max(1,d2(e.x,e.y,t.x,t.y)),air:t.air});ev(S,'shot',{kind:st.proj,x:e.x,y:e.y,side:e.side});return;}
  e.sw=SWING;e.swT=t.id;}
-function strike(S,e,t){const st=e.st;hurt(S,t,st.dmg,e.side);ev(S,'hit',{x:t.x,y:t.y,air:t.air,melee:1,card:e.card,tx:e.x,ty:e.y,id:t.id,dmg:st.dmg});
+function strike(S,e,t){const st=e.st;let dmg=st.dmg*dmul(S,e);
+ if(e.amb){e.amb=false;dmg+=st.burrow.bonus;if(t.cls==='unit')t.stun=Math.max(t.stun,t.hero?st.burrow.stun*.5:st.burrow.stun);ev(S,'ambush',{x:t.x,y:t.y,side:e.side});}// 0.7 Überraschungsbiss
+ hurt(S,t,dmg,e.side);ev(S,'hit',{x:t.x,y:t.y,air:t.air,melee:1,card:e.card,tx:e.x,ty:e.y,id:t.id,dmg});
+ if(st.cleave){const C=st.cleave;let n=0;for(const o of S.ents){if(o===t||o.side===e.side||o.cls!=='unit'||o.air||o.hp<=0||o.thrown||o.leap||ghost(o))continue;if(d2(o.x,o.y,t.x,t.y)<=C.r+o.r*.5){hurt(S,o,dmg*C.f,e.side);n++;}}ev(S,'cleave',{x:t.x,y:t.y,r:C.r,n,face:e.face});}
+ if(t.thT>S.tick&&t.thF&&e.cls==='unit'&&e.hp>0){hurt(S,e,dmg*t.thF,t.side);ev(S,'thorns',{x:e.x,y:e.y,id:e.id});}// 0.7 Dornenaura
  if(t.cls==='unit'&&!t.air&&t.hp>0&&e.mass>t.mass*1.5&&!ghost(t)){const d=d2(e.x,e.y,t.x,t.y)||1,k=Math.min(7,(1-t.mass/e.mass)*7);const py=t.y;t.x+=(t.x-e.x)/d*k;t.y+=(t.y-e.y)/d*k;fixPos(t,py);ev(S,'knock',{id:t.id,amt:k,x:t.x,y:t.y});}}
 function impact(S,p,t){const st=p.st;
- if(p.splash){splashAt(S,p.side,p.tx,p.ty,p.splash,p.dmg,{air:!!p.air});ev(S,'boom',{x:p.tx,y:p.ty,r:p.splash,kind:p.kind,air:p.air});}
- else if(t)hurt(S,t,p.dmg,p.side);
+ if(p.splash){const sl=st.slow;splashAt(S,p.side,p.tx,p.ty,p.splash,p.dmg,{air:!!p.air,fire:p.fire,each:sl?(o=>{if(o.cls==='unit'&&o.hp>0&&o!==t){o.slowT=Math.max(o.slowT,sl.t);o.slowF=Math.max(o.slowF,sl.f);}}):null});ev(S,'boom',{x:p.tx,y:p.ty,r:p.splash,kind:p.kind,air:p.air});}
+ else if(t)hurt(S,t,p.dmg,p.side,p.fire);
+ if(st.chain&&t){const C=st.chain,seen=new Set([t.id]),pts=[[t.x,t.y,t.air?1:0]];let cur=t,dmg=p.dmg;// 0.7 Kettenblitz
+  for(let i=0;i<C.n;i++){dmg*=C.f;let best=null,bd=1e9;for(const o of S.ents){if(o.side===p.side||o.cls!=='unit'||seen.has(o.id)||!canHit(st,o))continue;const d=d2(o.x,o.y,cur.x,cur.y);if(d<=C.r+o.r&&d<bd){bd=d;best=o;}}
+   if(!best)break;seen.add(best.id);hurt(S,best,dmg,p.side);pts.push([best.x,best.y,best.air?1:0]);cur=best;}
+  ev(S,'chain',{pts,side:p.side});}
+ if(p.net&&t&&t.hp>0&&t.cls==='unit'){snare(S,t,st.net.t);ev(S,'net',{id:t.id,x:t.x,y:t.y,air:t.air});}
  if(t&&t.hp>0&&t.cls==='unit'){if(st.slow){t.slowT=Math.max(t.slowT,st.slow.t);t.slowF=Math.max(t.slowF,st.slow.f);}if(st.dot){t.dot=st.dot.dps;t.dotT=st.dot.t;t.dotSide=p.side;}}
  if(st.puddle){S.zones.push({k:'puddle',side:p.side,x:p.tx,y:p.ty,r:st.puddle.r,t:st.puddle.t,max:st.puddle.t,dps:st.puddle.dps,slow:st.puddle.slow});ev(S,'splash',{x:p.tx,y:p.ty});}
  ev(S,'impact',{x:p.tx,y:p.ty,kind:p.kind,air:p.air,id:t?t.id:0});}
@@ -1331,22 +1725,37 @@ function updUnit(S,e){
  if(e.leap){const L=e.leap;L.t+=TICK;const k=Math.min(1,L.t/L.max);e.x=L.x0+(L.x1-L.x0)*k;e.y=L.y0+(L.y1-L.y0)*k;
   if(k>=1){e.leap=null;e.lane=laneOf(e.x);const A=CARDS[e.card].abil;splashAt(S,e.side,e.x,e.y,A.r,A.dmg,{tower:.5,stun:A.stun});ev(S,'slam',{x:e.x,y:e.y,r:A.r,side:e.side});fixPos(e,e.y);}return;}
  const st=e.st;e.mv=false;
- if(e.dotT>0){e.dotT-=TICK;hurt(S,e,e.dot*TICK,e.dotSide);}
+ if(e.dotT>0){e.dotT-=TICK;hurt(S,e,e.dot*TICK,e.dotSide);}else if(e.burn)e.burn=0;
+ if(e.rootT>0)e.rootT-=TICK;if(e.gndT>0)e.gndT-=TICK;if(e.burCd>0)e.burCd-=TICK;
  if(e.slowT>0){e.slowT-=TICK;if(e.slowT<=0)e.slowF=0;}
  if(e.frz>0){e.frz-=TICK;return;}if(e.stun>0){e.stun-=TICK;return;}
- const sm=e.slowT>0?1-e.slowF:1;
+ const sm=(e.slowT>0?1-e.slowF:1)*hmul(S,e);
+ // 0.7 Auren (Banner: Schaden+Heilung, Dornen: Rückschaden) – alle 0,5 s aufgefrischt
+ if((st.aura||st.thorns)&&(S.tick+e.id)%10===0){const A=st.aura,T=st.thorns,r=A?A.r:T.r;for(const o of S.ents){if(o.side!==e.side||o.cls!=='unit'||o.hp<=0||ghost(o)||d2(o.x,o.y,e.x,e.y)>r)continue;
+   if(A){o.auraF=Math.max(o.auraT>S.tick?o.auraF:0,A.dmg);o.auraT=S.tick+12;if(o.hp<o.maxhp)o.hp=Math.min(o.maxhp,o.hp+A.hps*.5);}if(T){o.thF=T.f;o.thT=S.tick+12;}}}
+ // 0.7 Schreckensschrei: Bodentruppen in der Nähe fliehen kurz
+ if(st.fear){e.fearCd-=TICK;if(e.fearCd<=0){let n=0;for(const o of S.ents)if(o.side!==e.side&&o.cls==='unit'&&!o.air&&!o.bur&&o.hp>0&&!ghost(o)&&!o.thrown&&!o.leap&&d2(o.x,o.y,e.x,e.y)<=st.fear.r){scare(S,o,e,st.fear.t);n++;}
+   if(n){e.fearCd=st.fear.every;ev(S,'fear',{x:e.x,y:e.y,r:st.fear.r,side:e.side});}else e.fearCd=.3;}}
+ // 0.7 Furcht: weg von der Quelle laufen (nur diesseits des Flusses), nicht angreifen
+ if(e.fearT>0){e.fearT-=TICK;e.lock=false;e.tgt=0;e.sw=0;if(e.rootT>0){e.vx*=.5;e.vy*=.5;return;}const fx=e.x-e.fearX,fy=e.y-e.fearY,fd=Math.sqrt(fx*fx+fy*fy)||1;let tx=e.x+fx/fd*30,ty=e.y+fy/fd*30;
+  const up=e.y>MIDY;ty=up?Math.max(ty,RY1+6):Math.min(ty,RY0-6);tx=clamp(tx,10,FW-10);moveTo(S,e,tx,ty,st.spd*sm*1.1,false,0);fixPos(e,e.oy);return;}
  if(st.heal){e.healT=(e.healT||0)-TICK;if(e.healT<=0){e.healT=1;let n=0;for(const o of S.ents)if(o.side===e.side&&o.cls==='unit'&&o.hp>0&&o.hp<o.maxhp&&d2(o.x,o.y,e.x,e.y)<=st.heal.r){o.hp=Math.min(o.maxhp,o.hp+st.heal.hps);n++;}if(n)ev(S,'heal',{x:e.x,y:e.y,r:st.heal.r});}}
  // laufender Schlag: Treffer im Schlag-Frame
  if(e.sw>0){e.sw--;if(e.sw===0){const tt=byId(S,e.swT);if(tt&&canHit(st,tt)&&inRange(e,tt))strike(S,e,tt);}return;}
  // 0.6 Zielerfassung: ungebunden wird jeden Tick neu gewählt (sofortiges Abdrehen); nach Kontakt LOCKED bis Ziel tot ist
  let t=byId(S,e.tgt);if(t&&!canHit(st,t))t=null;
+ // 0.7-Fix: wer > 1 s am Brückenkopf einem (z. B. eingefrorenen) Gegner auf der Brücke Vorfahrt lässt, greift ihn an, statt ewig zu warten
+ if(!e.lock&&e.yT>20&&e.yld){const o=byId(S,e.yld);if(o&&canHit(st,o)){t=o;e.tgt=o.id;e.lock=true;}e.yT=0;}
  if(t&&e.lock&&t.cls==='unit'&&edge(e,t)>(st.sight||st.range+60)+20)t=null;
  if(!t)e.lock=false;
  if(!e.lock){e.xr=0;const n=acquire(S,e);t=n;e.tgt=t?t.id:0;}
  if(!t){e.vx*=.5;e.vy*=.5;return;}
- if(reach(e,t)){e.lock=true;e.inr=S.tick;e.vx*=.3;e.vy*=.3;if(t.x!==e.x)e.face=t.x<e.x?-1:1;e.cd-=TICK*sm;if(e.cd<=0){attack(S,e,t);e.cd=st.hit;}}
+ if(reach(e,t)){if(e.bur){e.bur=false;e.amb=true;e.burCd=st.burrow.cd;ev(S,'unburrow',{x:e.x,y:e.y,id:e.id});}e.lock=true;e.inr=S.tick;e.vx*=.3;e.vy*=.3;if(t.x!==e.x)e.face=t.x<e.x?-1:1;e.cd-=TICK*sm;if(e.cd<=0){attack(S,e,t);e.cd=st.hit;}}
  else{// Ausholzeit nur nach echtem Laufen – nicht, wenn das Ziel gerade knapp aus der Reichweite driftet (sonst nie ein Schuss)
-  e.cd=S.tick-(e.inr??-99)<=10?e.cd-TICK:Math.max(e.cd-TICK,st.hit*.35);moveTo(S,e,t.x,t.y,st.spd*sm*(e.sf||1),t.cls!=='tower',t.id);fixPos(e,e.oy);
+  e.cd=S.tick-(e.inr??-99)<=10?e.cd-TICK:Math.max(e.cd-TICK,st.hit*.35);
+  if(st.burrow&&!e.bur&&!(e.burCd>0)&&!e.lock){e.bur=true;e.amb=false;ev(S,'burrow',{x:e.x,y:e.y,id:e.id});}// 0.7 Eingraben beim Laufen
+  if(e.rootT>0){e.vx=0;e.vy=0;e.pt=0;e.px=e.x;e.py=e.y;return;}// 0.7 Netz/Wurzeln: steht still
+  moveTo(S,e,t.x,t.y,st.spd*sm*(e.sf||1),t.cls!=='tower',t.id);fixPos(e,e.oy);
   // 0.6.1 Stau-Erkennung: kaum Fortschritt über 0,75 s -> Nahkämpfer in Waffenreichweite schlagen zu, sonst Ausweichmanöver
   if(++e.pt>=15){const mv=d2(e.x,e.y,e.px,e.py);e.px=e.x;e.py=e.y;e.pt=0;
    if(mv<st.spd*sm*.75*.25){e.stk++;if(st.range<=MELEE&&edge(e,t)<=st.range+e.r+(t.cls!=='unit'?2:0)){e.lock=true;e.xr=e.r;e.stk=0;}
@@ -1370,7 +1779,9 @@ function updProj(S){const keep=[];for(const p of S.proj){p.ox=p.x;p.oy=p.y;const
   const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.sqrt(dx*dx+dy*dy),s=p.spd*TICK;
   if(d<=s+2){p.x=p.tx;p.y=p.ty;impact(S,p,t&&!t.thrown&&!t.leap?t:null);}else{p.x+=dx/d*s;p.y+=dy/d*s;keep.push(p);}}S.proj=keep;}
 function updZones(S){const keep=[];for(const z of S.zones){z.t-=TICK;
-  if(z.k==='firerain'){if(z.t<=0){splashAt(S,z.side,z.x,z.y,z.r,z.dmg,{tower:z.tower});ev(S,'fireboom',{x:z.x,y:z.y,r:z.r});continue;}keep.push(z);continue;}
+  if(z.k==='roots'){if(z.t>0)keep.push(z);continue;}
+  if(z.k==='chant'){for(const e of S.ents){if(e.side!==z.side||e.cls!=='unit'||e.hp<=0||ghost(e))continue;if(d2(e.x,e.y,z.x,z.y)<=z.r+e.r*.5){setBuf(S,e,z.buff,.15);setHaste(S,e,z.haste,.15);}}if(z.t>0)keep.push(z);continue;}
+  if(z.k==='firerain'){if(z.t<=0){splashAt(S,z.side,z.x,z.y,z.r,z.dmg,{tower:z.tower,fire:true});ev(S,'fireboom',{x:z.x,y:z.y,r:z.r});continue;}keep.push(z);continue;}
   for(const e of S.ents){if(e.side===z.side||e.cls!=='unit'||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(e.air&&!z.air)continue;if(d2(e.x,e.y,z.x,z.y)<=z.r+e.r*.5){hurt(S,e,z.dps*TICK,z.side);e.slowT=Math.max(e.slowT,.3);e.slowF=Math.max(e.slowF,z.slow);}}
   if(z.t>0)keep.push(z);}S.zones=keep;}
 function updBombs(S){const keep=[];for(const b of S.bombs){b.t-=TICK;if(b.t<=0){splashAt(S,b.side,b.x,b.y,b.r,b.dmg,{air:false,tower:b.tower,knock:b.knock});ev(S,'bomb',{x:b.x,y:b.y,r:b.r,big:!!b.big});}else keep.push(b);}S.bombs=keep;}
@@ -1378,7 +1789,7 @@ function separate(S){for(let it=0;it<4;it++)separate1(S);}
 function separate1(S){const U=[];for(const e of S.ents)if(e.cls==='unit'&&e.hp>0&&!e.thrown&&!e.leap)U.push(e);
  // Einheiten, die an einem Turm/Gebäude anliegen, gelten als 'eingeklemmt' (sehr schwer) -> Gedränge löst sich nach außen auf
  for(const e of U){e.wall=1;if(!e.air)for(const o of S.ents){if((o.cls!=='tower'&&o.cls!=='bld')||o.hp<=0)continue;if(d2(e.x,e.y,o.x,o.y)<e.r+o.r*.85+.6){e.wall=30;break;}}}
- for(let i=0;i<U.length;i++){const a=U[i];for(let j=i+1;j<U.length;j++){const b=U[j];if(a.air!==b.air)continue;let dx=b.x-a.x,dy=b.y-a.y;const m=a.r+b.r;if(dx>m||dx<-m||dy>m||dy<-m)continue;
+ for(let i=0;i<U.length;i++){const a=U[i];for(let j=i+1;j<U.length;j++){const b=U[j];if(a.air!==b.air||a.bur||b.bur)continue;let dx=b.x-a.x,dy=b.y-a.y;const m=a.r+b.r;if(dx>m||dx<-m||dy>m||dy<-m)continue;
    let d=Math.sqrt(dx*dx+dy*dy);if(d>=m)continue;if(d<1e-4){dx=((a.id+b.id)%2?1:-1)*.01;dy=.01;d=Math.sqrt(dx*dx+dy*dy);}
    if(a.side===b.side&&!a.air&&a.y>RY0-6&&a.y<RY1+6&&b.y>RY0-6&&b.y<RY1+6&&d>=m*.8)continue;const ma=a.mass*a.wall,mb=b.mass*b.wall,o=(m-d)*.5,wa=mb/(ma+mb),wb=1-wa;a.x-=dx/d*o*wa;a.y-=dy/d*o*wa;b.x+=dx/d*o*wb;b.y+=dy/d*o*wb;}}
  for(const e of U){if(!e.air)for(const o of S.ents){if((o.cls!=='tower'&&o.cls!=='bld')||o.hp<=0)continue;const dx=e.x-o.x,dy=e.y-o.y,m=e.r+o.r*.85,d=Math.sqrt(dx*dx+dy*dy);if(d<m&&d>1e-4){e.x=o.x+dx/d*m;e.y=o.y+dy/d*m;}}fixPos(e,e.oy);}}
@@ -1406,7 +1817,7 @@ function step(S){if(S.over)return;S.ev.length=0;
  updProj(S);updZones(S);updBombs(S);separate(S);cleanup(S);
  S.tick++;S.t+=TICK;}
 function hash(S){let h=2166136261;const mix=v=>{h^=(v|0);h=Math.imul(h,16777619);};mix(S.tick);for(const e of S.ents){mix(e.id);mix(Math.round(e.x*100));mix(Math.round(e.y*100));mix(Math.round(e.hp*10));}for(const p of S.p){mix(Math.round(p.mana*1000));mix(p.crowns);}return(h>>>0).toString(16);}
-return{DEP,CONTACT,MELEE,SWING,laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
+return{DEP,CONTACT,MELEE,SWING,laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,dmul,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
 })();
 
 
@@ -1419,6 +1830,10 @@ const{CARDS,FW,FH,MIDY,RY0,RY1,BRIDGES,d2,clamp}=Sim;
 const PROFILES={
  grimm:{name:'Grimmzahn',react:1.6,think:.7,pushAt:9.5,smart:.3,jitter:45,spellMin:3,abil:.45,well:.15,split:.1,mid:.2},
  morvath:{name:'Morvath',react:.6,think:.3,pushAt:8,smart:.85,jitter:12,spellMin:2,abil:1,well:.6,split:.3,mid:.45},
+ // 0.7: neue Bosse – eigene Taktik über zusätzliche Parameter (chant = Kriegsgesang beim Angriff, air = Flieger als Angriffsspitze, hold = Mana-Reserve für Konter)
+ ugrak:{name:'Ugrak',react:.65,think:.35,pushAt:7.5,smart:.72,jitter:16,spellMin:2,abil:1,well:0,split:.4,mid:.55,chant:1},
+ sylvara:{name:'Sylvara',react:.45,think:.3,pushAt:9.5,smart:.88,jitter:10,spellMin:2,abil:1,well:0,split:.2,mid:.3,hold:1},
+ vyrthax:{name:'Vyrthax',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:0,split:.3,mid:.4,air:1,chant:1},
  bot:{name:'Autopilot',react:.35,think:.25,pushAt:8,smart:.95,jitter:6,spellMin:2,abil:1,well:.5,split:.25,mid:.4}};
 // Spurgrenzen für die KI-Platzierung (ohne Mittelzone, die ist fürs bewusste Aufteilen reserviert)
 const HM=Sim.MIDW/2+3,LXA=[[12,FW/2-HM],[FW/2+HM,FW-12]];
@@ -1428,7 +1843,8 @@ const isTank=id=>{const C=CARDS[id];return C.u&&(C.u.hp>=1000)&&C.u.range<40;};
 const isSwarm=id=>{const C=CARDS[id];return C.type==='unit'&&(C.count||1)>=3;};
 const isRanged=id=>{const C=CARDS[id];return C.u&&C.u.range>=60;};
 const hitsAir=id=>{const C=CARDS[id];if(C.type==='spell')return true;const s=C.u||C.b;return s&&s.tg==='any'&&(s.dmg||0)>0;};
-const splashy=id=>['firemage','alch','firerain','poisonhero'].includes(id);
+const splashy=id=>['firemage','alch','firerain','poisonhero','storm','troll','trollking','whelp','frostwyrm','dragonlord'].includes(id);
+const isBuff=id=>{const C=CARDS[id];return C.type==='spell'&&C.s&&C.s.buff;};
 function dps(e){const s=e.st;return s&&s.dmg?s.dmg/(s.hit||1):0;}
 function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)return null;ai.next=S.tick+Math.max(1,Math.round(ai.P.think/Sim.TICK));
  const side=ai.side,me=S.p[side],P=ai.P,fwd=side===0?-1:1,my=y=>side===0?y>MIDY:y<MIDY;
@@ -1452,7 +1868,7 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
  const L=lanes[0];
  if(L&&L.need>0){
   // Zauber auf Gruppen
-  for(const o of hand){if(o.C.type!=='spell')continue;const best=clusterAt(S,side,L.T,o.C.s.r);if(!best)continue;
+  for(const o of hand){if(o.C.type!=='spell'||isBuff(o.id))continue;const best=clusterAt(S,side,L.T,o.C.s.r);if(!best)continue;
    const val=o.id==='firerain'?best.val:(L.hp>1400&&my(L.lead.y)?best.val*.7:0);if(best.n>=P.spellMin&&val>=420+o.C.cost*40){const c=tryPlay(o,best.x,best.y);if(c)return c;}}
   let best=null,bs=-1e9;
   for(const o of hand){if(o.C.type==='spell')continue;let s=0;const C=o.C,u=C.u;
@@ -1473,23 +1889,28 @@ function think(ai,S){if(S.over||S.phase==='count')return null;if(S.tick<ai.next)
    if(canSplit(best)&&(both||midT)&&R(ai)<P.smart+.1){const c=tryPlay(best,FW/2,y,L.l,true);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
    const c=tryPlay(best,x,y,C.type==='bld'?null:L.l);if(c){if(!ai.push)ai.push={l:L.l,t:S.tick,counter:true};return c;}}
   if(L.need>800)return null;}
+ // --- 0.7 Kriegsgesang auf eigene Gruppe im Kampf ---
+ {const ch=hand.find(o=>isBuff(o.id));if(ch&&(P.chant||P.smart>.9)){const mine=S.ents.filter(e=>e.side===side&&e.cls==='unit'&&e.hp>0&&e.dep<=0);const b=clusterAt(S,side,mine,ch.C.s.r);
+  if(b&&b.n>=3&&b.val>=700&&S.ents.some(e=>e.side!==side&&e.hp>0&&e.cls!=='bld'&&!e.bur&&d2(e.x,e.y,b.x,b.y)<ch.C.s.r+70)){const c=tryPlay(ch,b.x,b.y);if(c)return c;}}}
  // --- Angriff / Druck ---
  const myTanks=S.ents.filter(e=>e.side===side&&e.cls==='unit'&&e.hp>0&&isTank(e.card));
  if(ai.push&&S.tick-ai.push.t>Math.round(14/Sim.TICK))ai.push=null;
  if(ai.push){// Unterstützung hinter dem Tank
   const t=myTanks.find(e=>e.lane===ai.push.l)||myTanks[0];
-  if(t&&(side===0?t.y<470:t.y>FH-470)){let best=null;for(const o of hand){if(o.C.type==='bld'||isTank(o.id))continue;if(o.C.type==='spell')continue;if(!best||(isRanged(o.id)&&!isRanged(best.id)))best=o;}
+  if(t&&(side===0?t.y<470:t.y>FH-470)){let best=null;for(const o of hand){if(o.C.type==='bld'||isTank(o.id))continue;if(o.C.type==='spell')continue;if(!best||(isRanged(o.id)&&!isRanged(best.id))||(o.id==='banner'&&best.id!=='banner'))best=o;}
    if(best&&me.mana>=best.C.cost+(P.smart>.5?0:1)){const c=tryPlay(best,t.x+jit()*.4,t.y-fwd*45,t.lane);if(c)return c;}}
   // Zauber auf Verteidiger am Turm
   for(const o of hand){if(o.C.type!=='spell'||o.id!=='firerain')continue;const foes=S.ents.filter(e=>e.side!==side&&e.cls==='unit'&&e.hp>0&&!my(e.y));const b=clusterAt(S,side,foes,o.C.s.r,true);if(b&&b.n>=P.spellMin&&b.val>=380){const c=tryPlay(o,b.x,b.y);if(c)return c;}}}
  // Zauber zum Turm-Abschluss
  for(const o of hand){if(o.id!=='firerain')continue;for(const e of S.ents)if(e.cls==='tower'&&e.side!==side&&e.hp>0&&e.hp<=o.C.s.dmg*o.C.s.tower*1.05&&(S.matchT<60||S.phase==='sudden'||e.hp<90)){const c=tryPlay(o,e.x,e.y);if(c)return c;}}
  const pushAt=(S.dbl||S.phase==='sudden')?Math.min(P.pushAt,7):P.pushAt;
+ if(P.hold&&thr.length&&me.mana<9.7)return null;// Sylvara: spart bei Bedrohung Mana für den Konter
  if(me.mana>=pushAt||me.mana>=9.7){
   // Brunnen bei Ruhe
   const well=hand.find(o=>o.id==='well');if(well&&!thr.length&&R(ai)<P.well&&!S.ents.some(e=>e.side===side&&e.card==='well')){const c=tryPlay(well,FW/2+(R(ai)<.5?-60:60),toMy(612));if(c)return c;}
   const lane=chooseLane(S,side,ai);const lx=BRIDGES[lane];
-  const tank=hand.find(o=>isTank(o.id)&&!o.C.air)||hand.find(o=>o.id==='zepp');
+  const airT=hand.find(o=>o.C.air&&o.C.cost>=5);
+  const tank=(P.air&&airT)||hand.find(o=>isTank(o.id)&&!o.C.air)||hand.find(o=>o.id==='zepp')||airT;
   if(tank){ai.push={l:lane,t:S.tick};const c=tryPlay(tank,tank.C.type==='hero'?lx:(lx*.55+FW/2*.45),tank.C.type==='hero'?bankY-fwd*60:backY-fwd*10);if(c)return c;}
   const sl=hand.find(o=>o.id==='sling');if(sl&&R(ai)<.6){const c=tryPlay(sl,FW/2+(lane?40:-40),toMy(420));if(c)return c;}
   // sonst günstigste sinnvolle Einheit an die Brücke
@@ -1509,6 +1930,7 @@ function clusterAt(S,side,list,r,incTower){let best=null;for(const c of list){le
   if(!best||val>best.val)best={n,val,x:sx/n,y:sy/n};}return best;}
 function abilTarget(S,ai,h){const A=CARDS[h.card].abil,side=ai.side;
  const foes=S.ents.filter(e=>e.side!==side&&e.cls==='unit'&&e.hp>0&&!e.thrown);
+ if(A.key==='roar'){let n=0,hp=0,own=0;for(const e of foes)if(d2(e.x,e.y,h.x,h.y)<=A.r){n++;hp+=e.hp;}for(const e of S.ents)if(e.side===side&&e.cls==='unit'&&e.hp>0&&d2(e.x,e.y,h.x,h.y)<=A.r)own++;return(n>=2&&own>=2)||hp>=1100||(n>=1&&own>=4)?{a:'abil',side,x:h.x,y:h.y}:null;}
  if(A.key==='nova'){let n=0,hp=0;for(const e of foes)if(d2(e.x,e.y,h.x,h.y)<=A.r){n++;hp+=e.hp;}return(n>=2||hp>=900)?{a:'abil',side,x:h.x,y:h.y}:null;}
  const near=foes.filter(e=>d2(e.x,e.y,h.x,h.y)<=A.reach+20);
  if(A.key==='summon'){if(near.length||(side===0?h.y<MIDY+40:h.y>MIDY-40)){const t=near[0]||{x:h.x,y:h.y+(side===0?-60:60)};return{a:'abil',side,x:(t.x+h.x)/2,y:(t.y+h.y)/2};}return null;}
@@ -1526,7 +1948,14 @@ const DUELL_OPP={
  grimm:{name:'Grimmzahn',title:'Goblin-Häuptling',portrait:'chief',ai:'grimm',deck:['orcs','wolves','sling','alch','bats','ogre','firerain','blade'],mods:{regen:.9},
   tag:'leicht',quote:'„Hehehe! Meine Schleuder wirft heute Orks – und morgen dich!“'},
  morvath:{name:'Morvath',title:'Totenbeschwörer',portrait:'lichP',ai:'morvath',deck:['skels','skelarch','knight','giant','bats','frost','firerain','lich'],mods:{regen:1.07},
-  tag:'schwer',quote:'„Jeder Gefallene dient mir. Auch du wirst es bald.“'}};
+  tag:'schwer',quote:'„Jeder Gefallene dient mir. Auch du wirst es bald.“'},
+ // 0.7: drei neue Bosse (steigende Schwierigkeit)
+ ugrak:{name:'Ugrak Baumbrecher',title:'Troll-Kriegsherr',portrait:'ugrakP',ai:'ugrak',deck:['troll','orcs','wolves','netter','storm','warchant','firerain','trollking'],mods:{regen:1.2,towerHp:1.05},
+  tag:'schwer',quote:'„Ugrak reißt Bäume aus. Ugrak reißt Türme aus. Du bist kleiner als ein Baum.“'},
+ sylvara:{name:'Sylvara',title:'Dornenmutter des Altwalds',portrait:'sylvaraP',ai:'sylvara',deck:['treant','banner','burrow','archers','netter','frost','shaman','thorn'],mods:{regen:1.095,towerHp:1.06},
+  tag:'sehr schwer',quote:'„Der Wald vergisst nicht. Jede Axt, jedes Feuer – heute zahlt ihr dafür.“'},
+ vyrthax:{name:'Vyrthax',title:'Der Aschenkönig',portrait:'vyrthaxP',ai:'vyrthax',deck:['whelp','frostwyrm','shade','storm','burrow','firerain','troll','dragonlord'],mods:{regen:1.14,towerHp:1.08},
+  tag:'Drache',quote:'„Ich habe Königreiche zu Asche gebrannt, bevor dein Turm ein Stein war.“'}};
 const DUELL_SCEN=[
  {id:1,title:'Der Grenzposten',opp:'grimm',
   story:['Am Nordende des Schattenpasses wacht ein kleiner Grenzposten über die zwei Brücken der Schattenschlucht.',
@@ -1542,8 +1971,32 @@ const DUELL_SCEN=[
    'Brenne sein Heer nieder, bevor er den Pass in ewige Nacht taucht!'],
   rule:'Morvath zieht Kraft aus der Gruft: sein Mana fließt etwas schneller.',
   tip:'Tipp: Flächenschaden gegen Knochenrotten, Frost und Gruppen gegen das Riesenskelett. Spar Mana für einen Gegenangriff.',
-  win:'Morvaths Laterne erlischt, die Gruft stürzt ein. Der Schattenpass ist frei – vorerst. Fortsetzung folgt …',
-  lose:'Kaltes Lachen hallt aus der Gruft. Morvath ist stark – prüfe dein Deck und greife erneut an!'}];
+  win:'Morvaths Laterne erlischt, die Gruft stürzt ein. Doch im Staub der Gruft liegt eine Kriegstrommel aus Trollknochen – und von Osten her dröhnt eine Antwort …',
+  lose:'Kaltes Lachen hallt aus der Gruft. Morvath ist stark – prüfe dein Deck und greife erneut an!'},
+ {id:3,title:'Trommeln im Eichenhang',opp:'ugrak',
+  story:['Östlich des Passes liegt der Eichenhang. Seit Morvaths Fall dröhnen dort Kriegstrommeln, und Baum um Baum stürzt krachend ins Tal.',
+   'Ugrak Baumbrecher hat die Bergtrolle geeint. Seine Krieger reißen Eichen aus und schwingen sie wie Keulen, Netzwerfer fangen alles, was flieht, und Sturmrufer lassen Blitze über die Reihen springen.',
+   'Wenn Ugrak brüllt, wird seine Horde wild. Halte die Brücken – und brich die Horde, bevor sie in Fahrt kommt!'],
+  rule:'Ugraks Horde stürmt früh und oft: sein Mana fließt deutlich schneller (+20 %), seine Türme sind 5 % stärker. Kriegsgesang macht seine Truppen stärker.',
+  tip:'Tipp: Trolle treffen alles um ihr Ziel – verteile dich nicht dicht um sie. Frost und Flieger sind gut gegen die Bodentruppen. Bei einem Kriegsschrei kurz zurückweichen.',
+  win:'Ugrak stürzt in den Fluss, sein Kriegsbaum treibt davon. Die Trolle zerstreuen sich – und manche schließen sich dir an! Doch am Waldrand bewegen sich die Bäume, ganz ohne Wind …',
+  lose:'Die Trommeln werden lauter. Ugraks Horde hat dich überrannt – versuch es mit mehr Flächenschaden!'},
+ {id:4,title:'Der Zorn des Altwalds',opp:'sylvara',
+  story:['Die Trolle haben den Altwald verwundet, und der Wald ist erwacht. Sylvara, die Dornenmutter, hält jeden Menschen für schuldig.',
+   'Uralte Borkenhüter stapfen auf deine Türme zu, Bannerträger führen ihre Waldläufer, und unter der Erde graben sich Grubenkriecher heran.',
+   'Wer ihr zu nah kommt, verfängt sich in Wurzeln und Dornen. Feuer fürchten ihre Riesen – doch Sylvara wartet geduldig auf deinen Fehler.'],
+  rule:'Sylvara spart Mana für Konter, ihr Mana fließt schneller (+9,5 %) und ihre Türme sind 6 % stärker.',
+  tip:'Tipp: Borkenhüter nehmen durch Feuer fast doppelten Schaden und brennen. Feuerregen und Feuermagier sind deine besten Freunde. Grubenkriecher erwischst du nur mit Flächenschaden.',
+  win:'Sylvara sinkt zurück in ihre Eiche. „Nicht ihr habt den Wald verbrannt“, flüstert sie. „Seht nach Norden, zum Aschenhorst.“ Am Horizont steigt Rauch auf …',
+  lose:'Der Wald schließt sich über deinen Türmen. Feuer ist die Antwort – und Geduld.'},
+ {id:5,title:'Der Aschenhorst',opp:'vyrthax',
+  story:['Im Norden, wo die Berge schwarz sind vom Ruß, schläft seit tausend Jahren der Aschenkönig. Morvaths Zauber, Ugraks Trommeln und der Zorn des Waldes haben ihn geweckt.',
+   'Vyrthax ruft seine Brut: Glutwelpen spucken Feuer, ein Frostwyrm aus alten Knochen gleitet über die Schlucht, und Schattenschwingen lassen mit ihrem Schrei jede Reihe zerbrechen.',
+   'Er ist der mächtigste Feind, dem die Turmwacht je begegnet ist. Hol alle Schützen auf die Mauern – der Himmel brennt!'],
+  rule:'Der Drache herrscht über den Himmel: sein Mana fließt deutlich schneller (+14 %), seine Türme sind 8 % stärker – und seine Drachen sind die wahre Gefahr.',
+  tip:'Tipp: Fast alles fliegt – nimm Bogenschützen, Netzwerfer und Frost. Ein Netz zieht Flieger zu Boden, dann treffen sie auch deine Nahkämpfer. Weiche der Feuerbahn aus!',
+  win:'Mit einem letzten Brüllen stürzt Vyrthax in seinen Horst, die Asche erlischt. Der Schattenpass, der Eichenhang und der Altwald sind frei. Die Turmwacht hat gesiegt – Ehre den Verteidigern!',
+  lose:'Asche regnet auf die Türme. Vyrthax lacht im Rauch – stelle dein Deck gegen Flieger auf und fordere ihn erneut!'}];
 
 
 // ---- duell-cards.js ----
@@ -1573,7 +2026,21 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
   knight:'Einst ein stolzer Ritter der Turmwacht, heute Morvaths Wächter in rostiger Rüstung.',
   wolves:'Grimmzahns Lieblinge. Sie jagen im Rudel und riechen Angst über die ganze Schlucht.',
   ogre:'Ein Oger mit einem einzigen Ziel: Mauern einreißen. Alles andere übersieht er.',
-  lich:'Morvath selbst, Herr der Gruft. Jeder Gefallene hört seinen Ruf.'};
+  lich:'Morvath selbst, Herr der Gruft. Jeder Gefallene hört seinen Ruf.',
+  // 0.7 – neue Kreaturen (Kapitel 3–5)
+  storm:'Die Sturmrufer lauschen den Gewittern über dem Eichenhang. Ein Blitz von ihnen sucht sich selbst seinen Weg.',
+  netter:'Zwei Fallensteller aus Ugraks Lager. Was sie einfangen, wird gefressen – oder verkauft.',
+  troll:'Ein Troll mit einer ausgerissenen Eiche als Keule. Er unterscheidet nicht zwischen Freund, Feind und Gebüsch.',
+  warchant:'Wenn die Trommeln der Horde schlagen, vergessen selbst Feiglinge ihre Angst.',
+  trollking:'Ugrak hat drei Wälder gerodet und keinen Baum zurückgelassen. Sein Schrei lässt ganze Heere zurückweichen.',
+  banner:'Solange sein Banner weht, fällt kein Krieger allein. Seine Fahne ist älter als die Turmwacht.',
+  burrow:'Ein gepanzerter Käfer aus den Tiefen des Altwalds. Man hört ihn erst, wenn er schon zubeißt.',
+  treant:'Ein Baumriese, älter als jede Mauer. Er hasst Steine, Äxte – und vor allem Feuer.',
+  thorn:'Die Dornenmutter spricht mit Wurzeln und Ranken. Wer ihren Wald betritt, kommt selten wieder heraus.',
+  shade:'Ein grauer Reiter auf einer lederhäutigen Bestie. Sein Schrei friert das Blut in den Adern.',
+  whelp:'Junge Drachen aus dem Aschenhorst. Noch klein, aber ihr Feuer brennt schon heiß genug.',
+  frostwyrm:'Die Knochen eines uralten Drachen, von eisiger Magie zusammengehalten. Sein Atem lässt Flüsse erstarren.',
+  dragonlord:'Vyrthax, der Aschenkönig. Er schlief hundert Jahre im Horst – jetzt ist er hungrig.'};
  const fx=(n,d)=>{d=d==null?1:d;return(+n).toFixed(d).replace(/\.0+$/,'').replace('.',',');};
  const pct=f=>Math.round(f*100)+' %';
  function rarity(id){const c=C[id];if(c.type==='hero')return{k:'leg',n:'Legendär'};if(c.cost>=6)return{k:'epic',n:'Episch'};if(c.cost>=4)return{k:'rare',n:'Selten'};return{k:'com',n:'Gewöhnlich'};}
@@ -1582,7 +2049,7 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
  // Vergleichsgrößen über alle Einheiten-/Heldenkarten (für Balken)
  const U=Object.values(C).filter(c=>c.u).map(c=>c.u);
  const MAX={hp:Math.max(...U.map(u=>u.hp)),dmg:Math.max(...U.map(u=>u.dmg)),dps:Math.max(...U.map(u=>u.dmg/u.hit)),range:Math.max(...U.map(u=>u.range)),spd:Math.max(...U.map(u=>u.spd)),hit:Math.min(...U.map(u=>u.hit)),
-  bhp:Math.max(...Object.values(C).filter(c=>c.b).map(c=>c.b.hp)),sdmg:Math.max(...Object.values(C).filter(c=>c.s).map(c=>c.s.dmg)),sr:Math.max(...Object.values(C).filter(c=>c.s).map(c=>c.s.r))};
+  bhp:Math.max(...Object.values(C).filter(c=>c.b).map(c=>c.b.hp)),sdmg:Math.max(...Object.values(C).filter(c=>c.s&&c.s.dmg).map(c=>c.s.dmg)),sr:Math.max(...Object.values(C).filter(c=>c.s).map(c=>c.s.r))};
  // Werte-Zeilen: {k:Label, v:Text, f:Balken 0..1 (optional), sub:Zusatz}
  function stats(id){const c=C[id],R=[];
   if(c.u){const u=c.u,n=c.count||1,dps=u.dmg/u.hit;
@@ -1599,6 +2066,8 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
    if(b.spawn){const s=C[b.spawn.card];R.push({k:'Erzeugt',v:'1 '+s.name.replace(/-Krieger$/,'')+' / '+fx(b.spawn.every,0)+' s'});}
    if(b.mana)R.push({k:'Mana',v:'+'+b.mana.amt+' alle '+fx(b.mana.every,0)+' s'});
    R.push({k:'Anzahl',v:'1 Gebäude'});}
+  else if(c.s&&c.s.buff){const s=c.s;R.push({k:'Stärke',v:'+'+pct(s.buff)+' Schaden'});R.push({k:'Tempo',v:'+'+pct(s.haste)+' Angriff & Lauf'});R.push({k:'Dauer',v:fx(s.t,0)+' s'});
+   R.push({k:'Radius',v:fx(s.r/B.tile,1)+' Felder',f:s.r/MAX.sr});R.push({k:'Ziel',v:'Eigene Truppen im Kreis'});}
   else if(c.s){const s=c.s;R.push({k:'Schaden',v:fx(s.dmg,0),f:s.dmg/MAX.sdmg,sub:'Türme '+pct(s.tower)});R.push({k:'Radius',v:fx(s.r/B.tile,1)+' Felder',f:s.r/MAX.sr});
    if(s.delay)R.push({k:'Verzögerung',v:fx(s.delay,1)+' s'});if(s.freeze)R.push({k:'Einfrieren',v:fx(s.freeze,1)+' s'});R.push({k:'Ziel',v:'Boden & Luft, beliebiger Ort'});}
   return R;}
@@ -1611,6 +2080,16 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
    if(u.tg==='bld'&&!u.bomb)L.push('Ignoriert Truppen und marschiert direkt auf Gebäude und Türme.');
    if(c.air)L.push('Fliegt – nur Fernkämpfer, Türme und Zauber erreichen ihn.');
    if(u.puddle){const p=u.puddle;L.push('Giftpfütze: '+fx(p.dps,0)+' Schaden/s für '+fx(p.t,1)+' s, verlangsamt um '+pct(p.slow)+'.');}
+   if(u.chain)L.push('Kettenblitz: springt auf bis zu '+u.chain.n+' weitere Gegner über, jeder Sprung '+pct(u.chain.f)+' Schaden.');
+   if(u.net)L.push('Jeder '+(u.net.every===3?'dritte':u.net.every+'.')+' Wurf ist ein Netz: Ziel steht '+fx(u.net.t,1)+' s still, Flieger werden zu Boden gezogen (dann auch für Nahkämpfer erreichbar).');
+   if(u.cleave)L.push('Spaltschlag: trifft alle Gegner im Umkreis von '+fx(u.cleave.r/B.tile,1)+' Feldern um das Ziel mit '+pct(u.cleave.f)+' Schaden.');
+   if(u.aura)L.push('Banner-Aura: Verbündete im Umkreis von '+fx(u.aura.r/B.tile,1)+' Feldern +'+pct(u.aura.dmg)+' Schaden und '+fx(u.aura.hps,0)+' Leben/s.');
+   if(u.burrow)L.push('Gräbt sich beim Laufen ein – nicht anvisierbar, nur Zauber und Flächenschaden treffen. Auftauchen: +'+fx(u.burrow.bonus,0)+' Schaden, betäubt '+fx(u.burrow.stun,1)+' s.');
+   if(u.firevul)L.push('Verwundbar durch Feuer: '+pct(u.firevul.f)+' Schaden und brennt '+fx(u.firevul.burn,0)+' s ('+fx(u.firevul.dps,0)+'/s).');
+   if(u.thorns)L.push('Dornenaura: Nahkämpfer, die Verbündete im Umkreis von '+fx(u.thorns.r/B.tile,1)+' Feldern treffen, erleiden '+pct(u.thorns.f)+' zurück.');
+   if(u.fear)L.push('Schreckensschrei alle '+fx(u.fear.every,0)+' s: Bodentruppen im Umkreis fliehen '+fx(u.fear.t,1)+' s (Helden halb so lang).');
+   if(u.fire)L.push('Feuerschaden – besonders wirksam gegen Borkenhüter.');
+   if(u.slow&&u.splash)L.push('Verlangsamt alle Getroffenen um '+pct(u.slow.f)+' für '+fx(u.slow.t,1)+' s.');else
    if(u.slow)L.push('Verlangsamt Getroffene um '+pct(u.slow.f)+' für '+fx(u.slow.t,1)+' s.');
    if(u.dot)L.push('Gift: '+fx(u.dot.dps,0)+' Schaden/s für '+fx(u.dot.t,0)+' s.');
    if(u.heal)L.push('Heilt Verbündete im Umkreis von '+fx(u.heal.r/B.tile,1)+' Feldern um '+fx(u.heal.hps,0)+' Leben/s.');
@@ -1619,13 +2098,17 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
    if(A.key==='leap')t='springt bis '+fx(A.reach/B.tile,1)+' Felder weit auf ein Ziel: '+fx(A.dmg,0)+' Flächenschaden, betäubt '+fx(A.stun,1)+' s.';
    else if(A.key==='nova')t='friert alles um den Helden '+fx(A.freeze,1)+' s ein und verursacht '+fx(A.dmg,0)+' Schaden.';
    else if(A.key==='cloud')t='Giftwolke für '+fx(A.t,0)+' s: '+fx(A.dps,0)+' Schaden/s, verlangsamt um '+pct(A.slow)+', trifft auch Flieger.';
+   else if(A.key==='roar')t='stärkt Verbündete im Umkreis '+fx(A.t,0)+' s lang (+'+pct(A.buff)+' Schaden, +'+pct(A.haste)+' Tempo); Bodentruppen der Gegner fliehen '+fx(A.fear,1)+' s.';
+   else if(A.key==='roots')t='Wurzeln brechen bis '+fx(A.reach/B.tile,1)+' Felder entfernt aus dem Boden: '+fx(A.dmg,0)+' Schaden, Feinde stehen '+fx(A.t,1)+' s still, Flieger werden zu Boden gezogen.';
+   else if(A.key==='fireline')t='fliegt eine Flammenbahn bis '+fx(A.reach/B.tile,1)+' Felder weit: '+fx(A.dmg,0)+' Feuerschaden für alles auf der Linie (Türme '+pct(A.tower)+').';
    else if(A.key==='summon')t='erweckt '+A.summon.n+' Skelette (wie „'+C[A.summon.card].name+'“) an einem Zielort.';
    L.push({abil:A.name,t,charge:'lädt '+fx(A.charge,0)+' s (erstmals nach ~'+first+' s)'});}
   if(b){if(b.spawn)L.push('Schleudert alle '+fx(b.spawn.every,0)+' s einen '+C[b.spawn.card].name.replace(/-Krieger$/,'-Krieger')+' über die Schlucht.');
    if(b.mana)L.push('Erzeugt '+fx(b.life,0)+' s lang alle '+fx(b.mana.every,0)+' s '+b.mana.amt+' Mana (insgesamt +'+Math.floor(b.life/b.mana.every)*b.mana.amt+').');
    if(b.dmg)L.push('Schießt Pfeile auf Boden und Luft und lockt Bodentruppen an.');
    L.push('Zerfällt nach '+fx(b.life,0)+' s. Nur auf deiner Hälfte baubar.');}
-  if(s){L.push('Wirkt an jeder Stelle des Feldes'+(s.delay?' nach '+fx(s.delay,1)+' s':'')+'.');if(s.freeze)L.push('Friert Einheiten und Türme '+fx(s.freeze,0)+' s ein.');L.push('Türme erleiden nur '+pct(s.tower)+' des Schadens.');}
+  if(s&&s.buff){L.push('Wirkt auf deine eigenen Truppen im Kreis – auch auf alle, die in den nächsten '+fx(s.t,0)+' s hineinlaufen.');L.push('Verursacht keinen Schaden.');}
+  else if(s){L.push('Wirkt an jeder Stelle des Feldes'+(s.delay?' nach '+fx(s.delay,1)+' s':'')+'.');if(s.freeze)L.push('Friert Einheiten und Türme '+fx(s.freeze,0)+' s ein.');L.push('Türme erleiden nur '+pct(s.tower)+' des Schadens.');}
   return L;}
  function avg(deck){return deck.length?deck.reduce((a,id)=>a+C[id].cost,0)/deck.length:0;}
  return{TYPE,LORE,rarity,stats,abilities,avg,fx,MAX};})();
@@ -1697,11 +2180,11 @@ function fx(o){o.t=0;st.fx.push(o);return o;}
 function parts(x,y,n,c,sp,life,up){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=(.3+Math.random())*sp;fx({k:'p',x,y,z:up||0,vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6,vz:(up?20:0)+Math.random()*sp*.6,c,max:life*(.6+Math.random()*.6),r:1.2+Math.random()*1.8});}}
 function text(x,y,txt,c,max){fx({k:'txt',x,y,txt,c,max:max||1.1});}
 function onEvents(evs,S){for(const e of evs){switch(e.k){
- case 'impact':{const a=st.an.get(e.id);if(a){a.ky=(a.side===0?1:-1)*1.6;a.kx=0;a.kt=.12;}}fx({k:'spark',x:e.x,y:e.y-(e.air?28:8),c:e.kind==='frostbolt'?'#bfe8ff':e.kind==='poison'?'#9aff60':e.kind==='shadow'?'#c080ff':e.kind==='bolt'?'#ffe860':'#fff0c0',max:.25});break;
+ case 'impact':{const a=st.an.get(e.id);if(a){a.ky=(a.side===0?1:-1)*1.6;a.kx=0;a.kt=.12;}}fx({k:'spark',x:e.x,y:e.y-(e.air?28:8),c:e.kind==='frostbolt'||e.kind==='icebreath'?'#bfe8ff':e.kind==='flame'?'#ffb040':e.kind==='thorn'?'#a8ff70':e.kind==='poison'?'#9aff60':e.kind==='shadow'?'#c080ff':e.kind==='bolt'?'#ffe860':'#fff0c0',max:.25});break;
  case 'hit':{const W=WSTYLE[e.card]||'sword';fx({k:'spark',x:e.x,y:e.y-(e.air?28:10),c:W==='club'?'#ffe0a0':W==='bite'||W==='claw'?'#ffd0c0':'#fff4d0',max:.22,big:W==='club'?1.6:1});
   const a=st.an.get(e.id);if(a){let dx=e.x-e.tx,dy=e.y-e.ty;const d=Math.hypot(dx,dy)||1;const f=W==='club'?5:3;a.kx=dx/d*f;a.ky=dy/d*f*.6;a.kt=.16;}
   if(W==='club'){parts(e.x,e.y,5,'#a08a60',30,.35);st.shake=Math.max(st.shake,1.5);}break;}
- case 'boom':fx({k:'ring',x:e.x,y:e.y,r:e.r||24,c:'#ff9a30',max:.4});parts(e.x,e.y-6,10,'#ffb040',40,.5);break;
+ case 'boom':{const ice=e.kind==='icebreath';fx({k:'ring',x:e.x,y:e.y,r:e.r||24,c:ice?'#bfefff':'#ff9a30',max:.4});parts(e.x,e.y-6,10,ice?'#e8f8ff':'#ffb040',40,.5);if(e.kind==='flame'||ice)fx({k:ice?'ring':'fire',x:e.x,y:e.y,r:(e.r||24)*.8,c:'rgba(200,240,255,.7)',max:.45,w:6});}break;
  case 'splash':parts(e.x,e.y,10,'#8aff40',36,.5);break;
  case 'fireboom':fx({k:'fire',x:e.x,y:e.y,r:e.r,max:.6});st.decals.push({x:e.x,y:e.y,r:e.r*.8,t:0,max:6});parts(e.x,e.y,22,'#ff8a20',70,.8,1);st.shake=Math.max(st.shake,5);break;
  case 'frost':fx({k:'ring',x:e.x,y:e.y,r:e.r,c:'#bfefff',max:.5,w:4});parts(e.x,e.y,24,'#e8f8ff',60,.9,1);break;
@@ -1716,6 +2199,20 @@ function onEvents(evs,S){for(const e of evs){switch(e.k){
  case 'keepwake':fx({k:'ring',x:e.x,y:e.y-20,r:58,c:e.side?'rgba(255,120,90,.95)':'rgba(120,180,255,.95)',max:.8,w:5});parts(e.x,e.y-40,24,'#ffd860',70,.9,1);text(e.x,e.y+(e.side?40:-100),'Bergfried erwacht!','#ffe28a',1.8);break;
  case 'throw':st.flashSling[Math.round(e.x)+'|'+Math.round(e.y)]=.35;break;
  case 'land':parts(e.x,e.y,6,'#a08a60',30,.4);break;
+ // 0.7 neue Mechaniken
+ case 'chain':fx({k:'bolt',pts:e.pts.map(p=>[p[0],p[1]-(p[2]?28:10)]),max:.28});for(const p of e.pts)fx({k:'spark',x:p[0],y:p[1]-(p[2]?28:10),c:'#cfe8ff',max:.25});break;
+ case 'net':fx({k:'ring',x:e.x,y:e.y-(e.air?28:0),r:16,c:'rgba(225,205,150,.95)',max:.35,w:2});if(e.air)text(e.x,e.y-46,'Zu Boden!','#f0e0b0',.9);break;
+ case 'cleave':fx({k:'ring',x:e.x,y:e.y,r:e.r*1.3,c:'rgba(255,225,170,.9)',max:.3,w:3});if(e.n)parts(e.x,e.y,4+e.n*2,'#a08a60',36,.4);break;
+ case 'chant':fx({k:'ring',x:e.x,y:e.y,r:e.r,c:'rgba(255,140,60,.95)',max:.6,w:5});parts(e.x,e.y,16,'#ffb060',50,.7,1);text(e.x,e.y-20,'Kriegsgesang!','#ffc080',1.2);break;
+ case 'roar':fx({k:'ring',x:e.x,y:e.y,r:e.r,c:'rgba(255,90,60,.95)',max:.55,w:6});fx({k:'ring',x:e.x,y:e.y,r:e.r*.6,c:'rgba(255,200,120,.8)',max:.4,w:3});st.shake=Math.max(st.shake,5);text(e.x,e.y-60,'Kriegsschrei!','#ffb0a0',1.3);break;
+ case 'roots':fx({k:'ring',x:e.x,y:e.y,r:e.r,c:'rgba(130,200,60,.95)',max:.5,w:4});parts(e.x,e.y,20,'#6a4a24',50,.6);st.shake=Math.max(st.shake,2.5);break;
+ case 'fireline':fx({k:'fline',x0:e.x0,y0:e.y0,x1:e.x1,y1:e.y1,w:e.w,max:.9});{const n=10;for(let i=0;i<=n;i++){const x=lerp(e.x0,e.x1,i/n),y=lerp(e.y0,e.y1,i/n);parts(x,y,3,'#ff8a20',40,.6,1);if(i%3===0)st.decals.push({x,y,r:e.w*.8,t:0,max:5});}}st.shake=Math.max(st.shake,6);break;
+ case 'burn':text(e.x,e.y-50,'brennt!','#ffa050',1);parts(e.x,e.y-20,10,'#ff8a20',40,.5,1);break;
+ case 'fear':fx({k:'ring',x:e.x,y:e.y,r:e.r,c:'rgba(190,120,255,.9)',max:.55,w:3});fx({k:'ring',x:e.x,y:e.y,r:e.r*.7,c:'rgba(220,180,255,.6)',max:.45,w:2});break;
+ case 'burrow':parts(e.x,e.y,10,'#7a5a36',36,.5);fx({k:'puff',x:e.x,y:e.y,r:10,c:'#8a6a42',max:.4});break;
+ case 'unburrow':parts(e.x,e.y,14,'#7a5a36',50,.55,1);fx({k:'puff',x:e.x,y:e.y,r:14,c:'#8a6a42',max:.5});break;
+ case 'ambush':fx({k:'spark',x:e.x,y:e.y-10,c:'#ffe0a0',max:.3,big:2});text(e.x,e.y-36,'Überraschung!','#ffe0a0',1);break;
+ case 'thorns':fx({k:'spark',x:e.x,y:e.y-10,c:'#a8ff70',max:.22});break;
  case 'play':fx({k:'ring',x:e.x,y:e.y,r:22,c:e.side?'rgba(255,110,90,.8)':'rgba(110,170,255,.8)',max:.45,w:2});
   {const C=CARDS[e.card];text(e.x,e.y-(C.type==='spell'?0:40),C.name,e.side?'#ffb0a0':'#b8d8ff',1.2);}break;
  }}}
@@ -1736,7 +2233,14 @@ function draw(S,alpha,dt){lastS=S;st.time+=dt;if(!bg)buildBg();
  for(const z of S.zones){if(z.k==='puddle'){const k=Math.min(1,z.t/z.max*3);ctx.fillStyle=`rgba(90,200,40,${.35*k})`;ctx.beginPath();ctx.ellipse(z.x,z.y,z.r,z.r*.6,0,0,7);ctx.fill();
    ctx.strokeStyle=`rgba(180,255,90,${.5*k})`;ctx.lineWidth=1.2;ctx.stroke();for(let i=0;i<5;i++){const a=T*1.3+i*1.26;ctx.fillStyle=`rgba(200,255,120,${.6*k})`;ctx.beginPath();ctx.arc(z.x+Math.cos(a)*z.r*.5,z.y+Math.sin(a*1.3)*z.r*.3,1.6+(i%2),0,7);ctx.fill();}}
   else if(z.k==='firerain'){const k=1-z.t/z.max;ctx.strokeStyle=z.side?'rgba(255,80,60,.9)':'rgba(255,200,80,.9)';ctx.setLineDash([6,4]);ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(z.x,z.y,z.r,z.r*.6,0,0,7);ctx.stroke();ctx.setLineDash([]);
-   ctx.fillStyle=`rgba(255,120,30,${.12+.2*k})`;ctx.fill();}}
+   ctx.fillStyle=`rgba(255,120,30,${.12+.2*k})`;ctx.fill();}
+  else if(z.k==='chant'){const k=Math.min(1,z.t/z.max*4),pl=.5+.5*Math.sin(T*8);ctx.fillStyle=`rgba(255,110,40,${(.08+.06*pl)*k})`;ctx.beginPath();ctx.ellipse(z.x,z.y,z.r,z.r*.6,0,0,7);ctx.fill();
+   ctx.strokeStyle=`rgba(255,150,60,${(.5+.3*pl)*k})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(z.x,z.y,z.r,z.r*.6,0,0,7);ctx.stroke();
+   const rr=z.r*((T*.8)%1);ctx.strokeStyle=`rgba(255,200,120,${.5*(1-rr/z.r)*k})`;ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(z.x,z.y,rr,rr*.6,0,0,7);ctx.stroke();
+   ctx.font='bold 10px system-ui,sans-serif';ctx.textAlign='center';ctx.fillStyle=`rgba(255,220,150,${.8*k})`;for(let i=0;i<3;i++){const a=T*1.2+i*2.09;ctx.fillText('♪',z.x+Math.cos(a)*z.r*.6,z.y+Math.sin(a)*z.r*.35-((T*14+i*9)%18));}}
+  else if(z.k==='roots'){const k=Math.min(1,z.t/z.max*3);ctx.fillStyle=`rgba(60,40,20,${.3*k})`;ctx.beginPath();ctx.ellipse(z.x,z.y,z.r,z.r*.6,0,0,7);ctx.fill();
+   ctx.lineCap='round';for(let i=0;i<9;i++){const a=i*.698+z.x*.01,r0=z.r*(.25+.6*((i*37)%7)/7),x=z.x+Math.cos(a)*r0,y=z.y+Math.sin(a)*r0*.6,h=(8+(i%3)*4)*k;
+    ctx.strokeStyle=OL;ctx.lineWidth=3.6;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+4,y-h*.6,x-2,y-h);ctx.stroke();ctx.strokeStyle=i%2?'#6a8a2a':'#6a4a24';ctx.lineWidth=2;ctx.stroke();}}}
  // Platzierungsbereich
  if(st.ghost&&st.ghost.zone){ctx.fillStyle='rgba(220,40,30,.22)';ctx.fillRect(0,0,FW,Sim.RY1+4);
   for(const lane of[0,1]){const g=Sim.tower(S,1,'guard',lane);if(!g||g.hp<=0){ctx.clearRect(0,0,0,0);ctx.fillStyle='rgba(80,180,255,.18)';ctx.fillRect(lane?FW/2:0,160,FW/2,Sim.RY0-4-160);}}
@@ -1848,6 +2352,10 @@ function towerDamage(o,e,T,dt){const f=e.hp/e.maxhp;if(f>=.66)return;const set=c
 const WSTYLE={orcs:'axe',blade:'sword',giant:'club',bats:'claw',skels:'sword',knight:'sword',wolves:'bite',ogre:'club',zepp:'none',archers:'bow',skelarch:'bow',firemage:'cast',frosthero:'cast',poisonhero:'cast',shaman:'cast',lich:'cast',alch:'throw'};
 const CASTC={firemage:'#ff9a30',frosthero:'#a0e8ff',poisonhero:'#9aff60',shaman:'#ffe860',lich:'#c080ff'};
 const NOLEGS={zepp:1,bats:1};
+// 0.7 neue Kreaturen
+Object.assign(WSTYLE,{storm:'cast',netter:'throw',troll:'club',trollking:'club',banner:'sword',burrow:'bite',treant:'club',thorn:'cast',shade:'claw',whelp:'breath',frostwyrm:'breath',dragonlord:'breath'});
+Object.assign(CASTC,{storm:'#9ad0ff',thorn:'#a8ff70',whelp:'#ff9a30',frostwyrm:'#a0e8ff',dragonlord:'#ff7a20'});
+Object.assign(NOLEGS,{shade:1,whelp:1,frostwyrm:1,dragonlord:1,burrow:1});
 function hOf(e){const a=DART[artKey(e)]||{h:40,m:1};return Math.min(a.h*a.m,70);}
 function tint(c,col){const K='_t'+col;if(c[K])return c[K];const t=document.createElement('canvas');t.width=c.width;t.height=c.height;const g=t.getContext('2d');g.drawImage(c,0,0);g.globalCompositeOperation='source-in';g.fillStyle=col;g.fillRect(0,0,t.width,t.height);t._ax=c._ax;t._ay=c._ay;t._w=c._w;t._h=c._h;return c[K]=t;}
 function track(S,list,dt){if(st.simRef!==S){st.simRef=S;st.an=new Map();st.corpses=[];}
@@ -1906,6 +2414,8 @@ function castOrb(x,y,face,kw,ks,hh,col){const px=x+face*8,py=y-hh*.92,rel=ks>=0&
  if(kw>0){ctx.strokeStyle=col;ctx.globalAlpha=.8*kw;ctx.lineWidth=1.1;ctx.beginPath();for(let i=0;i<4;i++){const an=st.time*7+i*1.571,rr=(1-kw)*14+5;ctx.moveTo(px+Math.cos(an)*rr,py+Math.sin(an)*rr);ctx.lineTo(px+Math.cos(an)*(rr-3.5),py+Math.sin(an)*(rr-3.5));}ctx.stroke();ctx.globalAlpha=1;}}
 function drawEnt(S,o){const e=o.e,key=artKey(e);let c;
  if(e.cls==='bld'&&e.card==='sling'){const fk=Math.round(e.x)+'|'+Math.round(e.y);c=spr(vk(st.flashSling[fk]>0?'sling2':'sling',e.side));}
+ else if(e.bur)c=spr('mound');// 0.7 eingegraben: nur ein Erdhügel ist zu sehen
+ else if(e.air&&DART[key+'_f']&&Math.sin(st.time*9+e.id*1.3)>.15)c=spr(key+'_f');// 0.7 Flügelschlag
  else c=spr(key);
  if(!c)return;const dep=e.dep>0;
  if(dep){const k=e.dep0?1-e.dep/e.dep0:1;ctx.fillStyle=e.side?'rgba(255,90,70,.28)':'rgba(90,160,255,.28)';ctx.beginPath();ctx.ellipse(o.x,o.y,e.r+3,(e.r+3)*.55,0,0,7);ctx.fill();ctx.globalAlpha=.32+.28*k;}
@@ -1913,32 +2423,54 @@ function drawEnt(S,o){const e=o.e,key=artKey(e);let c;
  let dx=0,dy=0,rot=0,sx=1,sy=1,legK=0,W=null,ks=-1,kw=0,tgt=null;
  if(e.cls==='unit'){W=WSTYLE[e.card]||'sword';const at=(S.tick-e.atkT)*Sim.TICK,hit=e.st.hit||1,busy=!e.frz&&!e.stun&&!dep&&!e.thrown&&!e.leap;
   tgt=e.tgt?Sim.byId(S,e.tgt):null;const Wd=Math.min(.34,hit*.45);
-  kw=busy&&tgt&&e.lock&&e.cd>0&&e.cd<Wd?1-e.cd/Wd:0;ks=at>=0&&at<.24?at/.24:-1;const pk=W!=='bow'&&W!=='cast'&&W!=='throw'?(Sim.SWING||2)*Sim.TICK/.24:.3;
+  if(e.bur)W='none';
+  kw=busy&&tgt&&e.lock&&e.cd>0&&e.cd<Wd?1-e.cd/Wd:0;ks=at>=0&&at<.24?at/.24:-1;const pk=W!=='bow'&&W!=='cast'&&W!=='throw'&&W!=='breath'?(Sim.SWING||2)*Sim.TICK/.24:.3;
   if(W==='sword'||W==='axe'||W==='club'||W==='claw'||W==='bite'){const big=W==='club'?1.4:1;
    if(kw>0){rot-=face*.17*big*kw*kw;dx-=face*1.6*kw;if(W==='club')sy=1+.04*kw;}
    if(ks>=0){const p=Math.sin(Math.PI*Math.min(1,ks*.5/pk));rot+=face*.24*big*p;dx+=face*(W==='axe'?7:W==='bite'?6:4)*Math.sin(Math.PI*ks);if(W==='axe'||W==='bite')dy-=(W==='axe'?6:4)*Math.sin(Math.PI*ks);}}
   else if(W==='bow'){if(kw>0){rot-=face*.07*kw;sx=1-.03*kw;}if(ks>=0&&ks<.4)dx-=face*1.6*Math.sin(Math.PI*ks/.4);}
   else if(W==='cast'){if(kw>0){dy-=2.2*kw;sy=1+.05*kw;sx=1-.02*kw;}if(ks>=0&&ks<.5)rot+=face*.1*Math.sin(Math.PI*ks/.5);}
+  else if(W==='breath'){if(kw>0){rot-=face*.1*kw;dx-=face*2*kw;dy-=2*kw;}if(ks>=0&&ks<.5){rot+=face*.14*Math.sin(Math.PI*ks/.5);dx+=face*4*Math.sin(Math.PI*ks/.5);}}
   else if(W==='throw'){if(kw>0)rot-=face*.2*kw;if(ks>=0)rot+=face*.22*Math.sin(Math.PI*Math.min(1,ks*1.5));}
+  if(e.bur&&e.mv&&Math.random()<.12)parts(o.x,o.y,1,'#7a5a36',14,.4);
   if(e.mv&&busy&&ks<0&&kw===0){const ph=a.wp;if(e.air)dy-=Math.sin(ph*1.6)*1.2;else{dy-=Math.abs(Math.sin(ph))*1.8;rot+=Math.sin(ph)*.05;if(!NOLEGS[e.card])legK=Math.sin(ph)*.42;}}
   if(a.kt>0){const k=a.kt/.16;dx+=a.kx*k;dy+=a.ky*k;rot+=face*.05*Math.sin(k*9)*k;}}
  const X=o.x+dx,Y=o.y-o.z+dy;
  drawSpr(c,X,Y,flip,rot,sx,sy,legK);
  if(a.fl>0){const al=ctx.globalAlpha;ctx.globalAlpha=Math.min(1,a.fl/.14)*(e.cls==='tower'?.3:.7)*al;drawSpr(tint(c,'#ffffff'),X,Y,flip,rot,sx,sy,0);ctx.globalAlpha=al;}
  if(dep)ctx.globalAlpha=1;
- if(W&&!dep){if(ks>=0&&W!=='bow'&&W!=='cast'&&W!=='throw'&&W!=='none')swoosh(X,Y,face,ks,hh,W);
+ // 0.7 Status: Netz/Wurzeln, Furcht, Stärkung, Auren
+ if(e.cls==='unit'&&!dep){const y0=o.y-o.z;
+  if(e.rootT>0){ctx.save();ctx.strokeStyle='rgba(215,195,140,.95)';ctx.lineWidth=1.1;const w=e.r*1.25,hN=Math.min(hh*.7,30);ctx.beginPath();for(let i=-2;i<=2;i++){ctx.moveTo(o.x+i*w*.4,y0+2);ctx.lineTo(o.x+i*w*.25,y0-hN);}for(let j=0;j<4;j++){const yy=y0-j*hN/3.2;ctx.moveTo(o.x-w*(1-j*.12),yy);ctx.lineTo(o.x+w*(1-j*.12),yy);}ctx.stroke();
+   if(!e.air){ctx.strokeStyle='rgba(90,140,40,.95)';ctx.lineWidth=2;for(const s0 of[-1,1]){ctx.beginPath();ctx.moveTo(o.x+s0*w,y0+3);ctx.quadraticCurveTo(o.x+s0*w*1.2,y0-hN*.6,o.x+s0*w*.2,y0-hN*.5);ctx.stroke();}}ctx.restore();}
+  if(e.fearT>0){ctx.font='bold 11px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.8)';const yy=y0-hh-6+Math.sin(st.time*14)*1.5;ctx.strokeText('!',o.x,yy);ctx.fillStyle='#d8a0ff';ctx.fillText('!',o.x,yy);}
+  if(e.bufT>S.tick||e.auraT>S.tick){const ch=e.bufT>S.tick;ctx.strokeStyle=ch?`rgba(255,120,50,${.55+.3*Math.sin(st.time*10)})`:'rgba(255,220,100,.6)';ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(o.x,o.y,e.r*1.45,e.r*.7,0,0,7);ctx.stroke();
+   if(ch&&Math.random()<.08)fx({k:'p',x:o.x+(Math.random()-.5)*e.r*2,y:o.y,z:hh*.3,vx:0,vy:0,vz:30,c:'#ff9a40',max:.5,r:1.4});}
+  if(e.st&&(e.st.aura||e.st.thorns)){const r=(e.st.aura||e.st.thorns).r;ctx.strokeStyle=e.st.aura?'rgba(255,220,110,.28)':'rgba(150,230,90,.3)';ctx.setLineDash([4,5]);ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(o.x,o.y,r,r*.6,0,0,7);ctx.stroke();ctx.setLineDash([]);}}
+ if(W&&!dep){if(ks>=0&&W!=='bow'&&W!=='cast'&&W!=='throw'&&W!=='none'&&W!=='breath')swoosh(X,Y,face,ks,hh,W);
+  if(W==='breath'&&(kw>0||(ks>=0&&ks<.4))){const A=DART[key]||{},hd=A.head||[20,-30],m=A.m||1,px=X+face*hd[0]*m,py=Y+hd[1]*m,col=CASTC[e.card]||'#ff9a30',r=ks>=0?6*(1-ks/.4)+2:1.5+4*kw;
+   const gr=ctx.createRadialGradient(px,py,0,px,py,r*2.2);gr.addColorStop(0,'rgba(255,255,230,.95)');gr.addColorStop(.4,col);gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(px,py,r*2.2,0,7);ctx.fill();
+   if(ks>=0&&Math.random()<.7)fx({k:'p',x:px,y:py,z:0,vx:face*(40+Math.random()*40),vy:(Math.random()-.5)*20,vz:0,c:col,max:.3,r:2+Math.random()*2});}
   if(W==='bow'&&kw>0&&tgt)bowDraw(X,Y,face,kw,hh,tgt);
   if(W==='cast'&&(kw>0||(ks>=0&&ks<.35)))castOrb(X,Y,face,kw,ks,hh,CASTC[e.card]||'#fff');}
  if(e.frz>0){ctx.fillStyle='rgba(160,225,255,.45)';ctx.strokeStyle='rgba(230,250,255,.9)';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(o.x,o.y-o.z-hh*.45,e.r*1.3,hh*.55,0,0,7);ctx.fill();ctx.stroke();}
  else if(e.stun>0){for(let i=0;i<3;i++){const ang=st.time*6+i*2.09;ctx.fillStyle='#ffe860';ctx.beginPath();ctx.arc(o.x+Math.cos(ang)*8,o.y-o.z-hh-2+Math.sin(ang)*2.5,1.8,0,7);ctx.fill();}}
  if(e.slowT>0&&!e.frz){ctx.fillStyle='rgba(120,200,255,.8)';for(let i=0;i<2;i++){ctx.beginPath();ctx.arc(o.x+Math.sin(st.time*4+i*3)*e.r,o.y-o.z-hh*.3-((st.time*12+i*6)%12),1.2,0,7);ctx.fill();}}
- if(e.dot>0){ctx.fillStyle='rgba(140,255,80,.85)';for(let i=0;i<2;i++){ctx.beginPath();ctx.arc(o.x+Math.cos(st.time*3+i*3)*e.r*.8,o.y-o.z-hh*.5-((st.time*10+i*7)%14),1.4,0,7);ctx.fill();}}}
-const PCOL={arrow:'#e8dcc0',tarrow:'#f0e4c8',fireball:'#ff9a30',flask:'#8aff40',frostbolt:'#a0e8ff',poison:'#9aff60',bolt:'#ffe860',shadow:'#b060ff'};
+ if(e.burn&&e.dotT>0){for(let i=0;i<3;i++){const fx0=o.x+(i-1)*e.r*.55,fy=o.y-o.z-hh*(.25+.22*((i*7)%3)),fl=.6+.4*Math.sin(st.time*20+i*2);ctx.save();ctx.shadowColor='#ff6a10';ctx.shadowBlur=8;ctx.fillStyle='#ff8a20';ctx.beginPath();ctx.moveTo(fx0-3.5,fy);ctx.quadraticCurveTo(fx0,fy-13*fl,fx0+3.5,fy);ctx.fill();ctx.fillStyle='#ffe070';ctx.beginPath();ctx.moveTo(fx0-1.6,fy);ctx.quadraticCurveTo(fx0,fy-6*fl,fx0+1.6,fy);ctx.fill();ctx.restore();}}
+ else if(e.dot>0){ctx.fillStyle='rgba(140,255,80,.85)';for(let i=0;i<2;i++){ctx.beginPath();ctx.arc(o.x+Math.cos(st.time*3+i*3)*e.r*.8,o.y-o.z-hh*.5-((st.time*10+i*7)%14),1.4,0,7);ctx.fill();}}}
+const PCOL={zap:'#bfe0ff',net:'#e0d0a0',flame:'#ff8a20',icebreath:'#a8e8ff',thorn:'#a8ff70',arrow:'#e8dcc0',tarrow:'#f0e4c8',fireball:'#ff9a30',flask:'#8aff40',frostbolt:'#a0e8ff',poison:'#9aff60',bolt:'#ffe860',shadow:'#b060ff'};
 function drawProj(p,alpha){const x=lerp(p.ox,p.x,alpha),y=lerp(p.oy,p.y,alpha);if(p._d0==null)p._d0=Math.max(1,Math.hypot(p.tx-p.x,p.ty-p.y));
  const d=Math.hypot(p.tx-x,p.ty-y),k=Math.max(0,Math.min(1,1-d/p._d0));const z=lerp(p.z,p.tz,k)+Math.sin(Math.PI*k)*(p.arc?p._d0*.35:p._d0*.08);const sy=y-z;
  const c=PCOL[p.kind]||'#fff';
  if(p.kind==='arrow'||p.kind==='tarrow'){const a=Math.atan2((p.ty-p.tz)-sy,p.tx-x);ctx.save();ctx.translate(x,sy);ctx.rotate(a);ctx.strokeStyle=OL;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(4,0);ctx.stroke();ctx.strokeStyle=c;ctx.lineWidth=1.3;ctx.stroke();
   ctx.fillStyle='#d8dce2';ctx.beginPath();ctx.moveTo(6,0);ctx.lineTo(2,-2.2);ctx.lineTo(2,2.2);ctx.fill();ctx.fillStyle=p.side?'#ff6a50':'#6aa8ff';ctx.fillRect(-10,-1.8,3,3.6);ctx.restore();return;}
+ if(p.kind==='thorn'){const a=Math.atan2((p.ty-p.tz)-sy,p.tx-x);ctx.save();ctx.translate(x,sy);ctx.rotate(a);ctx.strokeStyle=OL;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(4,0);ctx.stroke();ctx.strokeStyle='#5a8a2a';ctx.lineWidth=1.4;ctx.stroke();
+  ctx.fillStyle='#c8ff90';ctx.beginPath();ctx.moveTo(7,0);ctx.lineTo(2,-2.4);ctx.lineTo(2,2.4);ctx.fill();ctx.fillStyle='#4a9a2a';ctx.beginPath();ctx.ellipse(-8,0,3,1.6,0,0,7);ctx.fill();ctx.restore();return;}
+ if(p.kind==='net'){ctx.save();ctx.translate(x,sy);ctx.rotate(st.time*9);ctx.strokeStyle='rgba(225,205,150,.95)';ctx.lineWidth=.9;ctx.beginPath();ctx.arc(0,0,6,0,7);for(let i=-1;i<=1;i++){ctx.moveTo(i*3.5,-5);ctx.lineTo(i*3.5,5);ctx.moveTo(-5,i*3.5);ctx.lineTo(5,i*3.5);}ctx.stroke();
+  ctx.fillStyle='#5a5a62';for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(Math.cos(i*1.57)*6,Math.sin(i*1.57)*6,1.3,0,7);ctx.fill();}ctx.restore();return;}
+ if(p.kind==='zap'){const a=Math.atan2((p.ty-p.tz)-sy,p.tx-x);ctx.save();ctx.translate(x,sy);ctx.rotate(a);ctx.shadowColor='#8ac8ff';ctx.shadowBlur=8;ctx.strokeStyle='#eaf6ff';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-22,0);for(let i=1;i<=5;i++)ctx.lineTo(-22+i*5,(i%2?-1:1)*(1.5+Math.random()*2.5));ctx.stroke();ctx.restore();return;}
+ if(p.kind==='flame'||p.kind==='icebreath'){const ice=p.kind==='icebreath',r=ice?6:5,g2=ctx.createRadialGradient(x,sy,0,x,sy,r*2);g2.addColorStop(0,'rgba(255,255,240,.95)');g2.addColorStop(.45,ice?'rgba(140,220,255,.9)':'rgba(255,140,30,.9)');g2.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g2;ctx.beginPath();ctx.arc(x,sy,r*2,0,7);ctx.fill();for(let i=0;i<2;i++)st.fx.push({k:'p',x:x+(Math.random()-.5)*4,y:sy+(Math.random()-.5)*4,z:0,vx:(Math.random()-.5)*14,vy:(Math.random()-.5)*14,vz:0,c:ice?(Math.random()<.5?'#e8f8ff':'#8ad0ff'):(Math.random()<.5?'#ffd060':'#ff6a10'),max:.3,r:1.6+Math.random()*1.6,t:0});return;}
  if(p.kind==='flask'){ctx.save();ctx.translate(x,sy);ctx.rotate(st.time*10);drawFlask(ctx,0,0,.5,'#8aff40');ctx.restore();return;}
  ctx.save();ctx.shadowColor=c;ctx.shadowBlur=10;ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,sy,p.kind==='fireball'?5:3.6,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,sy,1.6,0,7);ctx.fill();ctx.restore();
  if(Math.random()<.5)st.fx.push({k:'p',x,y,z,vx:0,vy:0,vz:0,c,max:.25,r:1.6,t:0});}
@@ -1948,6 +2480,10 @@ function drawFx(dt){st.fx=st.fx.filter(f=>(f.t+=dt)<f.max);for(const k in st.fla
   else if(f.k==='spark'){ctx.globalAlpha=1-k;ctx.strokeStyle=f.c;ctx.lineWidth=1.5;ctx.beginPath();const B=f.big||1;for(let i=0;i<6;i++){const a=i*1.047+f.x,r1=(2+k*4)*B,r2=(5+k*9)*B;ctx.moveTo(f.x+Math.cos(a)*r1,f.y+Math.sin(a)*r1);ctx.lineTo(f.x+Math.cos(a)*r2,f.y+Math.sin(a)*r2);}ctx.stroke();}
   else if(f.k==='ring'){ctx.globalAlpha=1-k;ctx.strokeStyle=f.c;ctx.lineWidth=f.w||3;ctx.beginPath();ctx.ellipse(f.x,f.y,f.r*(.3+.7*k),f.r*(.3+.7*k)*.6,0,0,7);ctx.stroke();}
   else if(f.k==='fire'||f.k==='boomb'){ctx.globalAlpha=Math.max(0,1-k*k);const r=f.r*(.5+.6*k);const g=ctx.createRadialGradient(f.x,f.y-r*.3,0,f.x,f.y-r*.3,r);g.addColorStop(0,'rgba(255,250,200,.95)');g.addColorStop(.4,'rgba(255,160,40,.85)');g.addColorStop(1,'rgba(160,30,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(f.x,f.y-r*.3,r,r*.8,0,0,7);ctx.fill();}
+  else if(f.k==='bolt'){ctx.globalAlpha=Math.max(0,1-k);ctx.lineJoin='round';for(const[w,c]of[[4,'rgba(120,170,255,.5)'],[1.6,'#f4faff']]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
+    for(let i=0;i<f.pts.length;i++){const p=f.pts[i];if(!i){ctx.moveTo(p[0],p[1]);continue;}const q=f.pts[i-1];for(let j=1;j<=4;j++){const t=j/4,jx=j<4?(Math.sin(i*7+j*3+f.t*60)*5):0,jy=j<4?(Math.cos(i*5+j*7+f.t*50)*5):0;ctx.lineTo(q[0]+(p[0]-q[0])*t+jx,q[1]+(p[1]-q[1])*t+jy);}}ctx.stroke();}}
+  else if(f.k==='fline'){ctx.globalAlpha=Math.max(0,1-k*k);const g2=ctx.createLinearGradient(f.x0,f.y0,f.x1,f.y1);g2.addColorStop(0,'rgba(255,120,20,.2)');g2.addColorStop(Math.min(1,k*3),'rgba(255,200,80,.85)');g2.addColorStop(1,'rgba(255,90,10,.5)');
+   ctx.strokeStyle=g2;ctx.lineCap='round';ctx.lineWidth=f.w*2*(1-k*.4);ctx.beginPath();ctx.moveTo(f.x0,f.y0);ctx.lineTo(f.x1,f.y1);ctx.stroke();ctx.strokeStyle='rgba(255,250,200,.7)';ctx.lineWidth=f.w*.5;ctx.stroke();}
   else if(f.k==='puff'){ctx.globalAlpha=(1-k)*.6;ctx.fillStyle=f.c||'#d8d0c0';ctx.beginPath();ctx.arc(f.x,f.y-k*(f.rise||10),f.r*(.5+.6*k),0,7);ctx.fill();}
   else if(f.k==='plus'){ctx.globalAlpha=1-k;ctx.fillStyle='#7aff8a';ctx.fillRect(f.x-1,f.y-k*14-4,2,8);ctx.fillRect(f.x-4,f.y-k*14-1,8,2);}
   else if(f.k==='dmg'){ctx.globalAlpha=Math.min(1,(1-k)*2.2)*.9;ctx.font='bold 8px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=2.2;ctx.strokeStyle='rgba(0,0,0,.8)';const y=f.y-k*14;ctx.strokeText(f.txt,f.x,y);ctx.fillStyle=f.c;ctx.fillText(f.txt,f.x,y);}
@@ -1973,7 +2509,12 @@ const $=id=>document.getElementById(id);
 const el=(t,cls,html)=>{const e=document.createElement(t);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 // ---------- Speicher ----------
-function loadDeck(){const d=LS.get('duell_deck',null);return(d&&!Sim.validateDeck(d)&&d.every(id=>B.playerSet.includes(id)))?d:B.defaultDeck.slice();}
+function loadDeck(){const d=LS.get('duell_deck',null);return(d&&!Sim.validateDeck(d)&&d.every(id=>B.playerSet.includes(id)&&cardOpen(id)))?d:B.defaultDeck.slice();}
+// 0.7: neue Kreaturen werden durch Kampagnensiege freigeschaltet (Karte.unlock = Kapitel-Nr.)
+function cardOpen(id){const u=CARDS[id].unlock;return !u||prog().won.includes(u);}
+function ownSet(){return B.playerSet.filter(cardOpen);}
+function scenOf(oppKey){return DUELL_SCEN.find(s=>s.opp===oppKey);}
+function diffCls(tag){return tag==='schwer'?'hard':tag==='sehr schwer'?'hard2':tag==='Drache'?'dragon':'';}
 function saveDeck(d){LS.set('duell_deck',d);}
 function prog(){const p=LS.get('duell_progress',null);return p&&Array.isArray(p.won)?p:{won:[]};}
 function unlocked(id){return id===1||prog().won.includes(id-1);}
@@ -1984,7 +2525,10 @@ window.DUELL=G;
 // ---------- Audio ----------
 let audioOn=false;function audio(){if(!audioOn){audioOn=true;try{SFX.init();}catch(e){}}try{SFX.resume();}catch(e){}}
 function sfxEvents(evs){if(!audioOn)return;for(const e of evs){try{switch(e.k){
- case 'shot':if(e.kind==='arrow'||e.kind==='tarrow')SFX.shot('archer');else if(e.kind==='fireball')SFX.shot('mage');else SFX.shot('alch');break;
+ case 'shot':if(e.kind==='arrow'||e.kind==='tarrow'||e.kind==='thorn')SFX.shot('archer');else if(e.kind==='fireball')SFX.shot('mage');else if(e.kind==='zap')SFX.zap();else if(e.kind==='net')SFX.net();else if(e.kind==='flame')SFX.breath(false);else if(e.kind==='icebreath')SFX.breath(true);else SFX.shot('alch');break;
+ // 0.7 neue Mechaniken
+ case 'chain':SFX.zap();break;case 'roar':SFX.roar();break;case 'fear':SFX.screech();break;case 'burrow':case 'unburrow':SFX.burrow();break;
+ case 'chant':SFX.chant();break;case 'roots':SFX.roots();break;case 'fireline':SFX.fireline();break;case 'burn':SFX.shot('mage');break;
  case 'hit':SFX.hit();break;case 'boom':SFX.boom();break;case 'splash':SFX.splash();break;
  case 'firerain':SFX.cast('fire');break;case 'fireboom':SFX.boom();break;case 'frost':SFX.cast('frost');break;
  case 'nova':SFX.hero('frost');break;case 'leap':SFX.hero('blade');break;case 'slam':SFX.slam();break;case 'cloud':SFX.hero('poison');break;
@@ -2027,7 +2571,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.6.1',I=DUELL_INFO;
+const VERSION='0.7',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
@@ -2040,18 +2584,18 @@ function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const
   <div class="tiles">
    <button class="tile camp" id="bCamp"><img src="${DR.icon('lichP',72)}" alt=""><b>Kampagne</b><small>${P.won.length}/${DUELL_SCEN.length} Szenarien geschafft</small><i class="pb"><i style="width:${P.won.length/DUELL_SCEN.length*100}%"></i></i></button>
    <button class="tile free" id="bFree"><img src="${DR.icon('chief',72)}" alt=""><b>Freier Kampf</b><small>Üben ohne Fortschritt</small></button>
-   <button class="tile deck" id="bDeck"><img src="${DR.icon('blade',72)}" alt=""><b>Deck &amp; Sammlung</b><small>${B.playerSet.length} Karten · Infos zu jeder Kreatur</small></button>
+   <button class="tile deck" id="bDeck"><img src="${DR.icon('blade',72)}" alt=""><b>Deck &amp; Sammlung</b><small>${ownSet().length}/${B.playerSet.length} Karten · Infos zu jeder Kreatur</small></button>
    <button class="tile set" id="bSet"><span class="gear">⚙️</span><b>Einstellungen</b><small>Musik &amp; Effekte</small></button></div>
   <p class="foot">Turmwacht Duell · Offline-Testversion ${VERSION} · Fortschritt wird im Browser gespeichert</p></div>`,'m');
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
 function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
   <div class="parch"><h3>Klang</h3>${soundRow()}</div>
-  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p></div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p><p>Jeder Sieg in der Kampagne ab Kapitel 3 schaltet neue Kreaturen für deine Sammlung frei – Trolle, Baumriesen und sogar Drachen.</p></div>
   <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
 // ----- Kampagne -----
 function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';
  return `<div class="scen sc2 ${st}${u?'':' locked'}" data-s="${sc.id}" role="button" tabindex="0" ${u?'':'aria-disabled="true"'}>
-  <div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${O.tag==='schwer'?'hard':''}">${esc(O.tag)}</i></div>
+  <div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${diffCls(O.tag)}">${esc(O.tag)}</i></div>
   <div class="sci"><small>Kapitel ${sc.id}</small><b>${esc(sc.title)}</b><em>gegen ${esc(O.name)}, ${esc(O.title)}</em>
    ${u?'':`<p class="lk">🔒 Besiege zuerst „${esc(DUELL_SCEN.find(s=>s.id===sc.id-1).title)}“</p>`}</div>
   ${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}
@@ -2073,11 +2617,11 @@ function story(id){const sc=DUELL_SCEN.find(s=>s.id===id),O=DUELL_OPP[sc.opp];
  bindCardTaps(ov);$('bBack').onclick=campaign;$('bEd').onclick=()=>deckEditor(()=>story(id));$('bGo').onclick=()=>{audio();start({mode:'camp',scen:id});};}
 function free(){
  show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><h2>Freier Kampf</h2><p class="sub">Ein Übungskampf ohne Kampagnenfortschritt.</p></div></div>
-  ${Object.entries(DUELL_OPP).map(([k,O])=>{const u=k==='grimm'||unlocked(2);return `<div class="scen sc2 ${u?'open':'locked locked'}" data-o="${k}" role="button" tabindex="0"><div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${O.tag==='schwer'?'hard':''}">${esc(O.tag)}</i></div>
-   <div class="sci"><small>Gegner</small><b>${esc(O.name)}</b><em>${esc(O.title)}</em>${u?'':'<p class="lk">🔒 Erst in der Kampagne besiegen</p>'}</div>${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}<i class="seal ${u?'open':'locked'}">${u?'⚔<small>Kämpfen</small>':'🔒<small>Gesperrt</small>'}</i></div>`;}).join('')}
+  ${Object.entries(DUELL_OPP).map(([k,O])=>{const sc=scenOf(k),u=!sc||unlocked(sc.id);return `<div class="scen sc2 ${u?'open':'locked locked'}" data-o="${k}" role="button" tabindex="0"><div class="por"><img src="${DR.icon(O.portrait,96)}" alt=""><i class="diff ${diffCls(O.tag)}">${esc(O.tag)}</i></div>
+   <div class="sci"><small>Gegner</small><b>${esc(O.name)}</b><em>${esc(O.title)}</em>${u?'':`<p class="lk">🔒 Wartet in der Kampagne (Kapitel ${sc.id})</p>`}</div>${u?`<div class="sdk"><small>Gegnerdeck</small>${deckStrip(O.deck,{cls:'foe'})}</div>`:''}<i class="seal ${u?'open':'locked'}">${u?'⚔<small>Kämpfen</small>':'🔒<small>Gesperrt</small>'}</i></div>`;}).join('')}
   <div class="row stick"><button id="bEd">🃏 Deck ändern</button></div></div>`);
  bindCardTaps(ov);
- ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const k=b.dataset.o;if(k!=='grimm'&&!unlocked(2)){toast('Morvath wartet in der Kampagne (Szenario 2).');return;}audio();start({mode:'free',opp:k});});
+ ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const k=b.dataset.o,sc=scenOf(k);if(sc&&!unlocked(sc.id)){toast(DUELL_OPP[k].name+' wartet in der Kampagne (Kapitel '+sc.id+').');return;}audio();start({mode:'free',opp:k});});
  $('bBack').onclick=menu;$('bEd').onclick=()=>deckEditor(free);}
 // ----- Detailkarte -----
 const dc=el('div','dcwrap');dc.id='dcard';$('app').appendChild(dc);let dcAnim=0,dcOpen=null;
@@ -2149,6 +2693,7 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
  function replace(oldId,newId){const i=d.indexOf(oldId);if(i<0||d.includes(newId))return;d[i]=newId;flash=newId;swap=null;toast(CARDS[newId].name+' ersetzt '+CARDS[oldId].name+'.');render();}
  function compatible(a,b){return isHero(a)===isHero(b);}
  function detail(id){const inD=d.includes(id),C=CARDS[id],acts=[];let note='';
+  if(!cardOpen(id)){const sc=DUELL_SCEN.find(s=>s.id===C.unlock);openCard(id,{note:`🔒 Noch gesperrt – besiege Kapitel ${C.unlock}${sc?' „'+esc(sc.title)+'“':''}, um diese Karte freizuschalten.`});return;}
   if(inD){acts.push({label:'➖ Entfernen',cls:'rm',fn:()=>remove(id)});acts.push({label:'⇄ Tauschen',fn:()=>{swap={from:'deck',id};render();}});note='✓ Im Deck'+(isHero(id)?' – dein Held':'');}
   else if(isHero(id)){const h=heroOf();acts.push({label:h?'👑 Als Held einsetzen':'👑 Als Held einsetzen',cls:'go',fn:()=>add(id)});if(h)note='Ersetzt deinen Helden '+esc(CARDS[h].name)+' (nur 1 Held pro Deck).';}
   else{const full=others().length>=7;if(!full)acts.push({label:'➕ Ins Deck',cls:'go',fn:()=>add(id)});acts.push({label:'⇄ Tauschen',cls:full?'go':'',fn:()=>{swap={from:'coll',id};render();}});if(full)note='Deck ist voll – tausche eine Karte aus.';}
@@ -2158,18 +2703,18 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
    const tg=swap&&swap.from==='coll'&&compatible(swap.id,id),me=swap&&swap.from==='deck'&&swap.id===id;
    return cardHTML(id,{cls:'in'+(hs?' hslot':'')+(tg?' tgt':'')+(me?' me':'')+(flash===id?' pop':''),i}).replace('<div ','<div draggable="true" ');};
   const slots=[slot(h,0,true)].concat(Array.from({length:7},(_,k)=>slot(o[k],k+1,false))).join('');
-  let list=B.playerSet.filter(id=>VIEW.f==='all'||CARDS[id].type===VIEW.f);
+  let list=B.playerSet.filter(id=>VIEW.f==='all'||CARDS[id].type===VIEW.f);const nOpen=ownSet().length;
   const TO={hero:0,unit:1,bld:2,spell:3};
-  list.sort((a,b)=>VIEW.s==='name'?CARDS[a].name.localeCompare(CARDS[b].name,'de'):VIEW.s==='type'?(TO[CARDS[a].type]-TO[CARDS[b].type])||CARDS[a].cost-CARDS[b].cost:VIEW.s==='cost-'?CARDS[b].cost-CARDS[a].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'):CARDS[a].cost-CARDS[b].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'));
+  list.sort((a,b)=>(VIEW.s==='name'?CARDS[a].name.localeCompare(CARDS[b].name,'de'):VIEW.s==='type'?(TO[CARDS[a].type]-TO[CARDS[b].type])||CARDS[a].cost-CARDS[b].cost:VIEW.s==='cost-'?CARDS[b].cost-CARDS[a].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de'):CARDS[a].cost-CARDS[b].cost||CARDS[a].name.localeCompare(CARDS[b].name,'de')));
   const cnt=t=>B.playerSet.filter(id=>t==='all'||CARDS[id].type===t).length;
-  const coll=list.map(id=>{const inD=d.includes(id),tg=swap&&swap.from==='deck'&&!inD&&compatible(swap.id,id);return cardHTML(id,{cls:(inD?'used':'')+(tg?' tgt':'')+(swap&&!tg&&swap.from==='deck'?' dim':'')}).replace('<div ','<div draggable="true" ').replace('</div>',inD?'<i class="ind">Im Deck</i></div>':'</div>');}).join('');
+  const coll=list.map(id=>{if(!cardOpen(id))return cardHTML(id,{cls:'lockd'}).replace('</div>',`<i class="lkb">🔒 Kapitel ${CARDS[id].unlock}</i></div>`);const inD=d.includes(id),tg=swap&&swap.from==='deck'&&!inD&&compatible(swap.id,id);return cardHTML(id,{cls:(inD?'used':'')+(tg?' tgt':'')+(swap&&!tg&&swap.from==='deck'?' dim':'')}).replace('<div ','<div draggable="true" ').replace('</div>',inD?'<i class="ind">Im Deck</i></div>':'</div>');}).join('');
   const hint=swap?(swap.from==='coll'?`⇄ Tippe den Platz, den <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll${isHero(swap.id)?' (Held-Platz)':''}.`:`⇄ Wähle in der Sammlung die Karte, die <b>${esc(CARDS[swap.id].name)}</b> ersetzen soll.`):
    (e?esc(e):'✓ Deck bereit! Tippe eine Karte an, um sie dir anzusehen oder zu tauschen.');
   show(`<div class="box deck scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Deck &amp; Sammlung</h2></div>
    <div class="dstat"><span class="pill">🃏 <b>${d.length}/8</b></span><span class="pill">💧 Ø <b id="avgM">${I.fx(avg,1)}</b> Mana</span><span class="pill ${d.filter(isHero).length===1?'ok':'bad'}" id="heroRule">👑 Held ${d.filter(isHero).length===1?'✓':'fehlt'}</span></div>
    <div class="slots">${slots}</div>
    <p class="msg ${swap?'sw':e?'bad':'ok'}" id="deckMsg">${hint}${swap?' <button class="sm2" id="bSwX">Abbrechen</button>':''}</p>
-   <div class="colh"><h3>Sammlung <small>${B.playerSet.length} Karten</small></h3>
+   <div class="colh"><h3>Sammlung <small>${nOpen}/${B.playerSet.length} Karten</small></h3>
     <label class="sort">Sortieren <select id="dSort"><option value="cost">Kosten ↑</option><option value="cost-">Kosten ↓</option><option value="type">Typ</option><option value="name">Name</option></select></label></div>
    <div class="flt">${['all','hero','unit','spell','bld'].map(t=>`<button class="chipb${VIEW.f===t?' on':''}" data-f="${t}">${t==='all'?'Alle':TICON[t]+' '+(t==='hero'?'Helden':t==='unit'?'Einheiten':t==='spell'?'Zauber':'Gebäude')} <small>${cnt(t)}</small></button>`).join('')}</div>
    <div class="coll">${coll||'<p class="sub">Keine Karten.</p>'}</div>
@@ -2190,6 +2735,7 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
    if(swap&&swap.from==='coll'&&swap.id!==id){swap=null;}
    detail(id);});
   // Drag & Drop (Maus am PC)
+  ov.querySelectorAll('.cd.lockd').forEach(c=>c.removeAttribute('draggable'));
   ov.querySelectorAll('.cd[draggable]').forEach(c=>{c.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/plain',JSON.stringify({id:c.dataset.id,inD:!!c.closest('.slots')}));ev.dataTransfer.effectAllowed='move';c.classList.add('drg');});
    c.addEventListener('dragend',()=>c.classList.remove('drg'));});
   const rd=ev=>{try{return JSON.parse(ev.dataTransfer.getData('text/plain'));}catch(_){return null;}};
@@ -2304,7 +2850,9 @@ function resume(){hide();G.paused=false;G.last=performance.now();}
 G.pause=pause;G.resume=resume;
 function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let extra='';
  if(G.mode==='camp'){const sc=DUELL_SCEN.find(s=>s.id===G.scen);if(win){const fresh=markWon(sc.id);extra=`<p class="story">${esc(sc.win)}</p>`;
-   const nx=DUELL_SCEN.find(s=>s.id===sc.id+1);if(nx&&fresh)extra+=`<p class="unlock">🔓 Szenario ${nx.id} „${esc(nx.title)}“ freigeschaltet!</p>`;}
+   const nx=DUELL_SCEN.find(s=>s.id===sc.id+1);if(nx&&fresh)extra+=`<p class="unlock">🔓 Szenario ${nx.id} „${esc(nx.title)}“ freigeschaltet!</p>`;
+   const nc=fresh?B.playerSet.filter(id=>CARDS[id].unlock===sc.id):[];if(nc.length)extra+=`<p class="unlock">🔓 Neue Karten für deine Sammlung:</p><div class="newc">${nc.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b><span>${esc(CARDS[id].name)}</span></button>`).join('')}</div>`;
+   if(!nx&&fresh)extra+=`<p class="unlock">🏆 Du hast die Kampagne abgeschlossen!</p>`;}
   else extra=`<p class="story">${esc(sc.lose)}</p>`;}
  try{audio();if(!PW.endSnd){PW.endSnd=true;snd(win?'fanfare':'darkHorn');}}catch(_){}
  const nx=G.mode==='camp'&&win&&DUELL_SCEN.find(s=>s.id===G.scen+1);
@@ -2312,7 +2860,7 @@ function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let
   <div class="crowns"><div><small>Du</small>${[0,1,2].map(i=>`<i class="${i<S.p[0].crowns?'on b':''}">♛</i>`).join('')}</div><div><small>${esc(DUELL_OPP[G.opp].name)}</small>${[0,1,2].map(i=>`<i class="${i<S.p[1].crowns?'on r':''}">♛</i>`).join('')}</div></div>
   <p class="sub">${esc(S.reason||'')} · ${fmt(S.t-3)} gespielt · ${S.p[0].plays} Karten</p>${extra}
   <div class="col">${nx?`<button class="big go" id="bNext">▶ Weiter: ${esc(nx.title)}</button>`:''}<button class="big${nx?'':' go'}" id="bAgain">↻ Revanche</button><button class="big" id="bMenu">☰ Menü</button></div></div>`,'e');
- if(nx)$('bNext').onclick=()=>story(nx.id);$('bAgain').onclick=()=>G.mode==='camp'?story(G.scen):start({mode:'free',opp:G.opp});$('bMenu').onclick=()=>{G.S=null;menu();};}
+ bindCardTaps(ov);if(nx)$('bNext').onclick=()=>story(nx.id);$('bAgain').onclick=()=>G.mode==='camp'?story(G.scen):start({mode:'free',opp:G.opp});$('bMenu').onclick=()=>{G.S=null;menu();};}
 G.endScreen=endScreen;
 $('bPause').onclick=()=>{audio();G.paused?resume():pause();};
 $('bMus').onclick=()=>{audio();SFX.toggle('music');hudBtns();};$('bSfx').onclick=()=>{audio();SFX.toggle('sfx');hudBtns();};

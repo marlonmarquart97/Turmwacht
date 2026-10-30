@@ -29,7 +29,7 @@ function create(cfg){cfg=cfg||{};const decks=cfg.decks||[B.defaultDeck,B.default
  for(const side of[0,1])for(const T of TPOS){const st=B.towers[T.sub];addEnt(S,{side,cls:'tower',card:T.sub,sub:T.sub,lane:T.lane,x:T.x,y:side?FH-T.y:T.y,r:st.r,hp:st.hp,maxhp:st.hp,st,active:T.sub!=='keep',mass:1e9});}
  for(const e of S.ents)if(e.cls==='tower'){const k=S.mods[e.side].towerHp;if(k){e.hp=e.maxhp=Math.round(e.hp*k);}}
  return S;}
-function addEnt(S,o){const e=Object.assign({id:S.nid++,ox:o.x,oy:o.y,tgt:0,cd:0,frz:0,stun:0,slowT:0,slowF:0,dot:0,dotT:0,dep:0,face:o.side?1:-1,atk:0,atkT:-99,air:false,mass:1,retg:0,lock:false,vx:0,vy:0,sw:0,swT:0,dep0:0,born:S.tick},o);if(e.dep>0)e.dep0=e.dep;S.ents.push(e);return e;}
+function addEnt(S,o){const e=Object.assign({id:S.nid++,ox:o.x,oy:o.y,tgt:0,cd:0,frz:0,stun:0,slowT:0,slowF:0,dot:0,dotT:0,dep:0,face:o.side?1:-1,atk:0,atkT:-99,air:false,mass:1,retg:0,lock:false,vx:0,vy:0,sw:0,swT:0,dep0:0,born:S.tick,rootT:0,gndT:0,fearT:0,bufT:0,bufF:0,hasteT:0,hasteF:0,auraT:0,auraF:0,thT:0,thF:0,bur:false,amb:false,burCd:0,fearCd:1},o);if(e.dep>0)e.dep0=e.dep;S.ents.push(e);return e;}
 function ev(S,k,o){S.ev.push(Object.assign({k},o||{}));}
 function byId(S,id){if(!id)return null;for(const e of S.ents)if(e.id===id)return e.hp>0?e:null;return null;}
 function tower(S,side,sub,lane){return S.ents.find(e=>e.cls==='tower'&&e.side===side&&e.sub===sub&&(lane==null||e.lane===lane))||null;}
@@ -80,7 +80,16 @@ const ghost=e=>e.cls==='unit'&&e.dep>0;
 function enemiesIn(S,side,x,y,r,o){o=o||{};const out=[];for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(o.noAir&&e.air)continue;if(o.unitsOnly&&e.cls!=='unit')continue;if(d2(e.x,e.y,x,y)<=r+e.r*.5)out.push(e);}return out;}
 function castSpell(S,side,id,x,y){const s=CARDS[id].s;
  if(id==='firerain'){S.zones.push({k:'firerain',side,x,y,r:s.r,t:s.delay,max:s.delay,dmg:s.dmg,tower:s.tower});ev(S,'firerain',{side,x,y,r:s.r});}
- else if(id==='frost'){for(const e of enemiesIn(S,side,x,y,s.r)){hurt(S,e,e.cls==='unit'?s.dmg:s.dmg*s.tower,side);e.frz=Math.max(e.frz,s.freeze);}ev(S,'frost',{side,x,y,r:s.r});}}
+ else if(id==='frost'){for(const e of enemiesIn(S,side,x,y,s.r)){hurt(S,e,e.cls==='unit'?s.dmg:s.dmg*s.tower,side);e.frz=Math.max(e.frz,s.freeze);}ev(S,'frost',{side,x,y,r:s.r});}
+ else if(s.buff){S.zones.push({k:'chant',side,x,y,r:s.r,t:s.t,max:s.t,buff:s.buff,haste:s.haste});ev(S,'chant',{side,x,y,r:s.r});}}
+// 0.7: Buffs (Kriegsgesang/Kriegsschrei/Banner) – Schadens- und Tempo-Multiplikator
+function setBuf(S,o,f,t){const cur=o.bufT>S.tick?o.bufF:0;o.bufF=Math.max(cur,f);o.bufT=Math.max(o.bufT,S.tick+Math.round(t/TICK));}
+function setHaste(S,o,f,t){const cur=o.hasteT>S.tick?o.hasteF:0;o.hasteF=Math.max(cur,f);o.hasteT=Math.max(o.hasteT,S.tick+Math.round(t/TICK));}
+function dmul(S,e){let m=1;if(e.bufT>S.tick)m+=e.bufF;if(e.auraT>S.tick)m+=e.auraF;return m;}
+function hmul(S,e){return e.hasteT>S.tick?1+e.hasteF:1;}
+function scare(S,o,src,t){if(o.cls!=='unit'||o.air||o.bur||o.hp<=0)return;const ft=o.hero?t*.5:t;if(ft>o.fearT){o.fearT=ft;o.fearX=src.x;o.fearY=src.y;}}
+function snare(S,o,t){if(o.cls!=='unit'||o.hp<=0)return;const d=o.hero?t*.5:t;o.rootT=Math.max(o.rootT,d);if(o.air)o.gndT=Math.max(o.gndT,d);}
+function segD(px,py,x0,y0,x1,y1){const dx=x1-x0,dy=y1-y0,l=dx*dx+dy*dy||1;let k=((px-x0)*dx+(py-y0)*dy)/l;k=clamp(k,0,1);return d2(px,py,x0+dx*k,y0+dy*k);}
 function ability(S,side,x,y){const p=S.p[side],h=byId(S,p.heroId);if(!h||p.heroCharge<1||h.leap||h.dep>0||h.frz>0||h.stun>0)return false;const A=CARDS[h.card].abil;
  let tx=x,ty=y;if(A.reach){const d=d2(h.x,h.y,x,y);if(d>A.reach){tx=h.x+(x-h.x)*A.reach/d;ty=h.y+(y-h.y)*A.reach/d;}}
  tx=clamp(tx,8,FW-8);ty=clamp(ty,8,FH-8);
@@ -88,13 +97,20 @@ function ability(S,side,x,y){const p=S.p[side],h=byId(S,p.heroId);if(!h||p.heroC
  else if(A.key==='nova'){for(const e of enemiesIn(S,side,h.x,h.y,A.r)){hurt(S,e,e.cls==='unit'?A.dmg:A.dmg*.4,side);e.frz=Math.max(e.frz,e.cls==='tower'?A.freeze*.5:A.freeze);}ev(S,'nova',{side,x:h.x,y:h.y,r:A.r});}
  else if(A.key==='cloud'){S.zones.push({k:'cloud',side,x:tx,y:ty,r:A.r,t:A.t,max:A.t,dps:A.dps,slow:A.slow,air:true});ev(S,'cloud',{side,x:tx,y:ty,r:A.r});}
  else if(A.key==='summon'){if(inRiver(tx,ty))ty=(ty>MIDY)?RY1+4:RY0-4;const f=FORM[4];for(const[dx,dy]of f)spawnUnit(S,side,A.summon.card,tx+dx*1.3,ty+dy*1.3,.5,laneOf(tx));ev(S,'summon',{side,x:tx,y:ty});}
+ else if(A.key==='roar'){for(const o of S.ents)if(o.side===side&&o.cls==='unit'&&o.hp>0&&!ghost(o)&&d2(o.x,o.y,h.x,h.y)<=A.r){setBuf(S,o,A.buff,A.t);setHaste(S,o,A.haste,A.t);}
+  for(const e of enemiesIn(S,side,h.x,h.y,A.r*.8,{noAir:true,unitsOnly:true}))scare(S,e,h,A.fear);ev(S,'roar',{side,x:h.x,y:h.y,r:A.r});}
+ else if(A.key==='roots'){for(const e of enemiesIn(S,side,tx,ty,A.r,{unitsOnly:true})){hurt(S,e,A.dmg,side);snare(S,e,A.t);}S.zones.push({k:'roots',side,x:tx,y:ty,r:A.r,t:A.t,max:A.t});ev(S,'roots',{side,x:tx,y:ty,r:A.r});}
+ else if(A.key==='fireline'){const x0=h.x,y0=h.y;for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(segD(e.x,e.y,x0,y0,tx,ty)<=A.w+e.r*.5)hurt(S,e,e.cls==='unit'?A.dmg:A.dmg*A.tower,side,true);}
+  ev(S,'fireline',{side,x0,y0,x1:tx,y1:ty,w:A.w});}
  p.heroCharge=0;ev(S,'abil',{side,key:A.key,hero:h.card});return true;}
 // ---------- Schaden ----------
-function hurt(S,e,amt,srcSide){if(!e||e.hp<=0||amt<=0||ghost(e))return;e.hp-=amt;e.hurtT=S.tick;
+function hurt(S,e,amt,srcSide,fire){if(!e||e.hp<=0||amt<=0||ghost(e))return;
+ if(fire&&e.st&&e.st.firevul){const fv=e.st.firevul;amt*=fv.f;if(!e.burn)ev(S,'burn',{id:e.id,x:e.x,y:e.y});e.burn=1;e.dot=fv.dps;e.dotT=Math.max(e.dotT,fv.burn);e.dotSide=srcSide;}// 0.7 Ent-Schwäche: Feuer
+ e.hp-=amt;e.hurtT=S.tick;
  if(e.cls==='tower'){S.stats[srcSide===0?0:1].dmgTower+=amt;if(e.sub==='keep')e.active=true;}
  if(e.hp<=0){e.hp=0;}}
 function splashAt(S,side,x,y,r,dmg,o){o=o||{};let n=0;for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(o.air===false&&e.air)continue;if(o.air===true&&!e.air)continue;
-  if(d2(e.x,e.y,x,y)<=r+e.r*.6){hurt(S,e,e.cls==='unit'?dmg:dmg*(o.tower==null?1:o.tower),side);n++;
+  if(d2(e.x,e.y,x,y)<=r+e.r*.6){hurt(S,e,e.cls==='unit'?dmg:dmg*(o.tower==null?1:o.tower),side,o.fire);n++;if(o.each)o.each(e);
    if(o.knock&&e.cls==='unit'&&!e.air){const d=d2(e.x,e.y,x,y)||1;const k=o.knock*(1-Math.min(1,d/(r*1.2)))+o.knock*.4;e.x+=(e.x-x)/d*k;e.y+=(e.y-y)/d*k;e.stun=Math.max(e.stun,.5);fixPos(e,e.oy);}
    if(o.stun)e.stun=Math.max(e.stun,o.stun);}}return n;}
 // ---------- Wegfindung ----------
@@ -120,12 +136,13 @@ function steerGoal(e,tx,ty,chase){if(e.air)return[tx,ty];
  // direkt am Ufer, aber neben dem Brückenstreifen: erst seitlich auf die Brücke einfädeln, nicht ins Wasser drücken
  if(by0<10&&ox<=BW/2+e.r+6)return[lx,e.y];
  const by=up?e.y-RY1:RY0-e.y,look=Math.max(6,Math.min(44,8+ox*.45,by));return[lx,up?RY1+look:RY0-look];}
-function moveTo(S,e,tx,ty,spd,chase,tid){let[gx,gy]=steerGoal(e,tx,ty,chase);
+function moveTo(S,e,tx,ty,spd,chase,tid){let[gx,gy]=steerGoal(e,tx,ty,chase);const y0=e.yT;
  // 0.6.1 Vorfahrt am Brückenkopf: wer schon auf der Brücke ist, darf zuerst herunter. Passt ein entgegenkommender Gegner
  // (nicht mein Ziel) nicht neben mich auf den Steg, trete ich seitlich an den Brückenkopf statt frontal zu schieben.
  if(!e.air&&(e.y<RY0-1||e.y>RY1+1)&&needCross(e.y,ty)){const bx=laneBridge(e,tx,chase),up=e.y>MIDY,bk=up?e.y-RY1:RY0-e.y;
-  if(bk<40)for(const o of S.ents){if(o.side===e.side||o.cls!=='unit'||o.air||o.hp<=0||o.id===tid||o.lock)continue;if(Math.abs(o.x-bx)>BW/2||!(o.y>RY0-2&&o.y<RY1+2))continue;
-   if(e.r+o.r<BW/2+2)continue;const cs=e.x>=o.x?1:-1;gx=bx+cs*(BW/2+e.r+3);gy=up?Math.max(e.y,RY1+e.r+4):Math.min(e.y,RY0-e.r-4);break;}}
+  if(bk<40)for(const o of S.ents){if(o.side===e.side||o.cls!=='unit'||o.air||o.hp<=0||o.id===tid||o.lock||o.rootT>0||o.frz>0||o.stun>0)continue;if(Math.abs(o.x-bx)>BW/2||!(o.y>RY0-2&&o.y<RY1+2))continue;
+   if(e.r+o.r<BW/2+2)continue;const cs=e.x>=o.x?1:-1;gx=bx+cs*(BW/2+e.r+3);gy=up?Math.max(e.y,RY1+e.r+4):Math.min(e.y,RY0-e.r-4);e.yld=o.id;e.yT=(e.yT||0)+1;break;}}
+ if(e.yT===y0)e.yT=0;
  let dx=gx-e.x,dy=gy-e.y,d=Math.sqrt(dx*dx+dy*dy);if(d<1e-6)return;dx/=d;dy/=d;
  // seitliches Ausweichen um kämpfende Verbündete (fächert Gruppen am Ziel auf)
  let lx=0,ly=0;for(const o of S.ents){if(o===e||o.side!==e.side||o.cls!=='unit'||o.air!==e.air||o.hp<=0||!o.lock)continue;const ax=o.x-e.x,ay=o.y-e.y,m=e.r+o.r+8;if(ax>m||ax<-m||ay>m||ay<-m)continue;
@@ -144,7 +161,7 @@ function moveTo(S,e,tx,ty,spd,chase,tid){let[gx,gy]=steerGoal(e,tx,ty,chase);
  const s=spd*TICK;e.vx+=(dx*s-e.vx)*STEER*2;e.vy+=(dy*s-e.vy)*STEER*2;const v=Math.sqrt(e.vx*e.vx+e.vy*e.vy);if(v>s){e.vx*=s/v;e.vy*=s/v;}
  if(d<=s&&!(lx||ly)){e.x=gx;e.y=gy;}else{e.x+=e.vx;e.y+=e.vy;}if(Math.abs(e.vx)>.08)e.face=e.vx<0?-1:1;e.mv=true;}
 // ---------- Zielwahl ----------
-function canHit(st,o){if(o.thrown||o.leap||o.hp<=0||ghost(o))return false;if(st.tg==='bld'&&o.cls==='unit')return false;if(o.air&&st.tg!=='any')return false;return true;}
+function canHit(st,o){if(o.thrown||o.leap||o.hp<=0||ghost(o)||o.bur)return false;if(st.tg==='bld'&&o.cls==='unit')return false;if(o.air&&st.tg!=='any'&&!(o.gndT>0))return false;return true;}// 0.7: bur = eingegraben, gndT = per Netz zu Boden gezogen
 function edge(e,o){return d2(e.x,e.y,o.x,o.y)-e.r-o.r;}
 const CLOSE=14;
 function inLane(o,l){if(o.cls==='unit')return(o.lane!=null?o.lane:laneOf(o.x))===l;if(o.cls==='tower')return o.lane<0||o.lane===l;return laneOf(o.x)===l;}
@@ -160,16 +177,25 @@ function acquire(S,e){const st=e.st,sight=st.sight||st.range+60;let best=null,bd
 function inRange(e,t){return edge(e,t)<=e.st.range+(e.xr||0)+(t.cls!=='unit'?2:0);}// xr: 'über die Schulter' im Gedränge
 function reach(e,t){if(e.lock||e.st.range>MELEE)return inRange(e,t);return edge(e,t)<=CONTACT+(t.cls!=='unit'?2:0);}
 // ---------- Angriff ----------
-function attack(S,e,t){const st=e.st;e.atk++;e.atkT=S.tick;if(t.x!==e.x)e.face=t.x<e.x?-1:1;
- if(st.bomb){S.bombs.push({side:e.side,x:t.cls==='unit'?t.x:e.x,y:t.cls==='unit'?t.y:e.y+(t.y>e.y?6:-6),t:.45,max:.45,dmg:st.dmg,r:st.splash,tower:1,small:true});ev(S,'drop',{x:e.x,y:e.y});return;}
- if(st.proj){const P=B.projectiles[st.proj];S.proj.push({id:S.nid++,side:e.side,kind:st.proj,x:e.x,y:e.y,z:e.air?34:(e.cls==='tower'?(e.sub==='keep'?70:58):(e.cls==='bld'?50:18)),ox:e.x,oy:e.y,tid:t.id,tx:t.x,ty:t.y,tz:t.air?30:12,spd:P.spd,arc:P.arc||0,dmg:st.dmg,splash:st.splash||0,src:e.card,st,
+function attack(S,e,t){const st=e.st;e.atk++;e.atkT=S.tick;if(t.x!==e.x)e.face=t.x<e.x?-1:1;const dm=dmul(S,e);
+ if(st.bomb){S.bombs.push({side:e.side,x:t.cls==='unit'?t.x:e.x,y:t.cls==='unit'?t.y:e.y+(t.y>e.y?6:-6),t:.45,max:.45,dmg:st.dmg*dm,r:st.splash,tower:1,small:true});ev(S,'drop',{x:e.x,y:e.y});return;}
+ if(st.proj){const P=B.projectiles[st.proj];S.proj.push({id:S.nid++,side:e.side,kind:st.proj,x:e.x,y:e.y,z:e.air?34:(e.cls==='tower'?(e.sub==='keep'?70:58):(e.cls==='bld'?50:18)),ox:e.x,oy:e.y,tid:t.id,tx:t.x,ty:t.y,tz:t.air?30:12,spd:P.spd,arc:P.arc||0,dmg:st.dmg*dm,splash:st.splash||0,src:e.card,st,fire:!!(st.fire||st.proj==='fireball'),net:!!(st.net&&(e.atk-1)%st.net.every===0),
   d0:Math.max(1,d2(e.x,e.y,t.x,t.y)),air:t.air});ev(S,'shot',{kind:st.proj,x:e.x,y:e.y,side:e.side});return;}
  e.sw=SWING;e.swT=t.id;}
-function strike(S,e,t){const st=e.st;hurt(S,t,st.dmg,e.side);ev(S,'hit',{x:t.x,y:t.y,air:t.air,melee:1,card:e.card,tx:e.x,ty:e.y,id:t.id,dmg:st.dmg});
+function strike(S,e,t){const st=e.st;let dmg=st.dmg*dmul(S,e);
+ if(e.amb){e.amb=false;dmg+=st.burrow.bonus;if(t.cls==='unit')t.stun=Math.max(t.stun,t.hero?st.burrow.stun*.5:st.burrow.stun);ev(S,'ambush',{x:t.x,y:t.y,side:e.side});}// 0.7 Überraschungsbiss
+ hurt(S,t,dmg,e.side);ev(S,'hit',{x:t.x,y:t.y,air:t.air,melee:1,card:e.card,tx:e.x,ty:e.y,id:t.id,dmg});
+ if(st.cleave){const C=st.cleave;let n=0;for(const o of S.ents){if(o===t||o.side===e.side||o.cls!=='unit'||o.air||o.hp<=0||o.thrown||o.leap||ghost(o))continue;if(d2(o.x,o.y,t.x,t.y)<=C.r+o.r*.5){hurt(S,o,dmg*C.f,e.side);n++;}}ev(S,'cleave',{x:t.x,y:t.y,r:C.r,n,face:e.face});}
+ if(t.thT>S.tick&&t.thF&&e.cls==='unit'&&e.hp>0){hurt(S,e,dmg*t.thF,t.side);ev(S,'thorns',{x:e.x,y:e.y,id:e.id});}// 0.7 Dornenaura
  if(t.cls==='unit'&&!t.air&&t.hp>0&&e.mass>t.mass*1.5&&!ghost(t)){const d=d2(e.x,e.y,t.x,t.y)||1,k=Math.min(7,(1-t.mass/e.mass)*7);const py=t.y;t.x+=(t.x-e.x)/d*k;t.y+=(t.y-e.y)/d*k;fixPos(t,py);ev(S,'knock',{id:t.id,amt:k,x:t.x,y:t.y});}}
 function impact(S,p,t){const st=p.st;
- if(p.splash){splashAt(S,p.side,p.tx,p.ty,p.splash,p.dmg,{air:!!p.air});ev(S,'boom',{x:p.tx,y:p.ty,r:p.splash,kind:p.kind,air:p.air});}
- else if(t)hurt(S,t,p.dmg,p.side);
+ if(p.splash){const sl=st.slow;splashAt(S,p.side,p.tx,p.ty,p.splash,p.dmg,{air:!!p.air,fire:p.fire,each:sl?(o=>{if(o.cls==='unit'&&o.hp>0&&o!==t){o.slowT=Math.max(o.slowT,sl.t);o.slowF=Math.max(o.slowF,sl.f);}}):null});ev(S,'boom',{x:p.tx,y:p.ty,r:p.splash,kind:p.kind,air:p.air});}
+ else if(t)hurt(S,t,p.dmg,p.side,p.fire);
+ if(st.chain&&t){const C=st.chain,seen=new Set([t.id]),pts=[[t.x,t.y,t.air?1:0]];let cur=t,dmg=p.dmg;// 0.7 Kettenblitz
+  for(let i=0;i<C.n;i++){dmg*=C.f;let best=null,bd=1e9;for(const o of S.ents){if(o.side===p.side||o.cls!=='unit'||seen.has(o.id)||!canHit(st,o))continue;const d=d2(o.x,o.y,cur.x,cur.y);if(d<=C.r+o.r&&d<bd){bd=d;best=o;}}
+   if(!best)break;seen.add(best.id);hurt(S,best,dmg,p.side);pts.push([best.x,best.y,best.air?1:0]);cur=best;}
+  ev(S,'chain',{pts,side:p.side});}
+ if(p.net&&t&&t.hp>0&&t.cls==='unit'){snare(S,t,st.net.t);ev(S,'net',{id:t.id,x:t.x,y:t.y,air:t.air});}
  if(t&&t.hp>0&&t.cls==='unit'){if(st.slow){t.slowT=Math.max(t.slowT,st.slow.t);t.slowF=Math.max(t.slowF,st.slow.f);}if(st.dot){t.dot=st.dot.dps;t.dotT=st.dot.t;t.dotSide=p.side;}}
  if(st.puddle){S.zones.push({k:'puddle',side:p.side,x:p.tx,y:p.ty,r:st.puddle.r,t:st.puddle.t,max:st.puddle.t,dps:st.puddle.dps,slow:st.puddle.slow});ev(S,'splash',{x:p.tx,y:p.ty});}
  ev(S,'impact',{x:p.tx,y:p.ty,kind:p.kind,air:p.air,id:t?t.id:0});}
@@ -180,22 +206,37 @@ function updUnit(S,e){
  if(e.leap){const L=e.leap;L.t+=TICK;const k=Math.min(1,L.t/L.max);e.x=L.x0+(L.x1-L.x0)*k;e.y=L.y0+(L.y1-L.y0)*k;
   if(k>=1){e.leap=null;e.lane=laneOf(e.x);const A=CARDS[e.card].abil;splashAt(S,e.side,e.x,e.y,A.r,A.dmg,{tower:.5,stun:A.stun});ev(S,'slam',{x:e.x,y:e.y,r:A.r,side:e.side});fixPos(e,e.y);}return;}
  const st=e.st;e.mv=false;
- if(e.dotT>0){e.dotT-=TICK;hurt(S,e,e.dot*TICK,e.dotSide);}
+ if(e.dotT>0){e.dotT-=TICK;hurt(S,e,e.dot*TICK,e.dotSide);}else if(e.burn)e.burn=0;
+ if(e.rootT>0)e.rootT-=TICK;if(e.gndT>0)e.gndT-=TICK;if(e.burCd>0)e.burCd-=TICK;
  if(e.slowT>0){e.slowT-=TICK;if(e.slowT<=0)e.slowF=0;}
  if(e.frz>0){e.frz-=TICK;return;}if(e.stun>0){e.stun-=TICK;return;}
- const sm=e.slowT>0?1-e.slowF:1;
+ const sm=(e.slowT>0?1-e.slowF:1)*hmul(S,e);
+ // 0.7 Auren (Banner: Schaden+Heilung, Dornen: Rückschaden) – alle 0,5 s aufgefrischt
+ if((st.aura||st.thorns)&&(S.tick+e.id)%10===0){const A=st.aura,T=st.thorns,r=A?A.r:T.r;for(const o of S.ents){if(o.side!==e.side||o.cls!=='unit'||o.hp<=0||ghost(o)||d2(o.x,o.y,e.x,e.y)>r)continue;
+   if(A){o.auraF=Math.max(o.auraT>S.tick?o.auraF:0,A.dmg);o.auraT=S.tick+12;if(o.hp<o.maxhp)o.hp=Math.min(o.maxhp,o.hp+A.hps*.5);}if(T){o.thF=T.f;o.thT=S.tick+12;}}}
+ // 0.7 Schreckensschrei: Bodentruppen in der Nähe fliehen kurz
+ if(st.fear){e.fearCd-=TICK;if(e.fearCd<=0){let n=0;for(const o of S.ents)if(o.side!==e.side&&o.cls==='unit'&&!o.air&&!o.bur&&o.hp>0&&!ghost(o)&&!o.thrown&&!o.leap&&d2(o.x,o.y,e.x,e.y)<=st.fear.r){scare(S,o,e,st.fear.t);n++;}
+   if(n){e.fearCd=st.fear.every;ev(S,'fear',{x:e.x,y:e.y,r:st.fear.r,side:e.side});}else e.fearCd=.3;}}
+ // 0.7 Furcht: weg von der Quelle laufen (nur diesseits des Flusses), nicht angreifen
+ if(e.fearT>0){e.fearT-=TICK;e.lock=false;e.tgt=0;e.sw=0;if(e.rootT>0){e.vx*=.5;e.vy*=.5;return;}const fx=e.x-e.fearX,fy=e.y-e.fearY,fd=Math.sqrt(fx*fx+fy*fy)||1;let tx=e.x+fx/fd*30,ty=e.y+fy/fd*30;
+  const up=e.y>MIDY;ty=up?Math.max(ty,RY1+6):Math.min(ty,RY0-6);tx=clamp(tx,10,FW-10);moveTo(S,e,tx,ty,st.spd*sm*1.1,false,0);fixPos(e,e.oy);return;}
  if(st.heal){e.healT=(e.healT||0)-TICK;if(e.healT<=0){e.healT=1;let n=0;for(const o of S.ents)if(o.side===e.side&&o.cls==='unit'&&o.hp>0&&o.hp<o.maxhp&&d2(o.x,o.y,e.x,e.y)<=st.heal.r){o.hp=Math.min(o.maxhp,o.hp+st.heal.hps);n++;}if(n)ev(S,'heal',{x:e.x,y:e.y,r:st.heal.r});}}
  // laufender Schlag: Treffer im Schlag-Frame
  if(e.sw>0){e.sw--;if(e.sw===0){const tt=byId(S,e.swT);if(tt&&canHit(st,tt)&&inRange(e,tt))strike(S,e,tt);}return;}
  // 0.6 Zielerfassung: ungebunden wird jeden Tick neu gewählt (sofortiges Abdrehen); nach Kontakt LOCKED bis Ziel tot ist
  let t=byId(S,e.tgt);if(t&&!canHit(st,t))t=null;
+ // 0.7-Fix: wer > 1 s am Brückenkopf einem (z. B. eingefrorenen) Gegner auf der Brücke Vorfahrt lässt, greift ihn an, statt ewig zu warten
+ if(!e.lock&&e.yT>20&&e.yld){const o=byId(S,e.yld);if(o&&canHit(st,o)){t=o;e.tgt=o.id;e.lock=true;}e.yT=0;}
  if(t&&e.lock&&t.cls==='unit'&&edge(e,t)>(st.sight||st.range+60)+20)t=null;
  if(!t)e.lock=false;
  if(!e.lock){e.xr=0;const n=acquire(S,e);t=n;e.tgt=t?t.id:0;}
  if(!t){e.vx*=.5;e.vy*=.5;return;}
- if(reach(e,t)){e.lock=true;e.inr=S.tick;e.vx*=.3;e.vy*=.3;if(t.x!==e.x)e.face=t.x<e.x?-1:1;e.cd-=TICK*sm;if(e.cd<=0){attack(S,e,t);e.cd=st.hit;}}
+ if(reach(e,t)){if(e.bur){e.bur=false;e.amb=true;e.burCd=st.burrow.cd;ev(S,'unburrow',{x:e.x,y:e.y,id:e.id});}e.lock=true;e.inr=S.tick;e.vx*=.3;e.vy*=.3;if(t.x!==e.x)e.face=t.x<e.x?-1:1;e.cd-=TICK*sm;if(e.cd<=0){attack(S,e,t);e.cd=st.hit;}}
  else{// Ausholzeit nur nach echtem Laufen – nicht, wenn das Ziel gerade knapp aus der Reichweite driftet (sonst nie ein Schuss)
-  e.cd=S.tick-(e.inr??-99)<=10?e.cd-TICK:Math.max(e.cd-TICK,st.hit*.35);moveTo(S,e,t.x,t.y,st.spd*sm*(e.sf||1),t.cls!=='tower',t.id);fixPos(e,e.oy);
+  e.cd=S.tick-(e.inr??-99)<=10?e.cd-TICK:Math.max(e.cd-TICK,st.hit*.35);
+  if(st.burrow&&!e.bur&&!(e.burCd>0)&&!e.lock){e.bur=true;e.amb=false;ev(S,'burrow',{x:e.x,y:e.y,id:e.id});}// 0.7 Eingraben beim Laufen
+  if(e.rootT>0){e.vx=0;e.vy=0;e.pt=0;e.px=e.x;e.py=e.y;return;}// 0.7 Netz/Wurzeln: steht still
+  moveTo(S,e,t.x,t.y,st.spd*sm*(e.sf||1),t.cls!=='tower',t.id);fixPos(e,e.oy);
   // 0.6.1 Stau-Erkennung: kaum Fortschritt über 0,75 s -> Nahkämpfer in Waffenreichweite schlagen zu, sonst Ausweichmanöver
   if(++e.pt>=15){const mv=d2(e.x,e.y,e.px,e.py);e.px=e.x;e.py=e.y;e.pt=0;
    if(mv<st.spd*sm*.75*.25){e.stk++;if(st.range<=MELEE&&edge(e,t)<=st.range+e.r+(t.cls!=='unit'?2:0)){e.lock=true;e.xr=e.r;e.stk=0;}
@@ -219,7 +260,9 @@ function updProj(S){const keep=[];for(const p of S.proj){p.ox=p.x;p.oy=p.y;const
   const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.sqrt(dx*dx+dy*dy),s=p.spd*TICK;
   if(d<=s+2){p.x=p.tx;p.y=p.ty;impact(S,p,t&&!t.thrown&&!t.leap?t:null);}else{p.x+=dx/d*s;p.y+=dy/d*s;keep.push(p);}}S.proj=keep;}
 function updZones(S){const keep=[];for(const z of S.zones){z.t-=TICK;
-  if(z.k==='firerain'){if(z.t<=0){splashAt(S,z.side,z.x,z.y,z.r,z.dmg,{tower:z.tower});ev(S,'fireboom',{x:z.x,y:z.y,r:z.r});continue;}keep.push(z);continue;}
+  if(z.k==='roots'){if(z.t>0)keep.push(z);continue;}
+  if(z.k==='chant'){for(const e of S.ents){if(e.side!==z.side||e.cls!=='unit'||e.hp<=0||ghost(e))continue;if(d2(e.x,e.y,z.x,z.y)<=z.r+e.r*.5){setBuf(S,e,z.buff,.15);setHaste(S,e,z.haste,.15);}}if(z.t>0)keep.push(z);continue;}
+  if(z.k==='firerain'){if(z.t<=0){splashAt(S,z.side,z.x,z.y,z.r,z.dmg,{tower:z.tower,fire:true});ev(S,'fireboom',{x:z.x,y:z.y,r:z.r});continue;}keep.push(z);continue;}
   for(const e of S.ents){if(e.side===z.side||e.cls!=='unit'||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(e.air&&!z.air)continue;if(d2(e.x,e.y,z.x,z.y)<=z.r+e.r*.5){hurt(S,e,z.dps*TICK,z.side);e.slowT=Math.max(e.slowT,.3);e.slowF=Math.max(e.slowF,z.slow);}}
   if(z.t>0)keep.push(z);}S.zones=keep;}
 function updBombs(S){const keep=[];for(const b of S.bombs){b.t-=TICK;if(b.t<=0){splashAt(S,b.side,b.x,b.y,b.r,b.dmg,{air:false,tower:b.tower,knock:b.knock});ev(S,'bomb',{x:b.x,y:b.y,r:b.r,big:!!b.big});}else keep.push(b);}S.bombs=keep;}
@@ -227,7 +270,7 @@ function separate(S){for(let it=0;it<4;it++)separate1(S);}
 function separate1(S){const U=[];for(const e of S.ents)if(e.cls==='unit'&&e.hp>0&&!e.thrown&&!e.leap)U.push(e);
  // Einheiten, die an einem Turm/Gebäude anliegen, gelten als 'eingeklemmt' (sehr schwer) -> Gedränge löst sich nach außen auf
  for(const e of U){e.wall=1;if(!e.air)for(const o of S.ents){if((o.cls!=='tower'&&o.cls!=='bld')||o.hp<=0)continue;if(d2(e.x,e.y,o.x,o.y)<e.r+o.r*.85+.6){e.wall=30;break;}}}
- for(let i=0;i<U.length;i++){const a=U[i];for(let j=i+1;j<U.length;j++){const b=U[j];if(a.air!==b.air)continue;let dx=b.x-a.x,dy=b.y-a.y;const m=a.r+b.r;if(dx>m||dx<-m||dy>m||dy<-m)continue;
+ for(let i=0;i<U.length;i++){const a=U[i];for(let j=i+1;j<U.length;j++){const b=U[j];if(a.air!==b.air||a.bur||b.bur)continue;let dx=b.x-a.x,dy=b.y-a.y;const m=a.r+b.r;if(dx>m||dx<-m||dy>m||dy<-m)continue;
    let d=Math.sqrt(dx*dx+dy*dy);if(d>=m)continue;if(d<1e-4){dx=((a.id+b.id)%2?1:-1)*.01;dy=.01;d=Math.sqrt(dx*dx+dy*dy);}
    if(a.side===b.side&&!a.air&&a.y>RY0-6&&a.y<RY1+6&&b.y>RY0-6&&b.y<RY1+6&&d>=m*.8)continue;const ma=a.mass*a.wall,mb=b.mass*b.wall,o=(m-d)*.5,wa=mb/(ma+mb),wb=1-wa;a.x-=dx/d*o*wa;a.y-=dy/d*o*wa;b.x+=dx/d*o*wb;b.y+=dy/d*o*wb;}}
  for(const e of U){if(!e.air)for(const o of S.ents){if((o.cls!=='tower'&&o.cls!=='bld')||o.hp<=0)continue;const dx=e.x-o.x,dy=e.y-o.y,m=e.r+o.r*.85,d=Math.sqrt(dx*dx+dy*dy);if(d<m&&d>1e-4){e.x=o.x+dx/d*m;e.y=o.y+dy/d*m;}}fixPos(e,e.oy);}}
@@ -255,6 +298,6 @@ function step(S){if(S.over)return;S.ev.length=0;
  updProj(S);updZones(S);updBombs(S);separate(S);cleanup(S);
  S.tick++;S.t+=TICK;}
 function hash(S){let h=2166136261;const mix=v=>{h^=(v|0);h=Math.imul(h,16777619);};mix(S.tick);for(const e of S.ents){mix(e.id);mix(Math.round(e.x*100));mix(Math.round(e.y*100));mix(Math.round(e.hp*10));}for(const p of S.p){mix(Math.round(p.mana*1000));mix(p.crowns);}return(h>>>0).toString(16);}
-return{DEP,CONTACT,MELEE,SWING,laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
+return{DEP,CONTACT,MELEE,SWING,laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,dmul,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
 })();
 if(typeof module!=='undefined')module.exports=DuellSim;

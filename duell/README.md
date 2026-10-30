@@ -1,4 +1,4 @@
-# Turmwacht Duell (Offline-Testversion 0.6)
+# Turmwacht Duell (Offline-Testversion 0.7)
 
 Kartenduell am Schattenpass – Einzelspieler-Kampagne gegen Computergegner.
 Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfade → später unter `/duell/` im Turmwacht-Repo).
@@ -12,10 +12,45 @@ Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfa
 - `duell-campaign.js` – Szenarien, Gegner, Story-Texte
 - `duell-cards.js` – Karten-Infos für die Detailkarte (Seltenheit, Werte, Fähigkeitstexte, Lore; liest alle Werte live aus `TW_BESTIARY`)
 - `duell-back.js` – Rückansichten aller Einheiten/Helden/Gebäude-Figuren (`viewKey()`)
+- `duell-art07.js` – 0.7: Vektorgrafik der neuen Kreaturen (parametrisierter Drache `drawWyrm`, Trolle, Borkenhüter, Sylvara …), `duell-back07.js` – deren Rückansichten (inkl. Flügelschlag-Frames `_b_f`)
 - `duell-art.js`, `duell-render.js` – Darstellung (Canvas), `duell-ui.js` – Bedienung/Menüs
 - `headless-match.js` – KI-gegen-KI in Node (`node src/headless-match.js 30 morvath`)
 
 Bauen: `python3 src/build.py` → `index.html`.
+
+## Neu in 0.7 – Drei neue Kapitel, 13 neue Karten, Drachen
+Inspiration: Warcraft 3 und „Schlacht um Mittelerde“ 1/2 – eigene Namen, eigene Vektorgrafik, nichts 1:1 übernommen.
+
+**Kampagne (Kapitel 3–5, steigende Schwierigkeit)**
+- Kap. 3 „Trommeln im Eichenhang“ – **Ugrak Baumbrecher**, Troll-Kriegsherr (schwer): Baumtroll, Ork-Krieger, Wolfsrudel, Netzwerfer, Sturmrufer, Kriegsgesang, Feuerregen, Held Ugrak. Mana +20 %, Türme +5 %.
+- Kap. 4 „Der Zorn des Altwalds“ – **Sylvara**, Dornenmutter (sehr schwer): Borkenhüter, Bannerträger, Grubenkriecher, Elfen-Bogenschützen, Netzwerfer, Frost, Schamane, Heldin Sylvara. Mana +9,5 %, Türme +6 %.
+- Kap. 5 „Der Aschenhorst“ – **Vyrthax**, der Aschenkönig (Drache): Glutwelpen, Frostwyrm, Schattenschwinge, Sturmrufer, Grubenkriecher, Feuerregen, Baumtroll, Held Vyrthax. Mana +14 %, Türme +8 %.
+- Jeder Boss hat eigene Story-Texte, Tipps, Regeln und ein eigenes KI-Profil (`duell-ai.js`).
+
+**Freischaltung:** Ein Sieg in Kapitel 3/4/5 schaltet dessen Karten frei (Feld `unlock` in `tw-bestiary.js`). Gesperrte Karten sind im Deck-Editor sichtbar (🔒 „Kapitel X“), lassen sich ansehen, aber nicht ins Deck legen. Der Siegbildschirm zeigt die neuen Karten. Freies Spiel: Ein Boss ist wählbar, sobald sein Kapitel offen ist.
+
+**Neue Karten**
+| Karte | Typ/Mana | Kern | Vorbild |
+|---|---|---|---|
+| Sturmrufer | Einheit 4 | Kettenblitz springt auf 3 Ziele | WC3 (Kettenblitz) |
+| Netzwerfer ×2 | Einheit 3 | Netz fesselt; holt Flieger zu Boden | WC3 (Fangnetz) |
+| Baumtroll | Einheit 5 | 1650 LP, Rundumschlag | SuM (Bergtroll) + WC3 (Cleave) |
+| Kriegsgesang | Zauber 3 | +35 % Schaden, +25 % Tempo für 7 s | SuM (Kriegsgesänge) |
+| Ugrak Baumbrecher | Held 5 | Rundumschlag; Kriegsschrei | SuM |
+| Bannerträger | Einheit 3 | Aura: +25 % Schaden, Heilung | SuM (Bannerträger) |
+| Grubenkriecher | Einheit 4 | gräbt sich ein, Überraschungsangriff mit Betäubung | WC3 (Eingraben) |
+| Borkenhüter | Einheit 6 | 2400 LP, Gebäudejäger, feueranfällig | SuM (Ent) |
+| Sylvara | Heldin 4 | Dornenaura; Wurzelfessel | WC3 (Entangling Roots / Thorns Aura) |
+| Schattenschwinge | Flieger 5 | Nahkampf gegen Boden, Schreckensschrei (Furcht) | SuM (Fellbiest) |
+| Glutwelpen ×2 | Flieger 4 | Feueratem mit Brand | WC3/SuM |
+| Frostwyrm | Flieger 6 | Eisatem: Fläche + Verlangsamung | WC3 (Frostwyrm) |
+| Vyrthax | Held 6, fliegt | Feueratem; Feuerflug (Flammenbahn) | SuM (Drogoth) |
+
+Neue Mechaniken in der Simulation (deterministisch): Kettenblitz, Netz/Fessel, Rundumschlag, Auren, Eingraben, Feueranfälligkeit/Brand, Dornen, Furcht, Puffzauber. Neue Klänge additiv in `tw-sfx.js` (TD unverändert).
+
+**Fixes:** Brückenkopf-Vorfahrt weicht nicht mehr gefesselten/eingefrorenen/betäubten Einheiten aus; wer > 1 s einem angreifbaren Blocker ausweicht, greift ihn an (behebt seltene Hänger, die schon in 0.6.1 vorkamen).
+
+**Tests:** alle Browser-Tests + `bridges.js 400`, `matchstalls.js 400` (jetzt alle Bosse reihum, keine Hänger), `mech07.js` (neue Mechaniken, Determinismus), `ui07.js` (Freischaltung, 0.6.1-Spielstände). Bot-Siegquoten: Grimm 88 %, Morvath 61 %, Ugrak 46 %, Sylvara 39 %, Vyrthax 30 %.
 
 ## Neu in 0.6.1 – Brücken-Stau behoben, Gruppen laufen individueller
 - **Fix Brücken-Stau (Tester-Feedback „Orks bleiben an der Brücke hängen“):** Ursache war die Brückensteuerung. Eine Einheit,

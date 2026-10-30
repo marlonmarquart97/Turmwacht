@@ -3,7 +3,14 @@ const DUELL_OPP={
  grimm:{name:'Grimmzahn',title:'Goblin-Häuptling',portrait:'chief',ai:'grimm',deck:['orcs','wolves','sling','alch','bats','ogre','firerain','blade'],mods:{regen:.9},
   tag:'leicht',quote:'„Hehehe! Meine Schleuder wirft heute Orks – und morgen dich!“'},
  morvath:{name:'Morvath',title:'Totenbeschwörer',portrait:'lichP',ai:'morvath',deck:['skels','skelarch','knight','giant','bats','frost','firerain','lich'],mods:{regen:1.07},
-  tag:'schwer',quote:'„Jeder Gefallene dient mir. Auch du wirst es bald.“'}};
+  tag:'schwer',quote:'„Jeder Gefallene dient mir. Auch du wirst es bald.“'},
+ // 0.7: drei neue Bosse (steigende Schwierigkeit)
+ ugrak:{name:'Ugrak Baumbrecher',title:'Troll-Kriegsherr',portrait:'ugrakP',ai:'ugrak',deck:['troll','orcs','wolves','netter','storm','warchant','firerain','trollking'],mods:{regen:1.2,towerHp:1.05},
+  tag:'schwer',quote:'„Ugrak reißt Bäume aus. Ugrak reißt Türme aus. Du bist kleiner als ein Baum.“'},
+ sylvara:{name:'Sylvara',title:'Dornenmutter des Altwalds',portrait:'sylvaraP',ai:'sylvara',deck:['treant','banner','burrow','archers','netter','frost','shaman','thorn'],mods:{regen:1.095,towerHp:1.06},
+  tag:'sehr schwer',quote:'„Der Wald vergisst nicht. Jede Axt, jedes Feuer – heute zahlt ihr dafür.“'},
+ vyrthax:{name:'Vyrthax',title:'Der Aschenkönig',portrait:'vyrthaxP',ai:'vyrthax',deck:['whelp','frostwyrm','shade','storm','burrow','firerain','troll','dragonlord'],mods:{regen:1.14,towerHp:1.08},
+  tag:'Drache',quote:'„Ich habe Königreiche zu Asche gebrannt, bevor dein Turm ein Stein war.“'}};
 const DUELL_SCEN=[
  {id:1,title:'Der Grenzposten',opp:'grimm',
   story:['Am Nordende des Schattenpasses wacht ein kleiner Grenzposten über die zwei Brücken der Schattenschlucht.',
@@ -19,6 +26,30 @@ const DUELL_SCEN=[
    'Brenne sein Heer nieder, bevor er den Pass in ewige Nacht taucht!'],
   rule:'Morvath zieht Kraft aus der Gruft: sein Mana fließt etwas schneller.',
   tip:'Tipp: Flächenschaden gegen Knochenrotten, Frost und Gruppen gegen das Riesenskelett. Spar Mana für einen Gegenangriff.',
-  win:'Morvaths Laterne erlischt, die Gruft stürzt ein. Der Schattenpass ist frei – vorerst. Fortsetzung folgt …',
-  lose:'Kaltes Lachen hallt aus der Gruft. Morvath ist stark – prüfe dein Deck und greife erneut an!'}];
+  win:'Morvaths Laterne erlischt, die Gruft stürzt ein. Doch im Staub der Gruft liegt eine Kriegstrommel aus Trollknochen – und von Osten her dröhnt eine Antwort …',
+  lose:'Kaltes Lachen hallt aus der Gruft. Morvath ist stark – prüfe dein Deck und greife erneut an!'},
+ {id:3,title:'Trommeln im Eichenhang',opp:'ugrak',
+  story:['Östlich des Passes liegt der Eichenhang. Seit Morvaths Fall dröhnen dort Kriegstrommeln, und Baum um Baum stürzt krachend ins Tal.',
+   'Ugrak Baumbrecher hat die Bergtrolle geeint. Seine Krieger reißen Eichen aus und schwingen sie wie Keulen, Netzwerfer fangen alles, was flieht, und Sturmrufer lassen Blitze über die Reihen springen.',
+   'Wenn Ugrak brüllt, wird seine Horde wild. Halte die Brücken – und brich die Horde, bevor sie in Fahrt kommt!'],
+  rule:'Ugraks Horde stürmt früh und oft: sein Mana fließt deutlich schneller (+20 %), seine Türme sind 5 % stärker. Kriegsgesang macht seine Truppen stärker.',
+  tip:'Tipp: Trolle treffen alles um ihr Ziel – verteile dich nicht dicht um sie. Frost und Flieger sind gut gegen die Bodentruppen. Bei einem Kriegsschrei kurz zurückweichen.',
+  win:'Ugrak stürzt in den Fluss, sein Kriegsbaum treibt davon. Die Trolle zerstreuen sich – und manche schließen sich dir an! Doch am Waldrand bewegen sich die Bäume, ganz ohne Wind …',
+  lose:'Die Trommeln werden lauter. Ugraks Horde hat dich überrannt – versuch es mit mehr Flächenschaden!'},
+ {id:4,title:'Der Zorn des Altwalds',opp:'sylvara',
+  story:['Die Trolle haben den Altwald verwundet, und der Wald ist erwacht. Sylvara, die Dornenmutter, hält jeden Menschen für schuldig.',
+   'Uralte Borkenhüter stapfen auf deine Türme zu, Bannerträger führen ihre Waldläufer, und unter der Erde graben sich Grubenkriecher heran.',
+   'Wer ihr zu nah kommt, verfängt sich in Wurzeln und Dornen. Feuer fürchten ihre Riesen – doch Sylvara wartet geduldig auf deinen Fehler.'],
+  rule:'Sylvara spart Mana für Konter, ihr Mana fließt schneller (+9,5 %) und ihre Türme sind 6 % stärker.',
+  tip:'Tipp: Borkenhüter nehmen durch Feuer fast doppelten Schaden und brennen. Feuerregen und Feuermagier sind deine besten Freunde. Grubenkriecher erwischst du nur mit Flächenschaden.',
+  win:'Sylvara sinkt zurück in ihre Eiche. „Nicht ihr habt den Wald verbrannt“, flüstert sie. „Seht nach Norden, zum Aschenhorst.“ Am Horizont steigt Rauch auf …',
+  lose:'Der Wald schließt sich über deinen Türmen. Feuer ist die Antwort – und Geduld.'},
+ {id:5,title:'Der Aschenhorst',opp:'vyrthax',
+  story:['Im Norden, wo die Berge schwarz sind vom Ruß, schläft seit tausend Jahren der Aschenkönig. Morvaths Zauber, Ugraks Trommeln und der Zorn des Waldes haben ihn geweckt.',
+   'Vyrthax ruft seine Brut: Glutwelpen spucken Feuer, ein Frostwyrm aus alten Knochen gleitet über die Schlucht, und Schattenschwingen lassen mit ihrem Schrei jede Reihe zerbrechen.',
+   'Er ist der mächtigste Feind, dem die Turmwacht je begegnet ist. Hol alle Schützen auf die Mauern – der Himmel brennt!'],
+  rule:'Der Drache herrscht über den Himmel: sein Mana fließt deutlich schneller (+14 %), seine Türme sind 8 % stärker – und seine Drachen sind die wahre Gefahr.',
+  tip:'Tipp: Fast alles fliegt – nimm Bogenschützen, Netzwerfer und Frost. Ein Netz zieht Flieger zu Boden, dann treffen sie auch deine Nahkämpfer. Weiche der Feuerbahn aus!',
+  win:'Mit einem letzten Brüllen stürzt Vyrthax in seinen Horst, die Asche erlischt. Der Schattenpass, der Eichenhang und der Altwald sind frei. Die Turmwacht hat gesiegt – Ehre den Verteidigern!',
+  lose:'Asche regnet auf die Türme. Vyrthax lacht im Rauch – stelle dein Deck gegen Flieger auf und fordere ihn erneut!'}];
 if(typeof module!=='undefined')module.exports={DUELL_OPP,DUELL_SCEN};
