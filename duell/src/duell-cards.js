@@ -38,7 +38,24 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
   shade:'Ein grauer Reiter auf einer lederhäutigen Bestie. Sein Schrei friert das Blut in den Adern.',
   whelp:'Junge Drachen aus dem Aschenhorst. Noch klein, aber ihr Feuer brennt schon heiß genug.',
   frostwyrm:'Die Knochen eines uralten Drachen, von eisiger Magie zusammengehalten. Sein Atem lässt Flüsse erstarren.',
-  dragonlord:'Vyrthax, der Aschenkönig. Er schlief hundert Jahre im Horst – jetzt ist er hungrig.'};
+  dragonlord:'Vyrthax, der Aschenkönig. Er schlief hundert Jahre im Horst – jetzt ist er hungrig.',
+  wolfrider:'Orks auf grauen Wargen. Wenn sie Anlauf nehmen, bricht jede Schildreihe.',
+  wolves:'Ein Rudel aus den Frostfang-Wäldern. Allein harmlos – zu dritt tödlich.',
+  bear:'Ein Kriegsbär der Bergstämme, gepanzert mit Holz und Eisen. Sein Gebrüll zwingt jeden Feind, ihn anzusehen.',
+  wolfking:'Kargash Wolfsherz ritt als Kind mit den Wölfen. Heute heulen sie, wenn er ruft.',
+  shield:'Ein Gebet an die Ahnen. Für einen Atemzug stehen die Toten schützend vor den Lebenden.',
+  quake:'Die Erde selbst bäumt sich auf. Mauern wanken, Truppen stolpern.',
+  warlock:'Er handelt mit Mächten jenseits der Glut. Für jeden Funken, den er beschwört, zahlt er mit einem Stück Seele.',
+  drill:'Zwei Goblins, ein Bohrkopf und kein Gedanke an Sicherheit. Irgendwo wird es schon wieder herauskommen.',
+  warlockhero:'Zarvok der Glutbinder öffnete das Tor in den Teufelsglut-Minen. Seitdem regnet es dort Dämonen.',
+  lightning:'Der Himmel wählt seine Opfer selbst: immer die Stärksten zuerst.',
+  necro:'Wo ein Nekromant geht, bleibt kein Toter lange liegen.',
+  graves:'Der Boden bricht, und die Vergessenen kriechen hervor – hungrig und ohne Furcht.',
+  deathlord:'Aldric war einst König dieses Landes. Der Tod nahm ihm die Krone nicht – nur das Herz.',
+  plague:'Ein grüner Nebel, der nach Moder riecht. Wer ihn atmet, wird langsam und schwach.',
+  heal:'Eine Quelle reinen Lichts. Wunden schließen sich, solange man in ihrem Schein steht.',
+  imp:'Kleine, kichernde Glutteufel. Einzeln ein Ärgernis, in Scharen eine Plage.',
+  infernal:'Ein Dämon aus Stein und grünem Feuer, vom Himmel geschleudert.'};
  const fx=(n,d)=>{d=d==null?1:d;return(+n).toFixed(d).replace(/\.0+$/,'').replace('.',',');};
  const pct=f=>Math.round(f*100)+' %';
  function rarity(id){const c=C[id];if(c.type==='hero')return{k:'leg',n:'Legendär'};if(c.cost>=6)return{k:'epic',n:'Episch'};if(c.cost>=4)return{k:'rare',n:'Selten'};return{k:'com',n:'Gewöhnlich'};}
@@ -66,7 +83,14 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
    R.push({k:'Anzahl',v:'1 Gebäude'});}
   else if(c.s&&c.s.buff){const s=c.s;R.push({k:'Stärke',v:'+'+pct(s.buff)+' Schaden'});R.push({k:'Tempo',v:'+'+pct(s.haste)+' Angriff & Lauf'});R.push({k:'Dauer',v:fx(s.t,0)+' s'});
    R.push({k:'Radius',v:fx(s.r/B.tile,1)+' Felder',f:s.r/MAX.sr});R.push({k:'Ziel',v:'Eigene Truppen im Kreis'});}
+  else if(c.s&&!c.s.dmg){const s=c.s;
+   if(s.ward){R.push({k:'Schild',v:fx(s.ward,0)+' Schaden'});R.push({k:'Dauer',v:'bis '+fx(s.t,0)+' s'});}
+   if(s.hps){R.push({k:'Heilung',v:fx(s.hps,0)+' /s'});R.push({k:'Dauer',v:fx(s.t,0)+' s',sub:'= '+fx(s.hps*s.t,0)+' Leben'});}
+   if(s.dps){R.push({k:'Schaden',v:fx(s.dps,0)+' /s',sub:s.bdps?'Gebäude '+fx(s.bdps,0)+' /s':''});R.push({k:'Dauer',v:fx(s.t,0)+' s'});if(s.tower)R.push({k:'Türme',v:pct(s.tower)+' des Gebäudeschadens'});if(s.slow)R.push({k:'Verlangsamt',v:pct(s.slow)});}
+   if(s.card){R.push({k:'Erweckt',v:Math.floor(s.t/s.every)+' '+C[s.card].name.replace(/-Krieger$/,'')});R.push({k:'Dauer',v:fx(s.t,1)+' s'});}
+   R.push({k:'Radius',v:fx(s.r/B.tile,1)+' Felder',f:s.r/MAX.sr});R.push({k:'Ziel',v:s.ward||s.hps?'Eigene Truppen im Kreis':s.card?'Beliebiger Ort (nur Boden)':'Boden'+(id==='plague'?' & Luft':'')+', beliebiger Ort'});}
   else if(c.s){const s=c.s;R.push({k:'Schaden',v:fx(s.dmg,0),f:s.dmg/MAX.sdmg,sub:'Türme '+pct(s.tower)});R.push({k:'Radius',v:fx(s.r/B.tile,1)+' Felder',f:s.r/MAX.sr});
+   if(s.n)R.push({k:'Blitze',v:String(s.n),sub:'stärkste Ziele'});if(s.stun)R.push({k:'Betäubt',v:fx(s.stun,1)+' s'});
    if(s.delay)R.push({k:'Verzögerung',v:fx(s.delay,1)+' s'});if(s.freeze)R.push({k:'Einfrieren',v:fx(s.freeze,1)+' s'});R.push({k:'Ziel',v:'Boden & Luft, beliebiger Ort'});}
   return R;}
  // Fähigkeiten-Text automatisch aus den Daten
@@ -86,6 +110,12 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
    if(u.firevul)L.push('Verwundbar durch Feuer: '+pct(u.firevul.f)+' Schaden und brennt '+fx(u.firevul.burn,0)+' s ('+fx(u.firevul.dps,0)+'/s).');
    if(u.thorns)L.push('Dornenaura: Nahkämpfer, die Verbündete im Umkreis von '+fx(u.thorns.r/B.tile,1)+' Feldern treffen, erleiden '+pct(u.thorns.f)+' zurück.');
    if(u.fear)L.push('Schreckensschrei alle '+fx(u.fear.every,0)+' s: Bodentruppen im Umkreis fliehen '+fx(u.fear.t,1)+' s (Helden halb so lang).');
+   if(u.charge)L.push('Ansturm: nach '+fx(u.charge.after,1)+' s Laufen +'+pct(u.charge.spd-1)+' Tempo; der erste Treffer macht '+pct(u.charge.f)+' Schaden und betäubt '+fx(u.charge.stun,1)+' s.'+(u.charge.r?' Trampelt dabei alle Bodentruppen im Umkreis von '+fx(u.charge.r/B.tile,1)+' Feldern nieder ('+fx(u.dmg*u.charge.tr,0)+' Schaden).':''));
+   if(u.taunt)L.push('Wutgebrüll (automatisch, alle '+fx(u.taunt.cd,0)+' s): Feinde im Umkreis von '+fx(u.taunt.r/B.tile,1)+' Feldern müssen den Bären angreifen ('+fx(u.taunt.t,0)+' s, Helden halb so lang); der Bär nimmt so lange '+pct(u.taunt.dr)+' weniger Schaden.');
+   if(u.tunnel)L.push('Tunnel: überall platzierbar (nicht im Fluss, nicht direkt an gegnerischen Türmen). Bohrt sich vom eigenen Bergfried unterirdisch zum Ziel – unterwegs unangreifbar, aber die Erdspur verrät ihn.');
+   if(u.tunnel)L.push('Auftauchen: '+fx(u.tunnel.dmg,0)+' Flächenschaden und '+fx(u.tunnel.stun,1)+' s Betäubung; danach selbst '+fx(u.tunnel.self,1)+' s benommen. Konter: Truppen am Zielpunkt, Erdbeben, Flächenschaden. Türme erleiden '+pct(u.tunnel.tower)+'.');
+   if(u.summon)L.push('Beschwört alle '+fx(u.summon.every,0)+' s '+u.summon.n+' '+C[u.summon.card].name+' (höchstens '+u.summon.cap+' gleichzeitig).');
+   if(u.raise)L.push('Erweckt gefallene Truppen in '+fx(u.raise.r/B.tile,1)+' Feldern Umkreis als Skelett (Feind wie Freund, alle '+fx(u.raise.cd,1)+' s).');
    if(u.fire)L.push('Feuerschaden – besonders wirksam gegen Borkenhüter.');
    if(u.slow&&u.splash)L.push('Verlangsamt alle Getroffenen um '+pct(u.slow.f)+' für '+fx(u.slow.t,1)+' s.');else
    if(u.slow)L.push('Verlangsamt Getroffene um '+pct(u.slow.f)+' für '+fx(u.slow.t,1)+' s.');
@@ -99,6 +129,9 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
    else if(A.key==='roar')t='stärkt Verbündete im Umkreis '+fx(A.t,0)+' s lang (+'+pct(A.buff)+' Schaden, +'+pct(A.haste)+' Tempo); Bodentruppen der Gegner fliehen '+fx(A.fear,1)+' s.';
    else if(A.key==='roots')t='Wurzeln brechen bis '+fx(A.reach/B.tile,1)+' Felder entfernt aus dem Boden: '+fx(A.dmg,0)+' Schaden, Feinde stehen '+fx(A.t,1)+' s still, Flieger werden zu Boden gezogen.';
    else if(A.key==='fireline')t='fliegt eine Flammenbahn bis '+fx(A.reach/B.tile,1)+' Felder weit: '+fx(A.dmg,0)+' Feuerschaden für alles auf der Linie (Türme '+pct(A.tower)+').';
+   else if(A.key==='howl')t='Heulen: Verbündete im Umkreis +'+pct(A.haste)+' Tempo für '+fx(A.t,0)+' s, und '+A.summon.n+' Frostfang-Wölfe springen herbei.';
+   else if(A.key==='infernal')t='schleudert bis '+fx(A.reach/B.tile,1)+' Felder weit einen Höllenwächter vom Himmel: '+fx(A.dmg,0)+' Flächenschaden, betäubt '+fx(A.stun,1)+' s (Türme '+pct(A.tower)+'). Der Wächter kämpft danach weiter.';
+   else if(A.key==='drain')t='entzieht allen Feinden im Umkreis '+fx(A.dmg,0)+' Leben und heilt sich um '+pct(A.heal)+' davon.';
    else if(A.key==='summon')t='erweckt '+A.summon.n+' Skelette (wie „'+C[A.summon.card].name+'“) an einem Zielort.';
    L.push({abil:A.name,t,charge:'lädt '+fx(A.charge,0)+' s (erstmals nach ~'+first+' s)'});}
   if(b){if(b.spawn)L.push('Schleudert alle '+fx(b.spawn.every,0)+' s einen '+C[b.spawn.card].name.replace(/-Krieger$/,'-Krieger')+' über die Schlucht.');
@@ -106,6 +139,10 @@ const DUELL_INFO=(()=>{const B=TW_BESTIARY,C=B.cards;
    if(b.dmg)L.push('Schießt Pfeile auf Boden und Luft und lockt Bodentruppen an.');
    L.push('Zerfällt nach '+fx(b.life,0)+' s. Nur auf deiner Hälfte baubar.');}
   if(s&&s.buff){L.push('Wirkt auf deine eigenen Truppen im Kreis – auch auf alle, die in den nächsten '+fx(s.t,0)+' s hineinlaufen.');L.push('Verursacht keinen Schaden.');}
+  else if(s&&(s.ward||s.hps)){L.push(s.ward?'Jede eigene Truppe im Kreis erhält einen Schild, der zuerst '+fx(s.ward,0)+' Schaden schluckt.':'Heilt eigene Truppen im Kreis – auch alle, die hineinlaufen.');L.push('Verursacht keinen Schaden.');}
+  else if(s&&s.card){L.push('Alle '+fx(s.every,1)+' s kriecht ein '+C[s.card].name.replace(/-Krieger$/,'')+' aus dem Boden – auch auf der gegnerischen Hälfte, direkt am Turm.');L.push('Gut zum Belagern und Ablenken; anfällig für Flächenschaden.');}
+  else if(s&&s.dps){L.push('Wirkt an jeder Stelle des Feldes, '+fx(s.t,0)+' s lang.');if(s.bdps)L.push('Erschüttert Gebäude und Türme besonders stark (Türme '+pct(s.tower)+').');else L.push('Trifft auch Flieger; Türme bleiben verschont.');}
+  else if(s&&s.n){L.push('Schlägt in die '+s.n+' Gegner mit dem meisten Leben im Kreis ein und betäubt sie kurz.');L.push('Türme erleiden nur '+pct(s.tower)+' des Schadens.');}
   else if(s){L.push('Wirkt an jeder Stelle des Feldes'+(s.delay?' nach '+fx(s.delay,1)+' s':'')+'.');if(s.freeze)L.push('Friert Einheiten und Türme '+fx(s.freeze,0)+' s ein.');L.push('Türme erleiden nur '+pct(s.tower)+' des Schadens.');}
   return L;}
  function avg(deck){return deck.length?deck.reduce((a,id)=>a+C[id].cost,0)/deck.length:0;}

@@ -10,7 +10,7 @@ function loadDeck(){const d=LS.get('duell_deck',null);return(d&&!Sim.validateDec
 function cardOpen(id){const u=CARDS[id].unlock;return !u||prog().won.includes(u);}
 function ownSet(){return B.playerSet.filter(cardOpen);}
 function scenOf(oppKey){return DUELL_SCEN.find(s=>s.opp===oppKey);}
-function diffCls(tag){return tag==='schwer'?'hard':tag==='sehr schwer'?'hard2':tag==='Drache'?'dragon':'';}
+function diffCls(tag){return tag==='schwer'?'hard':tag==='sehr schwer'?'hard2':tag==='Drache'?'dragon':tag==='Rudel'?'pack':tag==='Dämon'?'demon':tag==='Untot'?'undead':'';}
 function saveDeck(d){LS.set('duell_deck',d);}
 function prog(){const p=LS.get('duell_progress',null);return p&&Array.isArray(p.won)?p:{won:[]};}
 function unlocked(id){return id===1||prog().won.includes(id-1);}
@@ -21,16 +21,17 @@ window.DUELL=G;
 // ---------- Audio ----------
 let audioOn=false;function audio(){if(!audioOn){audioOn=true;try{SFX.init();}catch(e){}}try{SFX.resume();}catch(e){}}
 function sfxEvents(evs){if(!audioOn)return;for(const e of evs){try{switch(e.k){
- case 'shot':if(e.kind==='arrow'||e.kind==='tarrow'||e.kind==='thorn')SFX.shot('archer');else if(e.kind==='fireball')SFX.shot('mage');else if(e.kind==='zap')SFX.zap();else if(e.kind==='net')SFX.net();else if(e.kind==='flame')SFX.breath(false);else if(e.kind==='icebreath')SFX.breath(true);else SFX.shot('alch');break;
+ case 'shot':if(e.kind==='arrow'||e.kind==='tarrow'||e.kind==='thorn')SFX.shot('archer');else if(e.kind==='fireball')SFX.shot('mage');else if(e.kind==='zap')SFX.zap();else if(e.kind==='fel')SFX.fel();else if(e.kind==='net')SFX.net();else if(e.kind==='flame')SFX.breath(false);else if(e.kind==='icebreath')SFX.breath(true);else SFX.shot('alch');break;
  // 0.7 neue Mechaniken
  case 'chain':SFX.zap();break;case 'roar':SFX.roar();break;case 'fear':SFX.screech();break;case 'burrow':case 'unburrow':SFX.burrow();break;
- case 'chant':SFX.chant();break;case 'roots':SFX.roots();break;case 'fireline':SFX.fireline();break;case 'burn':SFX.shot('mage');break;
+ case 'chant':SFX.chant();break;
+ case 'taunt':SFX.bearRoar();break;case 'howl':SFX.howl();break;case 'tunnel':SFX.drill();break;case 'emerge':SFX.emerge();break;case 'lightning':SFX.thunder();break;case 'ward':SFX.ward();break;case 'healsp':SFX.healsp();break;case 'quake':SFX.quake();break;case 'charge':SFX.charge();break;case 'drain':SFX.drain();break;case 'plague':SFX.plague();break;case 'summon2':case 'meteor':SFX.summon2();break;case 'infernal':SFX.boom();SFX.slam();break;case 'graves':case 'raise':SFX.bones();break;case 'roots':SFX.roots();break;case 'fireline':SFX.fireline();break;case 'burn':SFX.shot('mage');break;
  case 'hit':SFX.hit();break;case 'boom':SFX.boom();break;case 'splash':SFX.splash();break;
  case 'firerain':SFX.cast('fire');break;case 'fireboom':SFX.boom();break;case 'frost':SFX.cast('frost');break;
  case 'nova':SFX.hero('frost');break;case 'leap':SFX.hero('blade');break;case 'slam':SFX.slam();break;case 'cloud':SFX.hero('poison');break;
  case 'summon':SFX.bones();break;case 'bomb':SFX.bomb(e.big);break;case 'drop':SFX.drop();break;case 'throw':SFX.shot('catapult');break;case 'land':SFX.grunt();break;
  case 'death':if(e.cls==='unit'&&/skel|giant|lich/.test(e.card))SFX.bones();else if(e.big)SFX.death(false);break;
- case 'play':if(e.side===0&&/orcs|giant|ogre/.test(e.card))SFX.grunt();break;
+ case 'play':if(e.side===0&&/orcs|giant|ogre|bear|wolfrider|infernal/.test(e.card))SFX.grunt();break;
  case 'start':SFX.horn();break;
  case 'mana':if(e.side===0)SFX.drop();break;}}catch(_){}}}
 // Phasen-Klänge (0.3): alles über den Effekt-Schalter stummschaltbar; G.sndLog protokolliert gespielte Signale (für Tests)
@@ -80,7 +81,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.7.1',I=DUELL_INFO;
+const VERSION='0.8',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
@@ -99,7 +100,7 @@ function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
 function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
   <div class="parch"><h3>Klang</h3>${soundRow()}</div>
-  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen aber jeden Gegner in Sichtweite an – auch auf der anderen Spur. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p><p>Jeder Sieg in der Kampagne ab Kapitel 3 schaltet neue Kreaturen für deine Sammlung frei – Trolle, Baumriesen und sogar Drachen.</p></div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen bevorzugt Gegner vor sich und wer sie gerade angreift. Wer den Fluss überquert hat, kehrt nicht mehr um; nur ein Feind direkt hinter einer Truppe (auf derselben Flussseite) lockt sie kurz zurück. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Der Goblin-Tunnelbohrer darf fast überall hin – sogar auf die gegnerische Hälfte. Er gräbt sich vom eigenen Bergfried dorthin; die Erdspur verrät ihn.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p><p>Jeder Sieg in der Kampagne ab Kapitel 3 schaltet neue Kreaturen für deine Sammlung frei – Trolle, Baumriesen, Drachen, Wolfsreiter, Hexenmeister und Untote.</p></div>
   <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
 // ----- Kampagne -----
 function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';
@@ -112,10 +113,16 @@ function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.incl
 function campaign(){const P=prog();
  show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><h2>Kampagne</h2><p class="sub">Der Schattenpass ruft. Besiege die Anführer der Feinde.</p></div></div>
   <div class="cprog"><span>Fortschritt</span><i><i style="width:${P.won.length/DUELL_SCEN.length*100}%"></i></i><b>${P.won.length}/${DUELL_SCEN.length}</b></div>
-  ${DUELL_SCEN.map(sc=>scenCard(sc,P)).join('')}<p class="hint2">Tipp: Tippe auf eine Karte im Gegnerdeck, um sie dir genauer anzusehen.</p></div>`);
+  <div class="cpath" role="list" aria-label="Kapitelpfad">${DUELL_SCEN.map((sc,i)=>{const w=P.won.includes(sc.id),u=unlocked(sc.id);return (i?'<i class="cpl'+(u?' on':'')+'"></i>':'')+`<button class="cpc ${w?'won':u?'open':'locked'}" data-j="${sc.id}" role="listitem" aria-label="Kapitel ${sc.id}">${w?'✓':u?sc.id:'🔒'}</button>`;}).join('')}${DUELL_SCEN.length<10?Array.from({length:10-DUELL_SCEN.length},(_,i)=>'<i class="cpl"></i><span class="cpc soon" title="Bald">?</span>').join(''):''}</div>
+  ${DUELL_SCEN.map(sc=>(ACTS[sc.id]?`<h3 class="act">${ACTS[sc.id]}</h3>`:'')+scenCard(sc,P)).join('')}<p class="hint2">Tipp: Tippe auf eine Karte im Gegnerdeck, um sie dir genauer anzusehen.</p></div>`);
  bindCardTaps(ov);
  ov.querySelectorAll('.scen').forEach(b=>b.onclick=()=>{const id=+b.dataset.s;if(!unlocked(id)){toast('Erst Szenario '+(id-1)+' gewinnen!');return;}audio();story(id);});
+ // 0.8: Kapitelpfad – Tippen springt zum Kapitel; beim Öffnen wird das nächste offene Kapitel angezeigt
+ const jump=(id,sm)=>{const c=ov.querySelector('.scen[data-s="'+id+'"]');if(!c)return;const top=c.getBoundingClientRect().top-ov.getBoundingClientRect().top+ov.scrollTop-70;ov.scrollTo?ov.scrollTo({top:Math.max(0,top),behavior:sm?'smooth':'auto'}):ov.scrollTop=Math.max(0,top);};
+ ov.querySelectorAll('.cpc[data-j]').forEach(b=>b.onclick=()=>jump(+b.dataset.j,1));
+ const nx=DUELL_SCEN.find(sc=>unlocked(sc.id)&&!P.won.includes(sc.id));if(nx&&nx.id>2)requestAnimationFrame(()=>jump(nx.id,0));
  $('bBack').onclick=menu;}
+const ACTS={1:'Akt I · Der Schattenpass',6:'Akt II · Die wilden Lande'};
 function story(id){const sc=DUELL_SCEN.find(s=>s.id===id),O=DUELL_OPP[sc.opp];
  show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><div><small class="kick">Kapitel ${sc.id}</small><h2>${esc(sc.title)}</h2></div></div>
   <div class="opp"><img src="${DR.icon(O.portrait,96)}" alt=""><div><b>${esc(O.name)}</b><em>${esc(O.title)} · ${O.tag}</em><span class="q">${esc(O.quote)}</span></div></div>
@@ -319,9 +326,9 @@ const TOUCH_OFF=48;
 function worldAt(cx,cy,touch){const r=cv.getBoundingClientRect();return DR.toWorld(cx-r.left,cy-r.top-(touch?TOUCH_OFF:0));}
 function overHand(cx,cy){const r=$('panel').getBoundingClientRect();return cy>=r.top&&cx>=r.left&&cx<=r.right;}
 function ghostAt(i,cx,cy,touch){G.ptr={cx,cy,touch};const S=G.S,id=S.p[0].hand[i],C=CARDS[id];
- if(!inStage(cx,cy)||overHand(cx,cy)){DR.st.ghost={card:id,zone:C.type!=='spell',x:null,cancel:overHand(cx,cy)};return;}
+ if(!inStage(cx,cy)||overHand(cx,cy)){DR.st.ghost={card:id,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),x:null,cancel:overHand(cx,cy)};return;}
  const[x,y]=worldAt(cx,cy,touch),[fx,fy]=worldAt(cx,cy,false);const err=Sim.canPlay(S,0,i,x,y);
- DR.st.ghost={card:id,x,y,fx:touch?fx:null,fy:touch?fy:null,ok:!err,zone:C.type!=='spell',err,lane:Sim.laneOf(x)};}
+ DR.st.ghost={card:id,x,y,fx:touch?fx:null,fy:touch?fy:null,ok:!err,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),err,lane:Sim.laneOf(x)};}
 function cancelSel(){G.sel=null;DR.st.ghost=null;}
 function tryPlay(i,cx,cy,touch){const S=G.S;const[x,y]=worldAt(cx,cy,touch);const err=Sim.canPlay(S,0,i,x,y);
  if(err){toast((err==='Hier nicht erlaubt'?'Hier nicht erlaubt – nur auf deiner Hälfte (rot = gesperrt)':err)+' · abgebrochen');cancelSel();return false;}
@@ -337,7 +344,7 @@ function dragEnd(ev,cancel){const D=G.drag;if(!D)return;G.drag=null;if(!G.S||G.S
  if(D.moved){// Loslassen: auf gültigem Feld setzen, sonst (ungültig / zurück auf die Hand) abbrechen
   if(inStage(ev.clientX,ev.clientY)&&!overHand(ev.clientX,ev.clientY))tryPlay(D.i,ev.clientX,ev.clientY,D.touch);else cancelSel();}
  else if(D.wasSel)cancelSel();
- else{const S=G.S,id=S.p[0].hand[D.i],C=CARDS[id];DR.st.ghost={card:id,zone:C.type!=='spell',x:null};}}
+ else{const S=G.S,id=S.p[0].hand[D.i],C=CARDS[id];DR.st.ghost={card:id,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),x:null};}}
 window.addEventListener('pointerup',ev=>dragEnd(ev,false));
 window.addEventListener('pointercancel',ev=>dragEnd(ev,true));
 cv.addEventListener('pointerdown',ev=>{if(!G.S||G.paused||G.S.over||G.drag)return;audio();
@@ -349,7 +356,7 @@ $('abil').addEventListener('pointerdown',ev=>{ev.preventDefault();audio();const 
  if(A.self){Sim.issue(S,{side:0,a:'abil',x:Math.round(h.x),y:Math.round(h.y)});return;}
  G.aim=!G.aim;DR.st.aim=G.aim?{x:null}:null;if(G.aim)toast(A.name+': Ziel auf dem Feld antippen');});
 window.addEventListener('keydown',ev=>{if(!G.S||G.S.over)return;if(ev.key==='Escape'){if(G.sel!=null||G.aim){G.sel=null;G.aim=false;DR.st.ghost=null;DR.st.aim=null;}else if(!G.paused)pause();else resume();}
- else if(!G.paused&&/^[1-4]$/.test(ev.key)){G.sel=+ev.key-1;const id=G.S.p[0].hand[G.sel];DR.st.ghost={card:id,zone:CARDS[id].type!=='spell'};}
+ else if(!G.paused&&/^[1-4]$/.test(ev.key)){G.sel=+ev.key-1;const id=G.S.p[0].hand[G.sel];DR.st.ghost={card:id,zone:CARDS[id].type!=='spell'&&!(CARDS[id].u&&CARDS[id].u.tunnel)};}
  else if(!G.paused&&(ev.key==='q'||ev.key==='Q'))$('abil').dispatchEvent(new PointerEvent('pointerdown'));});
 // ---------- Pause / Ende ----------
 function pause(){if(!G.S||G.S.over)return;G.paused=true;const re=()=>{show(`<div class="box"><h2>Pause</h2>${soundRow()}

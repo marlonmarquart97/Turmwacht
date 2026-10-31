@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#24160b"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>Turmwacht Duell – Kartenduell am Schattenpass</title>
-<!-- Turmwacht Duell 0.7.1 -->
+<!-- Turmwacht Duell 0.8 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 html,body{height:100%;overflow:hidden;background:#0c0804;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;color:#f3e2b0;overscroll-behavior:none}
@@ -181,6 +181,11 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 .flt{display:flex;flex-wrap:wrap;gap:5px;padding:6px 0 8px;scrollbar-width:none}.flt::-webkit-scrollbar{display:none}
 .chipb{flex:0 0 auto;font-size:12.5px;padding:5px 9px;border-radius:14px;background:rgba(0,0,0,.35);border:1.5px solid #8a6a26;white-space:nowrap}.chipb small{opacity:.7;font-size:10.5px}.chipb.on{background:linear-gradient(#ffe070,#c8901a);color:#2a1600;border-color:#fff0b0;font-weight:700}
 .coll .cd.used{opacity:.62;filter:saturate(.45)}.coll .cd.lockd{opacity:.55;filter:grayscale(.85) brightness(.8)}.cd .lkb{position:absolute;left:0;right:0;bottom:16px;font:800 8.5px system-ui,sans-serif;font-style:normal;text-align:center;background:rgba(20,14,8,.9);color:#ffd890;padding:2px 0;pointer-events:none}
+.sc2 .diff.pack{background:linear-gradient(90deg,#3a4a5a,#6a7a8a);border-color:#d8e4ff}.sc2 .diff.demon{background:linear-gradient(90deg,#1a4a10,#3a8a1a);border-color:#9aff60;box-shadow:0 0 8px rgba(120,255,80,.5)}.sc2 .diff.undead{background:linear-gradient(90deg,#2a2a4a,#4a3a6a);border-color:#c0a0ff;box-shadow:0 0 8px rgba(180,140,255,.5)}
+.cpath{display:flex;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;padding:6px 4px 8px;margin:0 0 4px;scrollbar-width:none}.cpath::-webkit-scrollbar{display:none}
+.cpc{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 13px system-ui,sans-serif;border:2px solid #8a6a26;background:#2a1a0c;color:#c8b080;padding:0}.cpc.won{background:linear-gradient(#6aa83a,#3a6a1a);border-color:#b8f080;color:#fff}.cpc.open{background:linear-gradient(#ffd860,#c88a20);border-color:#fff0b0;color:#2a1a05;box-shadow:0 0 10px rgba(255,210,90,.7)}.cpc.locked{opacity:.75;font-size:11px}.cpc.soon{opacity:.35;border-style:dashed}
+.cpl{flex:1 0 8px;min-width:8px;height:3px;background:#4a3418;margin:0 1px}.cpl.on{background:#c8a050}
+h3.act{margin:12px 2px 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold2);border-bottom:1px solid rgba(200,160,80,.35);padding-bottom:3px}
 .sc2 .diff.hard2{background:#6a1a5a;border-color:#e070c0}.sc2 .diff.dragon{background:linear-gradient(90deg,#7a1a08,#c84a10);border-color:#ffb040;box-shadow:0 0 8px rgba(255,120,30,.6)}
 .newc{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 10px}.newc .mi{position:relative;width:64px;display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.25);border:1.5px solid #9ad860;border-radius:10px;padding:4px 2px;color:#fff}.newc .mi img{width:44px;height:44px}.newc .mi b{position:absolute;top:2px;left:4px;font-size:11px;color:#bfe0ff}.newc .mi span{font-size:9px;line-height:1.1;text-align:center}.cd .ind{position:absolute;left:0;right:0;top:40%;font:900 9px system-ui,sans-serif;font-style:normal;text-align:center;background:rgba(40,90,20,.92);color:#e8ffd0;padding:2px 0;transform:rotate(-12deg);letter-spacing:.5px;pointer-events:none}
 .coll .cd:not(.used):hover{transform:translateY(-2px)}

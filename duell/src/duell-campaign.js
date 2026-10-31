@@ -1,16 +1,23 @@
 // ===== Turmwacht Duell – Kampagne & Gegner (Daten) =====
 const DUELL_OPP={
- grimm:{name:'Grimmzahn',title:'Goblin-Häuptling',portrait:'chief',ai:'grimm',deck:['orcs','wolves','sling','alch','bats','ogre','firerain','blade'],mods:{regen:.9},
+ grimm:{name:'Grimmzahn',title:'Goblin-Häuptling',portrait:'chief',ai:'grimm',deck:['orcs','wolves','sling','alch','bats','ogre','firerain','blade'],mods:{regen:.93},
   tag:'leicht',quote:'„Hehehe! Meine Schleuder wirft heute Orks – und morgen dich!“'},
  morvath:{name:'Morvath',title:'Totenbeschwörer',portrait:'lichP',ai:'morvath',deck:['skels','skelarch','knight','giant','bats','frost','firerain','lich'],mods:{regen:1.07},
   tag:'schwer',quote:'„Jeder Gefallene dient mir. Auch du wirst es bald.“'},
  // 0.7: drei neue Bosse (steigende Schwierigkeit)
- ugrak:{name:'Ugrak Baumbrecher',title:'Troll-Kriegsherr',portrait:'ugrakP',ai:'ugrak',deck:['troll','orcs','wolves','netter','storm','warchant','firerain','trollking'],mods:{regen:1.2,towerHp:1.05},
+ ugrak:{name:'Ugrak Baumbrecher',title:'Troll-Kriegsherr',portrait:'ugrakP',ai:'ugrak',deck:['troll','orcs','wolves','netter','storm','warchant','firerain','trollking'],mods:{regen:1.215,towerHp:1.05},
   tag:'schwer',quote:'„Ugrak reißt Bäume aus. Ugrak reißt Türme aus. Du bist kleiner als ein Baum.“'},
- sylvara:{name:'Sylvara',title:'Dornenmutter des Altwalds',portrait:'sylvaraP',ai:'sylvara',deck:['treant','banner','burrow','archers','netter','frost','shaman','thorn'],mods:{regen:1.095,towerHp:1.06},
+ sylvara:{name:'Sylvara',title:'Dornenmutter des Altwalds',portrait:'sylvaraP',ai:'sylvara',deck:['treant','banner','burrow','archers','netter','frost','shaman','thorn'],mods:{regen:1.085,towerHp:1.06},
   tag:'sehr schwer',quote:'„Der Wald vergisst nicht. Jede Axt, jedes Feuer – heute zahlt ihr dafür.“'},
  vyrthax:{name:'Vyrthax',title:'Der Aschenkönig',portrait:'vyrthaxP',ai:'vyrthax',deck:['whelp','frostwyrm','shade','storm','burrow','firerain','troll','dragonlord'],mods:{regen:1.14,towerHp:1.08},
-  tag:'Drache',quote:'„Ich habe Königreiche zu Asche gebrannt, bevor dein Turm ein Stein war.“'}};
+  tag:'Drache',quote:'„Ich habe Königreiche zu Asche gebrannt, bevor dein Turm ein Stein war.“'},
+ // 0.8: Kapitel 6–8
+ kargash:{name:'Kargash Wolfsherz',title:'Häuptling des Frostfang-Stamms',portrait:'kargashP',ai:'kargash',deck:['wolfrider','wolves','bear','netter','shield','quake','frost','wolfking'],mods:{regen:1.31,towerHp:1.1},
+  tag:'Rudel',quote:'„Das Rudel jagt, wenn der Mond aufgeht. Heute Nacht ist Vollmond.“'},
+ zarvok:{name:'Zarvok',title:'Hexenmeister der Teufelsglut',portrait:'zarvokP',ai:'zarvok',deck:['warlock','drill','firemage','bats','lightning','sling','frost','warlockhero'],mods:{regen:1.25,towerHp:1.1},
+  tag:'Dämon',quote:'„Eure Türme stehen auf Erde. Und die Erde gehört meinen Goblins.“'},
+ aldric:{name:'Aldric',title:'Der bleiche König',portrait:'aldricP',ai:'aldric',deck:['necro','graves','knight','skelarch','plague','frostwyrm','firerain','deathlord'],mods:{regen:1.17,towerHp:1.1},
+  tag:'Untot',quote:'„Ich war der erste Hauptmann der Turmwacht. Ich kenne jeden Stein eurer Mauern.“'}};
 const DUELL_SCEN=[
  {id:1,title:'Der Grenzposten',opp:'grimm',
   story:['Am Nordende des Schattenpasses wacht ein kleiner Grenzposten über die zwei Brücken der Schattenschlucht.',
@@ -32,7 +39,7 @@ const DUELL_SCEN=[
   story:['Östlich des Passes liegt der Eichenhang. Seit Morvaths Fall dröhnen dort Kriegstrommeln, und Baum um Baum stürzt krachend ins Tal.',
    'Ugrak Baumbrecher hat die Bergtrolle geeint. Seine Krieger reißen Eichen aus und schwingen sie wie Keulen, Netzwerfer fangen alles, was flieht, und Sturmrufer lassen Blitze über die Reihen springen.',
    'Wenn Ugrak brüllt, wird seine Horde wild. Halte die Brücken – und brich die Horde, bevor sie in Fahrt kommt!'],
-  rule:'Ugraks Horde stürmt früh und oft: sein Mana fließt deutlich schneller (+20 %), seine Türme sind 5 % stärker. Kriegsgesang macht seine Truppen stärker.',
+  rule:'Ugraks Horde stürmt früh und oft: sein Mana fließt deutlich schneller (+21,5 %), seine Türme sind 5 % stärker. Kriegsgesang macht seine Truppen stärker.',
   tip:'Tipp: Trolle treffen alles um ihr Ziel – verteile dich nicht dicht um sie. Frost und Flieger sind gut gegen die Bodentruppen. Bei einem Kriegsschrei kurz zurückweichen.',
   win:'Ugrak stürzt in den Fluss, sein Kriegsbaum treibt davon. Die Trolle zerstreuen sich – und manche schließen sich dir an! Doch am Waldrand bewegen sich die Bäume, ganz ohne Wind …',
   lose:'Die Trommeln werden lauter. Ugraks Horde hat dich überrannt – versuch es mit mehr Flächenschaden!'},
@@ -50,6 +57,31 @@ const DUELL_SCEN=[
    'Er ist der mächtigste Feind, dem die Turmwacht je begegnet ist. Hol alle Schützen auf die Mauern – der Himmel brennt!'],
   rule:'Der Drache herrscht über den Himmel: sein Mana fließt deutlich schneller (+14 %), seine Türme sind 8 % stärker – und seine Drachen sind die wahre Gefahr.',
   tip:'Tipp: Fast alles fliegt – nimm Bogenschützen, Netzwerfer und Frost. Ein Netz zieht Flieger zu Boden, dann treffen sie auch deine Nahkämpfer. Weiche der Feuerbahn aus!',
-  win:'Mit einem letzten Brüllen stürzt Vyrthax in seinen Horst, die Asche erlischt. Der Schattenpass, der Eichenhang und der Altwald sind frei. Die Turmwacht hat gesiegt – Ehre den Verteidigern!',
-  lose:'Asche regnet auf die Türme. Vyrthax lacht im Rauch – stelle dein Deck gegen Flieger auf und fordere ihn erneut!'}];
+  win:'Mit einem letzten Brüllen stürzt Vyrthax in seinen Horst, die Asche erlischt. Der Schattenpass, der Eichenhang und der Altwald sind frei. Doch als der Rauch sich lichtet, heulen von den Frostgipfeln Wölfe – hunderte …',
+  lose:'Asche regnet auf die Türme. Vyrthax lacht im Rauch – stelle dein Deck gegen Flieger auf und fordere ihn erneut!'},
+ // 0.8: Kapitel 6–8
+ {id:6,title:'Die Frostfang-Jagd',opp:'kargash',
+  story:['Hinter dem Aschenhorst liegen die Frostgipfel. Dort jagt der Frostfang-Stamm – Orks, die auf riesigen Wargen reiten und mit Höhlenbären in den Krieg ziehen.',
+   'Kargash Wolfsherz, ihr Häuptling, reitet einen weißen Schneewarg. Wenn er ins Horn bläst, kommt das ganze Rudel – und seine Kriegsbären brüllen so laut, dass jeder Krieger auf sie losgeht, statt auf die Türme zu achten.',
+   'Die Reiter sind schnell und stürmen mit voller Wucht heran. Halte sie auf, bevor sie Anlauf nehmen!'],
+  rule:'Der Stamm jagt im Rudel: Mana fließt stark (+31 %), die Türme sind 10 % stärker. Ahnenschilde schützen seine Angriffe.',
+  tip:'Tipp: Ein Ansturm trifft doppelt – stell Truppen direkt hinter die Brücke, damit die Reiter keinen Anlauf haben. Brüllt ein Bär, greifen deine Truppen ihn an: Fernkämpfer hinter der Front halten und den Bär mit Frost oder Rotten binden.',
+  win:'Kargash fällt vom Warg, sein Horn zerbricht. „Du jagst gut, Turmwächter“, knurrt er – und das Rudel folgt jetzt dir. Doch in seinem Zelt findet ihr ein Siegel aus grünem Feuer: Ein Hexenmeister hat den Stamm aufgehetzt …',
+  lose:'Das Rudel heult über deinen Türmen. Stell dich den Reitern früher in den Weg und versuch es noch einmal!'},
+ {id:7,title:'Die Teufelsglut-Minen',opp:'zarvok',
+  story:['Unter den Frostgipfeln liegen alte Zwergenminen. Dort glüht der Fels grün: Zarvok, ein Hexenmeister, hat ein Tor zur Teufelsglut geöffnet.',
+   'Seine Goblin-Bohrtrupps graben sich unter dem Feld hindurch und brechen mitten zwischen deinen Türmen aus der Erde. Hexenmeister rufen Imps, und Zarvok selbst lässt Höllenwächter vom Himmel stürzen.',
+   'Achte auf die Erde – jede Spur, die sich durch das Feld zieht, ist ein Bohrer auf dem Weg zu dir!'],
+  rule:'Die Minen speisen Zarvoks Macht: Mana fließt stark (+25 %), seine Türme sind 10 % stärker. Seine Bohrer tauchen überall auf.',
+  tip:'Tipp: Die Erdspur zeigt, wo ein Tunnelbohrer auftaucht – stell dort früh Truppen hin. Beim Auftauchen ist er kurz benommen. Gegen Imps hilft Flächenschaden, gegen den Hexenmeister ein schneller Vorstoß.',
+  win:'Das grüne Tor bricht zusammen, Zarvok verglüht schreiend. Seine Goblins laufen über – und bringen dir ihre Bohrer! Doch in Zarvoks Grimoire steht ein Name, unterschrieben in Blut: Aldric, Hauptmann der Turmwacht …',
+  lose:'Grünes Feuer frisst sich durch deine Mauern. Beobachte die Erdspuren und versuch es noch einmal!'},
+ {id:8,title:'Der bleiche König',opp:'aldric',
+  story:['Vor dreihundert Jahren war Aldric der erste Hauptmann der Turmwacht. Er fiel an der Schattenschlucht – und wurde in der Gruft unter dem Pass begraben.',
+   'Morvath, Vyrthax, Zarvok – sie alle dienten ihm, ohne es zu wissen. Jetzt steigt der bleiche König selbst aus seinem Grab. Seine Nekromanten erwecken jeden Gefallenen, ganze Friedhöfe öffnen sich, und eine Seuchenwolke kriecht über den Fluss.',
+   'Er kennt jeden Stein eurer Mauern. Doch er hat vergessen, wofür die Turmwacht steht.'],
+  rule:'Der bleiche König kennt eure Türme: Mana fließt deutlich schneller (+17 %), seine Türme sind 10 % stärker. Wer in der Nähe seiner Nekromanten fällt, steht als Skelett wieder auf.',
+  tip:'Tipp: Schalte zuerst die Nekromanten aus, sonst wächst sein Heer mit jedem Kampf. Flächenschaden gegen den Friedhof, Heilung und Schilde gegen die Seuche. Aldric entzieht nahen Truppen Leben – greife ihn mit Fernkämpfern an.',
+  win:'Aldrics Krone zerspringt. „Haltet … die Brücken“, flüstert er, und zum ersten Mal seit dreihundert Jahren ruht der Hauptmann in Frieden. Die Turmwacht hat gesiegt! Doch weit im Süden, hinter dem Meer, leuchten fremde Feuer … (Fortsetzung folgt)',
+  lose:'Der bleiche König erhebt deine Gefallenen. Halte seine Nekromanten fern und fordere ihn erneut!'}];
 if(typeof module!=='undefined')module.exports={DUELL_OPP,DUELL_SCEN};

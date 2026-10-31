@@ -1,4 +1,4 @@
-# Turmwacht Duell (Offline-Testversion 0.7.1)
+# Turmwacht Duell (Offline-Testversion 0.8)
 
 Kartenduell am Schattenpass – Einzelspieler-Kampagne gegen Computergegner.
 Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfade → später unter `/duell/` im Turmwacht-Repo).
@@ -13,10 +13,33 @@ Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfa
 - `duell-cards.js` – Karten-Infos für die Detailkarte (Seltenheit, Werte, Fähigkeitstexte, Lore; liest alle Werte live aus `TW_BESTIARY`)
 - `duell-back.js` – Rückansichten aller Einheiten/Helden/Gebäude-Figuren (`viewKey()`)
 - `duell-art07.js` – 0.7: Vektorgrafik der neuen Kreaturen (parametrisierter Drache `drawWyrm`, Trolle, Borkenhüter, Sylvara …), `duell-back07.js` – deren Rückansichten (inkl. Flügelschlag-Frames `_b_f`)
+- `duell-art08.js` – 0.8: Wolfsreiter, Kriegsbär, Goblin-Tunnelbohrer, Hexenmeister/Imps/Höllenwächter, Nekromant, Aldric, Zauber-Icons, Boss-Porträts; `duell-back08.js` – deren Rückansichten
 - `duell-art.js`, `duell-render.js` – Darstellung (Canvas), `duell-ui.js` – Bedienung/Menüs
 - `headless-match.js` – KI-gegen-KI in Node (`node src/headless-match.js 30 morvath`)
 
 Bauen: `python3 src/build.py` → `index.html`.
+
+## Neu in 0.8 – Akt II „Die wilden Lande“: 3 neue Bosse, 15 neue Karten, Zielerfassung überarbeitet
+
+**Kampagne (8 Kapitel, ausgelegt auf 10):** Kapitelpfad oben (✓ / offen / 🔒, „?“-Platzhalter bis 10; Tippen springt zum Kapitel), Akt-Überschriften, beim Öffnen automatisch zum nächsten offenen Kapitel gescrollt. Natives Wischen und Tipp-Schutz aus 0.7.1 gelten auch hier (`duelltest/ui08.js`).
+
+| Kap. | Boss | Thema | Deck | KI |
+|---|---|---|---|---|
+| 6 | Kargash Wolfsherz | Frostfang-Orks, Wolfsrudel | Wolfsreiter, Wolfsrudel, Kriegsbär, Netzwerfer, Ahnenschild, Erdbeben, Frost, Held Kargash | aggressiv, Ansturm-Wellen, Bär als Spitze |
+| 7 | Zarvok | Hexenmeister der Teufelsglut-Minen | Hexenmeister, Tunnelbohrer, Feuermagier, Fledermäuse, Blitzschlag, Steinschleuder, Frost, Held Zarvok | Tunnel-Überfälle auf Türme, Beschwörungen |
+| 8 | Aldric, der bleiche König | Untote | Nekromant, Gräber öffnen, Ritter, Skelettbogner, Seuchenwolke, Frostwyrm, Feuerregen, Held Aldric | geduldig, Gräber auf Türme, Konter |
+
+**Neue Karten** (freigeschaltet durch Kapitel 6 / 7 / 8):
+- Kap. 6: **Wolfsreiter** (4, Ansturm: doppelter erster Treffer, Betäubung, trampelt Umstehende), **Kriegsbär** (5, Tank, *Wutgebrüll*: zwingt Gegner im Umkreis 3 s zum Angriff auf den Bären, 30 % Schadensreduktion), **Wolfsrudel** (3×), **Held Kargash** (Rudelruf: Eile + 2 Wölfe), **Ahnenschild** (Schutzschild 200), **Erdbeben** (Flächenschaden, stark gegen Gebäude, verlangsamt).
+- Kap. 7: **Goblin-Tunnelbohrer** (4, gräbt sich überall hin außer Fluss/Turmnähe, Erdspur, Erdbrocken beim Auftauchen; Konter: im Tunnel 0 Angriffe, aber nach dem Auftauchen 0,8 s selbst betäubt, Turm-Schaden 70 %), **Hexenmeister** (5, beschwört alle 7 s 2 Imps, max. 4), **Held Zarvok** (Höllensturz: Inferno-Einschlag + Höllenwächter), **Blitzschlag** (trifft die 3 stärksten Ziele).
+- Kap. 8: **Nekromant** (lässt Gefallene als Skelette aufstehen), **Gräber öffnen** (Skelette 4,2 s lang), **Held Aldric** (Seelenernte: Schaden + Heilung), **Seuchenwolke** (Schaden über Zeit, auch Flieger), **Heilquell**.
+- Jede Karte: Vorder- und Rückansicht, Lauf-/Angriffsanimation, Detailkarte mit Lore, Sounds, KI-Nutzung.
+
+**Feuerregen abgeschwächt** (es gibt keine Karte „Feuerball“; gemeint war der Feuerregen): Radius 52 → 48, Schaden 360 → 300, Turmschaden 35 % → 30 %, Vorwarnzeit 0,8 → 0,9 s.
+
+**Zielerfassung (Clash-Royale-Stil):** Einheiten drehen nur für nahe Gegner hinter sich um (< 60 % Sichtweite, gleiche Flussseite); wer den Fluss überquert hat, läuft nicht mehr zurück. Bewegung & Brücken wie 0.6.1.
+
+**Tests:** `mech08.js` (Spott, Tunnel, Beschwörungen, Zauber, Determinismus), `target08.js`, `ui08.js`, `live08.js` (Browser-Partien gegen die neuen Bosse) plus alle bisherigen. Siegquoten Bot-Standarddeck (100 Partien): Grimm 89 %, Morvath 60 %, Ugrak 47 %, Sylvara 39 %, Vyrthax 30 %, Kargash 26 %, Zarvok 25 %, Aldric 20 %.
 
 ## Neu in 0.7.1 – Bugfix: Scrollen über Karten am Handy
 
