@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#24160b"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>Turmwacht Duell – Kartenduell am Schattenpass</title>
-<!-- Turmwacht Duell 0.8 -->
+<!-- Turmwacht Duell 0.9 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 html,body{height:100%;overflow:hidden;background:#0c0804;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;color:#f3e2b0;overscroll-behavior:none}
@@ -33,8 +33,9 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 @keyframes pulse{50%{box-shadow:0 3px 0 #000,0 0 16px #ffd860}}
 #panel{flex:0 0 auto;padding:5px 6px 6px;background:linear-gradient(rgba(0,0,0,.25),rgba(0,0,0,.5)),repeating-linear-gradient(90deg,#3e2815 0 14px,#35220f 14px 15px,#432c17 15px 30px);border-top:3px solid #b8902f;z-index:3}
 #cards{display:flex;gap:5px;align-items:stretch}
-#next{flex:0 0 44px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.35);border:2px dashed #6a5236;border-radius:6px;font-size:10px}
-#next img{width:34px;height:34px;opacity:.85}
+#next{flex:0 0 50px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;background:linear-gradient(#2a1c10,#1a1008);border:2px solid #8a6a30;border-radius:8px;font-size:9px;color:#c8b088;box-shadow:inset 0 1px 0 rgba(255,220,150,.15),0 2px 0 #000}
+#next img{width:36px;height:36px;opacity:.95}
+#next .ncost{position:absolute;left:-3px;top:-3px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#f0c8ff,#9a40e0 60%,#4a1080);border:1.5px solid #120b05;font:700 10px system-ui,sans-serif;color:#fff;display:flex;align-items:center;justify-content:center}
 #hand{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .cd{position:relative;border-radius:7px;border:2px solid #9a7a30;background:linear-gradient(#6e5a3a,#2e2216);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:2px 1px 3px;box-shadow:0 2px 0 #000,inset 0 1px 0 rgba(255,230,160,.25);cursor:pointer;touch-action:manipulation;min-width:0}
 /* 0.7.1: nur die Handkarten im Match fangen die Geste selbst (Ziehen aufs Spielfeld); Menükarten lassen natives Scrollen zu */
@@ -51,10 +52,11 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 .cd.poor img{filter:grayscale(1) brightness(.6)}.cd.poor::after{content:'';position:absolute;left:0;right:0;bottom:0;height:calc((1 - var(--pg,0))*100%);background:rgba(0,0,0,.35);border-radius:5px;pointer-events:none}
 .cd.busy{opacity:.45}.cd.busy span::after{content:' (im Kampf)'}
 .cd.sel{transform:translateY(-8px);border-color:#fff;box-shadow:0 0 12px #ffd860,0 4px 0 #000}
-#mana{position:relative;margin-top:5px;height:18px;border-radius:9px;background:#1a0a28;border:2px solid #120b05;overflow:hidden}
+#mana{position:relative;margin-top:6px;height:22px;border-radius:11px;background:#1a0a28;border:2px solid #120b05;overflow:hidden;box-shadow:inset 0 2px 0 rgba(0,0,0,.45),0 1px 0 rgba(255,220,150,.15)}
 #manaFill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#e0a0ff,#9a40e0 50%,#5a1a90);transition:width .1s linear}
 #mana::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(10,0,20,.8) calc(10% - 2px) 10%)}
-#manaNum{position:absolute;left:6px;top:-1px;font:700 14px system-ui,sans-serif;z-index:1;text-shadow:0 1px 0 #000}
+#manaNum{position:absolute;left:8px;top:1px;font:700 15px system-ui,sans-serif;z-index:1;text-shadow:0 1px 0 #000}
+#manaLab{position:absolute;right:8px;top:2px;font:700 10px system-ui,sans-serif;color:#e0c8ff;z-index:1;text-shadow:0 1px 0 #000;letter-spacing:.04em}
 /* Overlays */
 .ov{position:absolute;inset:0;z-index:10;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 10px;background:rgba(8,5,2,.72);backdrop-filter:blur(2px)}
 .ov.show{display:block}.ov.m{background:linear-gradient(rgba(8,5,2,.35),rgba(8,5,2,.8))}
@@ -221,14 +223,34 @@ h3.act{margin:12px 2px 4px;font-size:13px;letter-spacing:.06em;text-transform:up
 @media (min-width:700px){#app.inmenu{max-width:620px}.mm,.box{max-width:560px}.coll{grid-template-columns:repeat(6,1fr)!important}.tile{min-height:170px}.dc{max-width:440px}}
 
 @media (max-height:760px){.cd.h{min-height:64px}.cd img{max-width:48px}#hud{padding:3px 5px}.who img{width:30px;height:30px}#abil{width:60px;height:60px}}
+
+
+#bEmo{position:absolute;left:6px;bottom:40px;width:36px;height:36px;border-radius:50%;font-size:18px;background:linear-gradient(#6a5236,#34251a);border:2px solid #b8902f;box-shadow:0 2px 0 #000;z-index:5}
+#emoBar{position:absolute;left:6px;bottom:80px;display:none;flex-direction:column;gap:4px;z-index:6}
+#emoBar.on{display:flex}
+#emoBar button{width:44px;height:44px;border-radius:10px;font-size:22px;background:linear-gradient(#5a3c22,#2a1a0c);border:2px solid #b8902f;box-shadow:0 2px 0 #000}
+.ebub{position:absolute;pointer-events:none;z-index:6;max-width:160px;padding:5px 8px;border-radius:10px 10px 10px 2px;background:rgba(20,12,6,.92);border:2px solid #b8902f;font-size:13px;color:#ffe9a0;text-shadow:0 1px 0 #000;animation:ebin .18s ease-out}
+.ebub.foe{border-color:#e05040;border-radius:10px 10px 2px 10px;color:#ffd0c0}
+.ebub .ei{font-size:16px;margin-right:3px}
+@keyframes ebin{from{transform:scale(.7);opacity:0}}
+#app.inmenu #bEmo,#app.inmenu #emoBar,.ebub.hide{display:none!important}
+.goldn{display:inline-flex;align-items:center;gap:4px;font:700 13px system-ui,sans-serif;color:#ffe9a0;background:rgba(0,0,0,.35);border:1.5px solid #b8902f;border-radius:999px;padding:2px 8px;margin-left:6px}
+/* Erz abbauen */
+.orebox{display:flex;flex-direction:column;align-items:center;margin:8px 0 4px}
+.orebox h3{font-size:16px;color:#ffe9a0;text-shadow:0 2px 0 #000;margin-bottom:2px}
+.orebox .orare{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c8b088;margin-bottom:6px}
+#oreCv{width:260px;height:210px;max-width:90vw;background:radial-gradient(ellipse at 50% 60%,#2a2218,#120c08);border:3px solid #b8902f;border-radius:12px;box-shadow:0 4px 0 #000,inset 0 0 20px #000;touch-action:none;cursor:pointer}
+.orehint{font-size:13px;color:#e0c8a0;margin-top:6px;text-align:center}
+.orepay{font-size:18px;color:#ffe9a0;text-shadow:0 0 10px #ffd860;margin-top:8px;font-weight:700}
+
 </style></head><body>
 <div id="app" class="inmenu">
  <div id="hud"><div class="who"><img id="oppImg" alt=""><div><b id="oppName">Gegner</b><div class="cr" id="crE"></div></div></div>
   <div id="tbox"><span id="plabel">×2 Mana in</span><span id="timer">2:00</span><div id="pbar"><i id="pfill"></i><b id="pmark"></b></div><span id="x2" style="display:none">×2</span></div>
   <div style="flex:1;display:flex;gap:4px;justify-content:flex-end"><button class="hb2" id="bMus" aria-label="Musik">🎵</button><button class="hb2" id="bSfx" aria-label="Effekte">🔊</button><button class="hb2" id="bPause" aria-label="Pause">⏸</button></div></div>
  <div id="tstrip"><span class="tl">Gegner-Türme</span><div class="tb" id="tsE0"><i></i><b>1500</b></div><div class="tb k" id="tsEk"><i></i><b>2600</b></div><div class="tb" id="tsE1"><i></i><b>1500</b></div><div id="score" title="Kronen Du : Gegner">♛ <span id="scoreN">0 : 0</span></div></div>
- <div id="stage"><canvas id="cv"></canvas><div id="crPbox">Du <span class="cr" id="crP"></span></div><div id="banner"></div><div id="cdown"></div><button id="abil" style="display:none"><img id="abilImg" alt=""><span id="abilName"></span></button><div id="toast"></div></div>
- <div id="panel"><div id="cards"><div id="next"><img id="nextImg" alt=""><span>Nächste</span></div><div id="hand"></div></div><div id="mana"><div id="manaFill"></div><span id="manaNum">5</span></div></div>
+ <div id="stage"><canvas id="cv"></canvas><div id="crPbox">Du <span class="cr" id="crP"></span></div><div id="banner"></div><div id="cdown"></div><button id="abil" style="display:none"><img id="abilImg" alt=""><span id="abilName"></span></button><button id="bEmo" aria-label="Emotes" title="Emotes">💬</button><div id="emoBar" role="menu"></div><div id="toast"></div></div>
+ <div id="panel"><div id="cards"><div id="next"><img id="nextImg" alt=""><span>Nächste</span></div><div id="hand"></div></div><div id="mana"><div id="manaFill"></div><span id="manaNum">5</span><span id="manaLab">Mana</span></div></div>
  <div id="ov" class="ov"></div>
 </div>
 <script>

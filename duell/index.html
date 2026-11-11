@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#24160b"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>Turmwacht Duell – Kartenduell am Schattenpass</title>
-<!-- Turmwacht Duell 0.8 -->
+<!-- Turmwacht Duell 0.9 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 html,body{height:100%;overflow:hidden;background:#0c0804;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;color:#f3e2b0;overscroll-behavior:none}
@@ -33,8 +33,9 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 @keyframes pulse{50%{box-shadow:0 3px 0 #000,0 0 16px #ffd860}}
 #panel{flex:0 0 auto;padding:5px 6px 6px;background:linear-gradient(rgba(0,0,0,.25),rgba(0,0,0,.5)),repeating-linear-gradient(90deg,#3e2815 0 14px,#35220f 14px 15px,#432c17 15px 30px);border-top:3px solid #b8902f;z-index:3}
 #cards{display:flex;gap:5px;align-items:stretch}
-#next{flex:0 0 44px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.35);border:2px dashed #6a5236;border-radius:6px;font-size:10px}
-#next img{width:34px;height:34px;opacity:.85}
+#next{flex:0 0 50px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;background:linear-gradient(#2a1c10,#1a1008);border:2px solid #8a6a30;border-radius:8px;font-size:9px;color:#c8b088;box-shadow:inset 0 1px 0 rgba(255,220,150,.15),0 2px 0 #000}
+#next img{width:36px;height:36px;opacity:.95}
+#next .ncost{position:absolute;left:-3px;top:-3px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#f0c8ff,#9a40e0 60%,#4a1080);border:1.5px solid #120b05;font:700 10px system-ui,sans-serif;color:#fff;display:flex;align-items:center;justify-content:center}
 #hand{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .cd{position:relative;border-radius:7px;border:2px solid #9a7a30;background:linear-gradient(#6e5a3a,#2e2216);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:2px 1px 3px;box-shadow:0 2px 0 #000,inset 0 1px 0 rgba(255,230,160,.25);cursor:pointer;touch-action:manipulation;min-width:0}
 /* 0.7.1: nur die Handkarten im Match fangen die Geste selbst (Ziehen aufs Spielfeld); Menükarten lassen natives Scrollen zu */
@@ -51,10 +52,11 @@ button{font-family:inherit;color:#f3e2b0;cursor:pointer;touch-action:manipulatio
 .cd.poor img{filter:grayscale(1) brightness(.6)}.cd.poor::after{content:'';position:absolute;left:0;right:0;bottom:0;height:calc((1 - var(--pg,0))*100%);background:rgba(0,0,0,.35);border-radius:5px;pointer-events:none}
 .cd.busy{opacity:.45}.cd.busy span::after{content:' (im Kampf)'}
 .cd.sel{transform:translateY(-8px);border-color:#fff;box-shadow:0 0 12px #ffd860,0 4px 0 #000}
-#mana{position:relative;margin-top:5px;height:18px;border-radius:9px;background:#1a0a28;border:2px solid #120b05;overflow:hidden}
+#mana{position:relative;margin-top:6px;height:22px;border-radius:11px;background:#1a0a28;border:2px solid #120b05;overflow:hidden;box-shadow:inset 0 2px 0 rgba(0,0,0,.45),0 1px 0 rgba(255,220,150,.15)}
 #manaFill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#e0a0ff,#9a40e0 50%,#5a1a90);transition:width .1s linear}
 #mana::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(10,0,20,.8) calc(10% - 2px) 10%)}
-#manaNum{position:absolute;left:6px;top:-1px;font:700 14px system-ui,sans-serif;z-index:1;text-shadow:0 1px 0 #000}
+#manaNum{position:absolute;left:8px;top:1px;font:700 15px system-ui,sans-serif;z-index:1;text-shadow:0 1px 0 #000}
+#manaLab{position:absolute;right:8px;top:2px;font:700 10px system-ui,sans-serif;color:#e0c8ff;z-index:1;text-shadow:0 1px 0 #000;letter-spacing:.04em}
 /* Overlays */
 .ov{position:absolute;inset:0;z-index:10;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 10px;background:rgba(8,5,2,.72);backdrop-filter:blur(2px)}
 .ov.show{display:block}.ov.m{background:linear-gradient(rgba(8,5,2,.35),rgba(8,5,2,.8))}
@@ -221,14 +223,34 @@ h3.act{margin:12px 2px 4px;font-size:13px;letter-spacing:.06em;text-transform:up
 @media (min-width:700px){#app.inmenu{max-width:620px}.mm,.box{max-width:560px}.coll{grid-template-columns:repeat(6,1fr)!important}.tile{min-height:170px}.dc{max-width:440px}}
 
 @media (max-height:760px){.cd.h{min-height:64px}.cd img{max-width:48px}#hud{padding:3px 5px}.who img{width:30px;height:30px}#abil{width:60px;height:60px}}
+
+
+#bEmo{position:absolute;left:6px;bottom:40px;width:36px;height:36px;border-radius:50%;font-size:18px;background:linear-gradient(#6a5236,#34251a);border:2px solid #b8902f;box-shadow:0 2px 0 #000;z-index:5}
+#emoBar{position:absolute;left:6px;bottom:80px;display:none;flex-direction:column;gap:4px;z-index:6}
+#emoBar.on{display:flex}
+#emoBar button{width:44px;height:44px;border-radius:10px;font-size:22px;background:linear-gradient(#5a3c22,#2a1a0c);border:2px solid #b8902f;box-shadow:0 2px 0 #000}
+.ebub{position:absolute;pointer-events:none;z-index:6;max-width:160px;padding:5px 8px;border-radius:10px 10px 10px 2px;background:rgba(20,12,6,.92);border:2px solid #b8902f;font-size:13px;color:#ffe9a0;text-shadow:0 1px 0 #000;animation:ebin .18s ease-out}
+.ebub.foe{border-color:#e05040;border-radius:10px 10px 2px 10px;color:#ffd0c0}
+.ebub .ei{font-size:16px;margin-right:3px}
+@keyframes ebin{from{transform:scale(.7);opacity:0}}
+#app.inmenu #bEmo,#app.inmenu #emoBar,.ebub.hide{display:none!important}
+.goldn{display:inline-flex;align-items:center;gap:4px;font:700 13px system-ui,sans-serif;color:#ffe9a0;background:rgba(0,0,0,.35);border:1.5px solid #b8902f;border-radius:999px;padding:2px 8px;margin-left:6px}
+/* Erz abbauen */
+.orebox{display:flex;flex-direction:column;align-items:center;margin:8px 0 4px}
+.orebox h3{font-size:16px;color:#ffe9a0;text-shadow:0 2px 0 #000;margin-bottom:2px}
+.orebox .orare{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c8b088;margin-bottom:6px}
+#oreCv{width:260px;height:210px;max-width:90vw;background:radial-gradient(ellipse at 50% 60%,#2a2218,#120c08);border:3px solid #b8902f;border-radius:12px;box-shadow:0 4px 0 #000,inset 0 0 20px #000;touch-action:none;cursor:pointer}
+.orehint{font-size:13px;color:#e0c8a0;margin-top:6px;text-align:center}
+.orepay{font-size:18px;color:#ffe9a0;text-shadow:0 0 10px #ffd860;margin-top:8px;font-weight:700}
+
 </style></head><body>
 <div id="app" class="inmenu">
  <div id="hud"><div class="who"><img id="oppImg" alt=""><div><b id="oppName">Gegner</b><div class="cr" id="crE"></div></div></div>
   <div id="tbox"><span id="plabel">×2 Mana in</span><span id="timer">2:00</span><div id="pbar"><i id="pfill"></i><b id="pmark"></b></div><span id="x2" style="display:none">×2</span></div>
   <div style="flex:1;display:flex;gap:4px;justify-content:flex-end"><button class="hb2" id="bMus" aria-label="Musik">🎵</button><button class="hb2" id="bSfx" aria-label="Effekte">🔊</button><button class="hb2" id="bPause" aria-label="Pause">⏸</button></div></div>
  <div id="tstrip"><span class="tl">Gegner-Türme</span><div class="tb" id="tsE0"><i></i><b>1500</b></div><div class="tb k" id="tsEk"><i></i><b>2600</b></div><div class="tb" id="tsE1"><i></i><b>1500</b></div><div id="score" title="Kronen Du : Gegner">♛ <span id="scoreN">0 : 0</span></div></div>
- <div id="stage"><canvas id="cv"></canvas><div id="crPbox">Du <span class="cr" id="crP"></span></div><div id="banner"></div><div id="cdown"></div><button id="abil" style="display:none"><img id="abilImg" alt=""><span id="abilName"></span></button><div id="toast"></div></div>
- <div id="panel"><div id="cards"><div id="next"><img id="nextImg" alt=""><span>Nächste</span></div><div id="hand"></div></div><div id="mana"><div id="manaFill"></div><span id="manaNum">5</span></div></div>
+ <div id="stage"><canvas id="cv"></canvas><div id="crPbox">Du <span class="cr" id="crP"></span></div><div id="banner"></div><div id="cdown"></div><button id="abil" style="display:none"><img id="abilImg" alt=""><span id="abilName"></span></button><button id="bEmo" aria-label="Emotes" title="Emotes">💬</button><div id="emoBar" role="menu"></div><div id="toast"></div></div>
+ <div id="panel"><div id="cards"><div id="next"><img id="nextImg" alt=""><span>Nächste</span></div><div id="hand"></div></div><div id="mana"><div id="manaFill"></div><span id="manaNum">5</span><span id="manaLab">Mana</span></div></div>
  <div id="ov" class="ov"></div>
 </div>
 <script>
@@ -360,7 +382,7 @@ const TW_BESTIARY={version:1,tile:20,
    abil:{key:'summon',name:'Knochenruf',charge:15,reach:120,summon:{card:'skels',n:4}}}
  },
  towers:{guard:{name:'Wachturm',hp:1500,r:20,dmg:62,hit:.8,range:150,tg:'any',proj:'tarrow'},keep:{name:'Bergfried',hp:2600,r:27,dmg:80,hit:1.0,range:140,tg:'any',proj:'tarrow'}},
- projectiles:{arrow:{spd:430},tarrow:{spd:460},fireball:{spd:300},flask:{spd:250,arc:1},frostbolt:{spd:360},poison:{spd:340},bolt:{spd:420},shadow:{spd:300},zap:{spd:900},fel:{spd:330},net:{spd:320,arc:1},flame:{spd:380},icebreath:{spd:340},thorn:{spd:380}},
+ projectiles:{arrow:{spd:430,arc:1},tarrow:{spd:460,arc:1},fireball:{spd:300},flask:{spd:250,arc:1},frostbolt:{spd:360},poison:{spd:340},bolt:{spd:420},shadow:{spd:300},zap:{spd:900},fel:{spd:330},net:{spd:320,arc:1},flame:{spd:380},icebreath:{spd:340},thorn:{spd:380}},
  // Spielerkarten (Startset 16 Karten + 13 freischaltbare aus 0.7 + 15 aus 0.8) und Standarddeck
  playerSet:['orcs','archers','firemage','alch','sling','ranger','well','blade','frosthero','poisonhero','zepp','giant','shaman','bats','firerain','frost',
   'storm','netter','troll','warchant','trollking','banner','burrow','treant','thorn','shade','whelp','frostwyrm','dragonlord',
@@ -872,7 +894,11 @@ const SFX=(()=>{let A=null,master,mus,fx,noiseBuf,on={music:LS.get('music',true)
   drain(){if(!ok('drain',.6))return;const t=T();osc('sine',900,t,.9,.1,fx,.05,180);osc('triangle',450,t,.9,.08,fx,.05,120);noise(t,.8,.1,fx,'bandpass',1200,4,400);},
   charge(){if(!ok('charge',.3))return;const t=T();fdrum(t,.9);noise(t,.2,.25,fx,'lowpass',900,1,200);osc('square',160,t,.12,.08,fx,.003,70);},
   plague(){if(!ok('plague',.5))return;const t=T();noise(t,1,.18,fx,'bandpass',500,1.5,300,.1);osc('sine',90,t,.9,.1,fx,.1,70);},
-  summon2(){if(!ok('summ2',.5))return;const t=T();osc('sawtooth',120,t,.6,.1,fx,.05,480);osc('sine',240,t+.1,.5,.08,fx,.05,960);noise(t,.5,.1,fx,'highpass',2500,1);}});
+  summon2(){if(!ok('summ2',.5))return;const t=T();osc('sawtooth',120,t,.6,.1,fx,.05,480);osc('sine',240,t+.1,.5,.08,fx,.05,960);noise(t,.5,.1,fx,'highpass',2500,1);},
+  // 0.9
+  pick(){if(!ok('pick',.08))return;const t=T();noise(t,.08,.22,fx,'highpass',1800,1);osc('square',520,t,.07,.08,fx,.002,180);osc('sine',180,t,.1,.12,fx,.002,70);fdrum(t,.35);},
+  oreBreak(){if(!ok('orebr',.3))return;const t=T();noise(t,.45,.4,fx,'lowpass',800,1,140);osc('sine',70,t,.35,.28,fx,.005,40);fdrum(t,.9);for(let i=0;i<5;i++)osc('square',240+Math.random()*280,t+.04+i*.04,.05,.05,fx,.002,90);},
+  emote(){if(!ok('emote',.2))return;const t=T();[523,659,784].forEach((f,i)=>osc('triangle',f,t+i*.05,.25,.07,fx,.008));}});
  return api;})();
 window.SFX=SFX;
 
@@ -916,7 +942,7 @@ function drawChief(g){drawGoblin(g);
  P(g,[[-7,-29],[-8,-37],[-4,-33],[0,-39],[4,-33],[8,-37],[7,-29]]);F(g,LG(g,0,-39,0,-29,'#ffe070','#c08a20'),1.2);
  E(g,0,-31.5,1.4);F(g,'#e02020',.6);
  L(g,-9,-30,-15,-44,OL,2.4);L(g,-9,-30,-15,-44,'#e04020',1.2);}
-function drawKeepTeam(g,team,sleep){
+function drawKeepTeam(g,team,sleep,accent){
  // Bergfried: Burg aus Turmwacht, Dächer/Fahnen in Teamfarbe; sleep = ruht noch (dunkle Fenster, Fallgitter unten)
  const C=team?['#6a1410','#d0402c','#b02a1a']:['#1a3270','#3a68c8','#2a58c0'];
  const sv=g.createLinearGradient;g.createLinearGradient=function(...a){const gr=sv.apply(this,a),ad=gr.addColorStop.bind(gr);
@@ -931,6 +957,7 @@ function drawKeepTeam(g,team,sleep){
  if(team){P(g,[[-4,-33],[4,-25]]);L(g,-4,-33,4,-25,'#ffd860',1.6);L(g,4,-33,-4,-25,'#ffd860',1.6);}else{P(g,[[-4.5,-27],[-5,-33],[-2.5,-30.5],[0,-34],[2.5,-30.5],[5,-33],[4.5,-27]]);F(g,'#ffd860',.8);}
  // Zinnen-Banner an den Seitentürmen
  for(const s of[-1,1]){P(g,[[s*30,-48],[s*38,-48],[s*38,-30],[s*34,-33],[s*30,-30]]);F(g,LG(g,s*30,0,s*38,0,C[0],C[1]),1.1);E(g,s*34,-42,1.6);F(g,'#ffd860',.6);}
+ if(accent){for(const s of[-1,1]){P(g,[[s*31,-46],[s*37,-46],[s*37,-34],[s*34,-36],[s*31,-34]]);F(g,accent,.9);}E(g,0,-38,3.2);F(g,accent,.8);}
  if(sleep){// geschlossene Läden + Ketten am Tor
   for(const s of[-1,1]){P(g,[[s*3.4,-56.6],[s*8.6,-56.6],[s*8.6,-47.4],[s*3.4,-47.4]]);F(g,'#4a3018',1);L(g,s*6,-56.6,s*6,-47.4,'#2a1808',.8);}
   for(const s of[-1,1])L(g,s*10,-20,s*3,-9,'#8a8a94',1.4);}}
@@ -945,8 +972,7 @@ function drawGuardTeam(g,team){
  E(g,0,-h,r+2,ry+1.4);F(g,LG(g,0,-h-ry,0,-h+ry,'#9a9488','#5a564e'),1.6);E(g,0,-h,r-4,ry-2);F(g,'#4a3a2a',1);
  // hintere Zinnen
  for(const a of[3.6,4.2,4.8,5.4,6.0]){const x=Math.cos(a)*(r+1),y=-h+Math.sin(a)*(ry+.6);P(g,[[x-3,y],[x-3,y-6],[x+3,y-6],[x+3,y]]);F(g,LG(g,x-3,0,x+3,0,'#6a665e','#a8a296'),1.1);}
- // Schütze
- g.save();g.translate(0,-h+3);g.scale(.85,.85);if(team){drawElf(g);drawElfBow(g);}else drawElfBack(g);g.restore();
+ // 0.9: Schütze wird in der Darstellung zum Ziel gedreht (nicht mehr fest im Sprite)
  // vordere Zinnen
  for(const a of[.35,.95,1.57,2.19,2.79]){const x=Math.cos(a)*(r+1),y=-h+Math.sin(a)*(ry+.6);P(g,[[x-3.4,y+2],[x-3.4,y-6],[x+3.4,y-6],[x+3.4,y+2]]);F(g,LG(g,x-3.4,0,x+3.4,0,'#7a766c','#c8c2b4'),1.2);}
  // Teambanner vorne
@@ -1853,7 +1879,7 @@ function validateDeck(deck){
  const h=deck.filter(id=>CARDS[id].type==='hero').length;
  if(h===0)return 'Jedes Deck braucht genau einen Helden.';if(h>1)return 'Nur ein Held pro Deck erlaubt.';return null;}
 function mkPlayer(S,side,deck){const d=deck.slice();for(let i=d.length-1;i>0;i--){const j=Math.floor(rnd(S)*(i+1));[d[i],d[j]]=[d[j],d[i]];}
- return{side,mana:5,regen:1,crowns:0,hand:d.slice(0,4),queue:d.slice(4),heroId:0,heroCharge:0,spent:0,plays:0,leak:0};}
+ return{side,mana:5,regen:1,crowns:0,hand:d.slice(0,4),queue:d.slice(4),heroId:0,heroCharge:0,spent:0,plays:0,leak:0,heroCard:deck.find(id=>CARDS[id]&&CARDS[id].type==='hero')||null};}
 function create(cfg){cfg=cfg||{};const decks=cfg.decks||[B.defaultDeck,B.defaultDeck];
  decks.forEach((d,i)=>{const e=validateDeck(d);if(e)throw new Error('Deck '+(i+1)+': '+e);});
  const S={v:1,tick:0,t:0,phase:'count',countT:COUNT,matchT:MATCH,suddenT:SUDDEN,dbl:false,over:false,winner:-1,reason:'',rs:(cfg.seed|0)||1,nid:1,
@@ -1875,15 +1901,27 @@ function zoneOK(S,side,x,y){if(x<8||x>FW-8||y<10||y>FH-10)return false;if(inRive
  if(side===0?y>=RY1+4:y<=RY0-4)return true;
  const lane=x<FW/2?0:1,g=tower(S,1-side,'guard',lane);if(alive(g))return false;
  return side===0?y>=160:y<=FH-160;}
-function canPlay(S,side,i,x,y){if(S.over||S.phase==='count')return 'Noch nicht bereit';const p=S.p[side],id=p.hand[i],C=CARDS[id];if(!C)return 'Keine Karte';
- if(p.mana+1e-9<C.cost)return 'Nicht genug Mana';
- if(C.type==='hero'&&p.heroId&&byId(S,p.heroId))return 'Dein Held kämpft bereits';
+function posErr(S,side,i,x,y){const p=S.p[side],id=p.hand[i],C=CARDS[id];if(!C)return 'Keine Karte';
  if(C.type==='spell')return(x>=0&&x<=FW&&y>=0&&y<=FH)?null:'Außerhalb des Feldes';
  if(C.u&&C.u.tunnel){if(x<12||x>FW-12||y<24||y>FH-24||inRiver(x,y))return 'Hier nicht erlaubt';// 0.8 Tunnelbohrer: ganzes Feld, aber nicht direkt an gegnerischen Türmen
   for(const o of S.ents)if(o.cls==='tower'&&o.side!==side&&o.hp>0&&d2(o.x,o.y,x,y)<o.r+34)return 'Zu nah am Turm';return null;}
  if(!zoneOK(S,side,x,y))return 'Hier nicht erlaubt';
  if(C.type==='bld'){for(const o of S.ents)if((o.cls==='tower'||o.cls==='bld')&&d2(o.x,o.y,x,y)<o.r+C.b.r+2)return 'Zu nah an einem Gebäude';}
  return null;}
+function canPlay(S,side,i,x,y){if(S.over||S.phase==='count')return 'Noch nicht bereit';const p=S.p[side],id=p.hand[i],C=CARDS[id];if(!C)return 'Keine Karte';
+ if(p.mana+1e-9<C.cost)return 'Nicht genug Mana';
+ if(C.type==='hero'&&p.heroId&&byId(S,p.heroId))return 'Dein Held kämpft bereits';
+ return posErr(S,side,i,x,y);}
+// 0.9: nächster gültiger Punkt (deterministisch, für Vorschau und Loslassen in verbotener Zone)
+function snapPlay(S,side,i,x0,y0){const id=S.p[side].hand[i],C=CARDS[id];if(!C)return[x0,y0];
+ if(C.type==='spell')return[clamp(x0,0,FW),clamp(y0,0,FH)];
+ let x=clamp(x0,8,FW-8),y=clamp(y0,10,FH-10);if(!posErr(S,side,i,x,y))return[x,y];
+ let best=null,bd=1e9;
+ for(let r=3;r<=240;r+=3){const n=Math.max(8,Math.min(32,(r/3|0)*4));
+  for(let k=0;k<n;k++){const a=k/n*Math.PI*2,px=clamp(x0+Math.cos(a)*r,8,FW-8),py=clamp(y0+Math.sin(a)*r,10,FH-10);
+   if(posErr(S,side,i,px,py))continue;const d=(px-x0)*(px-x0)+(py-y0)*(py-y0);if(d<bd){bd=d;best=[px,py];}}
+  if(best&&r*r>=bd)break;}
+ return best||[x,y];}
 function issue(S,cmd,delay){cmd=Object.assign({},cmd);cmd.tick=S.tick+(delay==null?1:delay);if(cmd.a==='play')cmd.card=S.p[cmd.side].hand[cmd.i];S.queue.push(cmd);return cmd;}
 function exec(S,c){const p=S.p[c.side];
  if(c.a==='play'){if(p.hand[c.i]!==c.card||canPlay(S,c.side,c.i,c.x,c.y))return;const C=CARDS[c.card];p.mana-=C.cost;p.spent+=C.cost;p.plays++;
@@ -1965,7 +2003,7 @@ function hurt(S,e,amt,srcSide,fire){if(!e||e.hp<=0||amt<=0||ghost(e))return;
  if(e.drT>S.tick)amt*=1-e.drF;// 0.8 Wutgebrüll (Bär): weniger Schaden
  if(e.ward>0){if(e.wardT>S.tick){const a=Math.min(e.ward,amt);e.ward-=a;amt-=a;if(e.ward<=0){e.ward=0;ev(S,'wardbreak',{x:e.x,y:e.y,id:e.id});}if(amt<=0){e.hurtT=S.tick;return;}}else e.ward=0;}// 0.8 Ahnenschild
  e.hp-=amt;e.hurtT=S.tick;
- if(e.cls==='tower'){S.stats[srcSide===0?0:1].dmgTower+=amt;if(e.sub==='keep')e.active=true;}
+ if(e.cls==='tower'){S.stats[srcSide===0?0:1].dmgTower+=amt;if(e.sub==='keep')e.active=true;if(S.phase==='sudden'&&srcSide!=null&&srcSide!==e.side&&!S.over)end(S,srcSide,'Sudden Death');}// 0.9 Overtime: nächster Turmtreffer entscheidet
  if(e.hp<=0){e.hp=0;}}
 function splashAt(S,side,x,y,r,dmg,o){o=o||{};let n=0;for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(o.air===false&&e.air)continue;if(o.air===true&&!e.air)continue;
   if(d2(e.x,e.y,x,y)<=r+e.r*.6){hurt(S,e,e.cls==='unit'?dmg:dmg*(o.tower==null?1:o.tower),side,o.fire);n++;if(o.each)o.each(e);
@@ -2198,7 +2236,7 @@ function step(S){if(S.over)return;S.ev.length=0;
  updProj(S);updZones(S);updBombs(S);separate(S);cleanup(S);
  S.tick++;S.t+=TICK;}
 function hash(S){let h=2166136261;const mix=v=>{h^=(v|0);h=Math.imul(h,16777619);};mix(S.tick);for(const e of S.ents){mix(e.id);mix(Math.round(e.x*100));mix(Math.round(e.y*100));mix(Math.round(e.hp*10));}for(const p of S.p){mix(Math.round(p.mana*1000));mix(p.crowns);}return(h>>>0).toString(16);}
-return{acquire,spawnUnit,deploy,edge,needCross,isBehind,DEP,CONTACT,MELEE,SWING,laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,dmul,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
+return{acquire,spawnUnit,deploy,edge,needCross,isBehind,DEP,CONTACT,MELEE,SWING,laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,dmul,issue,canPlay,posErr,snapPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
 })();
 
 
@@ -2656,7 +2694,8 @@ function artKey(e){if(e.cls==='tower')return e.sub+e.side+(e.sub==='keep'&&!e.ac
 function vk(k,side){return typeof viewKey==='function'?viewKey(k,side):k;}
 const lerp=(a,b,k)=>a+(b-a)*k;
 // ---------- Effekte ----------
-function fx(o){o.t=0;st.fx.push(o);return o;}
+const FXMAX=140;
+function fx(o){if(st.fx.length>=FXMAX){let i=st.fx.findIndex(f=>f.k==='p');st.fx.splice(i>=0?i:0,1);}o.t=0;st.fx.push(o);return o;}
 function parts(x,y,n,c,sp,life,up){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=(.3+Math.random())*sp;fx({k:'p',x,y,z:up||0,vx:Math.cos(a)*v,vy:Math.sin(a)*v*.6,vz:(up?20:0)+Math.random()*sp*.6,c,max:life*(.6+Math.random()*.6),r:1.2+Math.random()*1.8});}}
 function text(x,y,txt,c,max){fx({k:'txt',x,y,txt,c,max:max||1.1});}
 function onEvents(evs,S){for(const e of evs){switch(e.k){
@@ -2678,7 +2717,7 @@ function onEvents(evs,S){for(const e of evs){switch(e.k){
  case 'tower':fx({k:'boomb',x:e.x,y:e.y-20,r:60,max:.9});parts(e.x,e.y-20,40,'#c8b898',100,1.1,1);parts(e.x,e.y-30,20,'#ff9a30',80,.8,1);st.shake=10;st.ruins.push({x:e.x,y:e.y,side:e.side,sub:e.sub});break;
  case 'keepwake':fx({k:'ring',x:e.x,y:e.y-20,r:58,c:e.side?'rgba(255,120,90,.95)':'rgba(120,180,255,.95)',max:.8,w:5});parts(e.x,e.y-40,24,'#ffd860',70,.9,1);text(e.x,e.y+(e.side?40:-100),'Bergfried erwacht!','#ffe28a',1.8);break;
  case 'throw':st.flashSling[Math.round(e.x)+'|'+Math.round(e.y)]=.35;break;
- case 'land':parts(e.x,e.y,6,'#a08a60',30,.4);break;
+ case 'land':fx({k:'ring',x:e.x,y:e.y,r:22,c:'rgba(200,180,140,.9)',max:.4,w:4});parts(e.x,e.y,10,'#a08a60',34,.45);break;
  // 0.7 neue Mechaniken
  case 'chain':fx({k:'bolt',pts:e.pts.map(p=>[p[0],p[1]-(p[2]?28:10)]),max:.28});for(const p of e.pts)fx({k:'spark',x:p[0],y:p[1]-(p[2]?28:10),c:'#cfe8ff',max:.25});break;
  case 'net':fx({k:'ring',x:e.x,y:e.y-(e.air?28:0),r:16,c:'rgba(225,205,150,.95)',max:.35,w:2});if(e.air)text(e.x,e.y-46,'Zu Boden!','#f0e0b0',.9);break;
@@ -2834,8 +2873,9 @@ function draw(S,alpha,dt){lastS=S;st.time+=dt;if(!bg)buildBg();
      const [ax,ay]=pts[0],[bx2,by2]=pts[1]||pts[0],dd=Math.hypot(bx2-ax,by2-ay)||1,ux=(bx2-ax)/dd,uy=(by2-ay)/dd,m=Math.min(30,dd*.6),hx=ax+ux*m,hy=ay+uy*m;
      ctx.fillStyle=col;ctx.strokeStyle=OL;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(hx+ux*8,hy+uy*8);ctx.lineTo(hx-uy*5.5,hy+ux*5.5);ctx.lineTo(hx+uy*5.5,hy-ux*5.5);ctx.closePath();ctx.fill();ctx.stroke();
      if(sp)labs.push(['×'+sp[l]+(l?' →':''),(l?'← ':'')&&0,hx+ux*14+(l?16:-16),hy+uy*14,l]);}}
-   const b0=C.u||C.b,R0=b0.r*1.4+(n>1?12:0);
-   ctx.fillStyle=colF;ctx.strokeStyle=OL;ctx.lineWidth=4.5+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,R0,R0*.6,0,0,7);ctx.stroke();ctx.strokeStyle=colS;ctx.lineWidth=2.2+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,R0,R0*.6,0,0,7);ctx.fill();ctx.stroke();
+   const b0=C.u||C.b,R0=Math.max(42, (b0.r||12)*3.2)+(n>1?10:0);// 0.9: großer Kreis, sichtbar um den Finger herum
+   ctx.fillStyle=colF;ctx.strokeStyle=OL;ctx.lineWidth=5.5+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,R0,R0*.62,0,0,7);ctx.stroke();ctx.strokeStyle=colS;ctx.lineWidth=2.6+pul;ctx.beginPath();ctx.ellipse(g.x,g.y,R0,R0*.62,0,0,7);ctx.fill();ctx.stroke();
+   ctx.strokeStyle=ok?'rgba(93,255,176,.45)':'rgba(255,74,58,.45)';ctx.lineWidth=1.4;ctx.setLineDash([5,5]);ctx.beginPath();ctx.ellipse(g.x,g.y,R0+5,R0*.62+3,0,0,7);ctx.stroke();ctx.setLineDash([]);
    if(C.type==='bld'&&b0.range){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.ellipse(g.x,g.y,b0.range,b0.range*.75,0,0,7);ctx.stroke();ctx.setLineDash([]);}
    const c=spr(vk(C.art==='fire'?'firerain':C.art,0));
    if(c)for(const[dx,dy]of f){const x=C.type==='bld'?g.x:Math.max(8,Math.min(FW-8,g.x+dx)),y=g.y+dy-(C.air?24:0);
@@ -2897,7 +2937,9 @@ function track(S,list,dt){if(st.simRef!==S){st.simRef=S;st.an=new Map();st.corps
   if(dt>0){a.hpd+=(e.hp-a.hpd)*Math.min(1,dt*9);a.hpt+=(e.hp-a.hpt)*Math.min(1,dt*2.2);if(a.hpt<a.hpd)a.hpt=a.hpd;}else if(e.hp>a.hpd){a.hpd=a.hpt=e.hp;}
   a.hp=e.hp;a.fr=fr;a.o=o;a.fl=Math.max(0,a.fl-dt);a.kt=Math.max(0,a.kt-dt);a.dnT-=dt;
   if(st.dmgNums&&dt>0&&a.dn>=25&&a.dnT<=0){fx({k:'dmg',x:o.x+((e.id*7)%9-4),y:o.y-o.z-(e.cls==='tower'?96:hOf(e)+8),txt:String(Math.round(a.dn)),c:e.side?'#ffe9a0':'#ffb4a8',max:.8});a.dn=0;a.dnT=.35;}
-  if(dt>0&&e.mv&&!e.frz&&!e.stun)a.wp+=dt*(e.st&&e.st.spd?e.st.spd*.36:9);}
+  if(dt>0&&e.mv&&!e.frz&&!e.stun)a.wp+=dt*(e.st&&e.st.spd?e.st.spd*.36:9);
+  if(a.depOn&&e.dep<=0&&e.cls==='unit'&&!e.air&&!e.tun){fx({k:'ring',x:o.x,y:o.y,r:e.r*2.4,c:'rgba(210,190,150,.95)',max:.45,w:3});parts(o.x,o.y,8,'#b09870',28,.4);}
+  a.depOn=e.dep>0;}
  for(const[id,a]of st.an){if(a.fr===fr)continue;st.an.delete(id);const o=a.o,e=o.e;if(e.cls==='tower'||e.hp>0)continue;
   const c=e.cls==='bld'&&e.card==='sling'?spr(vk('sling',e.side)):spr(artKey(e));if(!c)continue;
   const style=e.cls==='bld'?'bld':e.air?'air':/skel|lich|giant/.test(e.card)?'crumble':'fall';
@@ -2943,6 +2985,21 @@ function bowDraw(x,y,face,kw,hh,t){const hx=x+face*5,hy=y-hh*.52;let dx=t.x-x,dy
 function castOrb(x,y,face,kw,ks,hh,col){const px=x+face*8,py=y-hh*.92,rel=ks>=0&&ks<.35,r=rel?(1-ks/.35)*6:1.2+4.2*kw;if(r<=.2)return;
  const g=ctx.createRadialGradient(px,py,0,px,py,r*2.4);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.35,col);g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,r*2.4,0,7);ctx.fill();
  if(kw>0){ctx.strokeStyle=col;ctx.globalAlpha=.8*kw;ctx.lineWidth=1.1;ctx.beginPath();for(let i=0;i<4;i++){const an=st.time*7+i*1.571,rr=(1-kw)*14+5;ctx.moveTo(px+Math.cos(an)*rr,py+Math.sin(an)*rr);ctx.lineTo(px+Math.cos(an)*(rr-3.5),py+Math.sin(an)*(rr-3.5));}ctx.stroke();ctx.globalAlpha=1;}}
+
+const HERO_ACCENT={blade:'#c8a050',frosthero:'#80d8ff',poisonhero:'#88e050',trollking:'#6aaa40',dragonlord:'#ff6a20',wolfking:'#e8e8f0',warlockhero:'#7aff50',deathlord:'#c080ff'};
+function heroAccent(S,side){const p=S.p[side];const id=p&&p.heroCard;return(id&&HERO_ACCENT[id])||null;}
+function drawKeepAccent(S,o){const e=o.e;if(e.sub!=='keep'||e.hp<=0)return;const col=heroAccent(S,e.side);if(!col)return;
+ ctx.save();
+ for(const sx of[-22,22]){ctx.fillStyle=col;ctx.strokeStyle=OL;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(o.x+sx,o.y-52);ctx.lineTo(o.x+sx+7,o.y-52);ctx.lineTo(o.x+sx+7,o.y-36);ctx.lineTo(o.x+sx+3.5,o.y-39);ctx.lineTo(o.x+sx,o.y-36);ctx.closePath();ctx.fill();ctx.stroke();}
+ ctx.fillStyle=col;ctx.beginPath();ctx.arc(o.x,o.y-28,3.2,0,7);ctx.fill();ctx.restore();}
+function drawTowerGunner(S,o){const e=o.e;if(e.hp<=0)return;if(e.sub==='keep'&&!e.active)return;
+ const tgt=e.tgt?Sim.byId(S,e.tgt):null;
+ const gx=o.x,gy=o.y-(e.sub==='keep'?60:31);
+ let face=e.side?1:-1;if(tgt)face=tgt.x<o.x?-1:1;
+ let tilt=0;if(tgt){const ax=tgt.x-o.x,ay=tgt.y-o.y;tilt=Math.max(-.55,Math.min(.55,Math.atan2(ax,Math.max(20,Math.abs(ay))))*.85);}
+ ctx.save();ctx.translate(gx,gy);ctx.rotate(tilt);ctx.scale(.82*face,.82);
+ if(e.side===1){drawElf(ctx);drawElfBow(ctx);}else drawElfBack(ctx);
+ ctx.restore();}
 function drawEnt(S,o){const e=o.e,key=artKey(e);let c;
  if(e.cls==='bld'&&e.card==='sling'){const fk=Math.round(e.x)+'|'+Math.round(e.y);c=spr(vk(st.flashSling[fk]>0?'sling2':'sling',e.side));}
  else if(e.tun){c=spr('tunnel');if(Math.random()<.35)parts(o.x+(Math.random()-.5)*10,o.y,1,'#7a5a36',22,.35,1);}
@@ -2966,10 +3023,11 @@ function drawEnt(S,o){const e=o.e,key=artKey(e);let c;
   else if(W==='breath'){if(kw>0){rot-=face*.1*kw;dx-=face*2*kw;dy-=2*kw;}if(ks>=0&&ks<.5){rot+=face*.14*Math.sin(Math.PI*ks/.5);dx+=face*4*Math.sin(Math.PI*ks/.5);}}
   else if(W==='throw'){if(kw>0)rot-=face*.2*kw;if(ks>=0)rot+=face*.22*Math.sin(Math.PI*Math.min(1,ks*1.5));}
   if(e.bur&&e.mv&&Math.random()<.12)parts(o.x,o.y,1,'#7a5a36',14,.4);
-  if(e.mv&&busy&&ks<0&&kw===0){const ph=a.wp;if(e.air)dy-=Math.sin(ph*1.6)*1.2;else{dy-=Math.abs(Math.sin(ph))*1.8;rot+=Math.sin(ph)*.05;if(!NOLEGS[e.card])legK=Math.sin(ph)*.42;}}
+  if(e.mv&&busy&&ks<0&&kw===0){const ph=a.wp;if(e.air)dy-=Math.sin(ph*1.6)*1.2;else{dy-=Math.abs(Math.sin(ph))*1.8;rot+=Math.sin(ph)*.05;if(!NOLEGS[e.card])legK=Math.sin(ph)*.42;if(!e.air&&Math.random()<.16)parts(o.x-face*e.r*.4,o.y,1,'#c8b890',16,.35);}}
   if(a.kt>0){const k=a.kt/.16;dx+=a.kx*k;dy+=a.ky*k;rot+=face*.05*Math.sin(k*9)*k;}}
  const X=o.x+dx,Y=o.y-o.z+dy;
  drawSpr(c,X,Y,flip,rot,sx,sy,legK);
+ if(e.cls==='tower'){drawKeepAccent(S,o);drawTowerGunner(S,o);}
  if(a.fl>0){const al=ctx.globalAlpha;ctx.globalAlpha=Math.min(1,a.fl/.14)*(e.cls==='tower'?.3:.7)*al;drawSpr(tint(c,'#ffffff'),X,Y,flip,rot,sx,sy,0);ctx.globalAlpha=al;}
  if(dep)ctx.globalAlpha=1;
  // 0.7 Status: Netz/Wurzeln, Furcht, Stärkung, Auren
@@ -2998,8 +3056,8 @@ function drawEnt(S,o){const e=o.e,key=artKey(e);let c;
  if(e.burn&&e.dotT>0){for(let i=0;i<3;i++){const fx0=o.x+(i-1)*e.r*.55,fy=o.y-o.z-hh*(.25+.22*((i*7)%3)),fl=.6+.4*Math.sin(st.time*20+i*2);ctx.save();ctx.shadowColor='#ff6a10';ctx.shadowBlur=8;ctx.fillStyle='#ff8a20';ctx.beginPath();ctx.moveTo(fx0-3.5,fy);ctx.quadraticCurveTo(fx0,fy-13*fl,fx0+3.5,fy);ctx.fill();ctx.fillStyle='#ffe070';ctx.beginPath();ctx.moveTo(fx0-1.6,fy);ctx.quadraticCurveTo(fx0,fy-6*fl,fx0+1.6,fy);ctx.fill();ctx.restore();}}
  else if(e.dot>0){ctx.fillStyle='rgba(140,255,80,.85)';for(let i=0;i<2;i++){ctx.beginPath();ctx.arc(o.x+Math.cos(st.time*3+i*3)*e.r*.8,o.y-o.z-hh*.5-((st.time*10+i*7)%14),1.4,0,7);ctx.fill();}}}
 const PCOL={zap:'#bfe0ff',net:'#e0d0a0',flame:'#ff8a20',icebreath:'#a8e8ff',thorn:'#a8ff70',arrow:'#e8dcc0',tarrow:'#f0e4c8',fireball:'#ff9a30',flask:'#8aff40',frostbolt:'#a0e8ff',poison:'#9aff60',bolt:'#ffe860',shadow:'#b060ff',fel:'#7aff50'};
-function drawProj(p,alpha){const x=lerp(p.ox,p.x,alpha),y=lerp(p.oy,p.y,alpha);if(p._d0==null)p._d0=Math.max(1,Math.hypot(p.tx-p.x,p.ty-p.y));
- const d=Math.hypot(p.tx-x,p.ty-y),k=Math.max(0,Math.min(1,1-d/p._d0));const z=lerp(p.z,p.tz,k)+Math.sin(Math.PI*k)*(p.arc?p._d0*.35:p._d0*.08);const sy=y-z;
+function drawProj(p,alpha){const x=lerp(p.ox,p.x,alpha),y=lerp(p.oy,p.y,alpha);const d0=p.d0||p._d0||Math.max(1,Math.hypot(p.tx-(p.ox!=null?p.ox:p.x),p.ty-(p.oy!=null?p.oy:p.y)));
+ const d=Math.hypot(p.tx-x,p.ty-y),k=Math.max(0,Math.min(1,1-d/d0));const z=lerp(p.z,p.tz,k)+Math.sin(Math.PI*k)*(p.arc?d0*.35:d0*.08);const sy=y-z;
  const c=PCOL[p.kind]||'#fff';
  if(p.kind==='arrow'||p.kind==='tarrow'){const a=Math.atan2((p.ty-p.tz)-sy,p.tx-x);ctx.save();ctx.translate(x,sy);ctx.rotate(a);ctx.strokeStyle=OL;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(4,0);ctx.stroke();ctx.strokeStyle=c;ctx.lineWidth=1.3;ctx.stroke();
   ctx.fillStyle='#d8dce2';ctx.beginPath();ctx.moveTo(6,0);ctx.lineTo(2,-2.2);ctx.lineTo(2,2.2);ctx.fill();ctx.fillStyle=p.side?'#ff6a50':'#6aa8ff';ctx.fillRect(-10,-1.8,3,3.6);ctx.restore();return;}
@@ -3062,9 +3120,12 @@ function ownSet(){return B.playerSet.filter(cardOpen);}
 function scenOf(oppKey){return DUELL_SCEN.find(s=>s.opp===oppKey);}
 function diffCls(tag){return tag==='schwer'?'hard':tag==='sehr schwer'?'hard2':tag==='Drache'?'dragon':tag==='Rudel'?'pack':tag==='Dämon'?'demon':tag==='Untot'?'undead':'';}
 function saveDeck(d){LS.set('duell_deck',d);}
-function prog(){const p=LS.get('duell_progress',null);return p&&Array.isArray(p.won)?p:{won:[]};}
+function prog(){const p=LS.get('duell_progress',null);const o=p&&Array.isArray(p.won)?p:{won:[]};if(o.gold==null)o.gold=0;if(!o.ores)o.ores={};return o;}
 function unlocked(id){return id===1||prog().won.includes(id-1);}
 function markWon(id){const p=prog();const fresh=!p.won.includes(id);if(fresh)p.won.push(id);LS.set('duell_progress',p);return fresh;}
+function saveProg(p){LS.set('duell_progress',p);}
+const OPTS=Object.assign({dmgNums:true},LS.get('duell_opts',{}));
+function saveOpts(){LS.set('duell_opts',OPTS);if(typeof DR!=='undefined')DR.st.dmgNums=!!OPTS.dmgNums;}
 // ---------- Zustand ----------
 const G={S:null,ai:null,auto:null,mode:null,scen:null,opp:null,paused:true,acc:0,last:0,sel:null,drag:null,aim:false,endShown:false,speed:1,deck:loadDeck(),toastT:0};
 window.DUELL=G;
@@ -3094,7 +3155,7 @@ function phaseWatch(S,ev){let fell=false;
  for(const e of ev){
   if(e.k==='start')banner('Kampf!',1);
   else if(e.k==='double'){banner('Doppel-Mana!<small>Mana lädt doppelt so schnell · noch 1:00</small>',2);snd('warhorn');}
-  else if(e.k==='sudden'){banner('Sudden Death!<small>Der nächste zerstörte Turm entscheidet · 1:00</small>',2.4);snd('suddenBell');}
+  else if(e.k==='sudden'){banner('Sudden Death!<small>Der nächste Treffer auf einen Turm entscheidet · 1:00</small>',2.4);snd('suddenBell');}
   else if(e.k==='tower'){fell=true;banner(e.side===1?'Turm zerstört! 👑':'Dein Turm ist gefallen!',1.4);snd('towerFall');}
   else if(e.k==='end'){const w=e.winner;banner(w===0?'Sieg! 🏆':w<0?'Unentschieden':'Niederlage',1.6);PW.endSnd=true;snd(w===0?'fanfare':'darkHorn');$('cdown').className='';}}
  // Bergfried erwacht (getroffen oder Wachturm gefallen) – reine Anzeige
@@ -3105,7 +3166,7 @@ function phaseWatch(S,ev){let fell=false;
  const rem=S.phase==='play'?S.matchT:S.phase==='sudden'?S.suddenT:null;
  if(rem!=null&&rem>0&&rem<=10+1e-9){const sec=Math.ceil(rem-1e-9),key=S.phase+':'+sec;
   if(PW.tick!==key){const first=!PW.tick||PW.tick.split(':')[0]!==S.phase;PW.tick=key;
-   if(first)banner(S.phase==='sudden'?'Letzte 10 Sekunden<small>Sudden Death endet – dann zählen die Turm-Lebenspunkte</small>':'Letzte 10 Sekunden',1.4);
+   if(first)banner(S.phase==='sudden'?'Letzte 10 Sekunden<small>Kein Treffer – dann zählen die Turm-Lebenspunkte</small>':'Letzte 10 Sekunden',1.4);
    snd('tick',sec<=3);const c=$('cdown');c.textContent=sec;c.className='';void c.offsetWidth;c.className='go'+(sec<=3?' hot':'');}}}
 // ---------- Bildschirme ----------
 const ov=$('ov');
@@ -3131,7 +3192,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.8',I=DUELL_INFO;
+const VERSION='0.9',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
@@ -3146,12 +3207,13 @@ function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const
    <button class="tile free" id="bFree"><img src="${DR.icon('chief',72)}" alt=""><b>Freier Kampf</b><small>Üben ohne Fortschritt</small></button>
    <button class="tile deck" id="bDeck"><img src="${DR.icon('blade',72)}" alt=""><b>Deck &amp; Sammlung</b><small>${ownSet().length}/${B.playerSet.length} Karten · Infos zu jeder Kreatur</small></button>
    <button class="tile set" id="bSet"><span class="gear">⚙️</span><b>Einstellungen</b><small>Musik &amp; Effekte</small></button></div>
-  <p class="foot">Turmwacht Duell · Offline-Testversion ${VERSION} · Fortschritt wird im Browser gespeichert</p></div>`,'m');
+  <p class="foot">Turmwacht Duell · Offline-Testversion ${VERSION} · Fortschritt wird im Browser gespeichert <span class="goldn" title="Gold aus abgebauten Erzen">🟡 ${P.gold||0}</span></p></div>`,'m');
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
 function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
   <div class="parch"><h3>Klang</h3>${soundRow()}</div>
-  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen bevorzugt Gegner vor sich und wer sie gerade angreift. Wer den Fluss überquert hat, kehrt nicht mehr um; nur ein Feind direkt hinter einer Truppe (auf derselben Flussseite) lockt sie kurz zurück. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Der Goblin-Tunnelbohrer darf fast überall hin – sogar auf die gegnerische Hälfte. Er gräbt sich vom eigenen Bergfried dorthin; die Erdspur verrät ihn.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p><p>Jeder Sieg in der Kampagne ab Kapitel 3 schaltet neue Kreaturen für deine Sammlung frei – Trolle, Baumriesen, Drachen, Wolfsreiter, Hexenmeister und Untote.</p></div>
-  <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
+  <div class="parch"><h3>Anzeige</h3><div class="row snd"><button class="sm${OPTS.dmgNums?' on':''}" id="bDmgNum">${OPTS.dmgNums?'🔢 Schadenszahlen an':'🔢 Schadenszahlen aus'}</button></div></div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand aufs Feld – oder tippe sie an und dann aufs Feld. Die Einheit landet genau unter deinem Finger. Ein großer Kreis und ein Geist zeigen den Platz; in der verbotenen Zone rastet die Vorschau auf den nächsten gültigen Punkt ein.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand eine Minute Sudden Death: der nächste Treffer auf einen Turm gewinnt. Über den Knopf 💬 sendest du Emotes – die Bosse antworten. Nach einem Kampagnensieg kannst du eine Erzader abbauen.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen bevorzugt Gegner vor sich und wer sie gerade angreift. Wer den Fluss überquert hat, kehrt nicht mehr um; nur ein Feind direkt hinter einer Truppe (auf derselben Flussseite) lockt sie kurz zurück. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Der Goblin-Tunnelbohrer darf fast überall hin – sogar auf die gegnerische Hälfte. Er gräbt sich vom eigenen Bergfried dorthin; die Erdspur verrät ihn.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p><p>Jeder Sieg in der Kampagne ab Kapitel 3 schaltet neue Kreaturen für deine Sammlung frei – Trolle, Baumriesen, Drachen, Wolfsreiter, Hexenmeister und Untote.</p></div>
+  <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);const bn=$('bDmgNum');if(bn)bn.onclick=()=>{OPTS.dmgNums=!OPTS.dmgNums;saveOpts();re();};$('bBack').onclick=back;};re();}
 // ----- Kampagne -----
 function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';
  return `<div class="scen sc2 ${st}${u?'':' locked'}" data-s="${sc.id}" role="button" tabindex="0" ${u?'':'aria-disabled="true"'}>
@@ -3314,7 +3376,8 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
   $('bOk').onclick=()=>{const e=Sim.validateDeck(d);if(e){toast(e);return;}G.deck=d.slice();saveDeck(G.deck);back();};};
  render();}
 // ---------- Kampf ----------
-function start(o){const seed=(Date.now()%1e9)|0||7;G.mode=o.mode;G.scen=o.scen||null;const oppKey=o.opp||DUELL_SCEN.find(s=>s.id===o.scen).opp,O=DUELL_OPP[oppKey];G.opp=oppKey;
+function start(o){G._closeEmo=0;document.querySelectorAll('.ebub').forEach(e=>e.remove());const eb=document.getElementById('emoBar');if(eb)eb.classList.remove('on');
+ const seed=(Date.now()%1e9)|0||7;G.mode=o.mode;G.scen=o.scen||null;const oppKey=o.opp||DUELL_SCEN.find(s=>s.id===o.scen).opp,O=DUELL_OPP[oppKey];G.opp=oppKey;
  const err=Sim.validateDeck(G.deck);if(err){toast(err);deckEditor(menu);return;}
  G.S=Sim.create({seed:o.seed||seed,decks:[G.deck,O.deck],mods:[{},O.mods]});G.ai=DuellAI.create(O.ai,1,(o.seed||seed)*7+3);G.auto=o.auto?DuellAI.create('bot',0,(o.seed||seed)*3+1):(G.auto?DuellAI.create('bot',0,(o.seed||seed)*3+1):null);
  G.endShown=false;G.sel=null;G.aim=false;G.acc=0;DR.reset();phaseReset();hide();$('app').classList.remove('inmenu');
@@ -3338,7 +3401,7 @@ G.toast=toast;
 // ---------- HUD ----------
 let lastHand='';
 function buildHand(force){const S=G.S,p=S.p[0],key=p.hand.join(',')+'|'+p.queue[0];if(!force&&key===lastHand)return;lastHand=key;
- $('hand').innerHTML=p.hand.map((id,i)=>cardHTML(id,{i,cls:'h'})).join('');$('nextImg').src=DR.icon(CARDS[p.queue[0]].art==='fire'?'firerain':CARDS[p.queue[0]].art,40);
+ $('hand').innerHTML=p.hand.map((id,i)=>cardHTML(id,{i,cls:'h'})).join('');const nq=p.queue[0],NQ=CARDS[nq];$('nextImg').src=DR.icon(NQ.art==='fire'?'firerain':NQ.art,40);const nc=$('next').querySelector('.ncost');if(nc)nc.textContent=NQ.cost;else{const b=document.createElement('b');b.className='ncost';b.textContent=NQ.cost;$('next').insertBefore(b,$('nextImg'));}
  $('hand').querySelectorAll('.cd').forEach(c=>{c.addEventListener('pointerdown',ev=>cardDown(ev,+c.dataset.i));});G.sel=null;G.aim=false;DR.st.ghost=null;}
 function fmt(t){t=Math.max(0,Math.ceil(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
 function phaseHud(S){const D=Sim.DOUBLE,M=Sim.MATCH;let lab,t,cls='',fill,mark=true;
@@ -3372,17 +3435,21 @@ function hudBtns(){$('bMus').textContent=SFX.on.music?'🎵':'🔇';$('bSfx').te
 const stage=$('stage'),cv=$('cv');
 function inStage(x,y){const r=cv.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;}
 // Vorschau sitzt bei Touch deutlich über dem Finger, damit er sie nicht verdeckt
-const TOUCH_OFF=48;
-function worldAt(cx,cy,touch){const r=cv.getBoundingClientRect();return DR.toWorld(cx-r.left,cy-r.top-(touch?TOUCH_OFF:0));}
+const TOUCH_OFF=0;// 0.9: exakt unterm Finger, kein vertikaler Versatz
+function worldAt(cx,cy,touch){const r=cv.getBoundingClientRect();return DR.toWorld(cx-r.left,cy-r.top);}
 function overHand(cx,cy){const r=$('panel').getBoundingClientRect();return cy>=r.top&&cx>=r.left&&cx<=r.right;}
 function ghostAt(i,cx,cy,touch){G.ptr={cx,cy,touch};const S=G.S,id=S.p[0].hand[i],C=CARDS[id];
  if(!inStage(cx,cy)||overHand(cx,cy)){DR.st.ghost={card:id,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),x:null,cancel:overHand(cx,cy)};return;}
- const[x,y]=worldAt(cx,cy,touch),[fx,fy]=worldAt(cx,cy,false);const err=Sim.canPlay(S,0,i,x,y);
- DR.st.ghost={card:id,x,y,fx:touch?fx:null,fy:touch?fy:null,ok:!err,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),err,lane:Sim.laneOf(x)};}
+ const[fx,fy]=worldAt(cx,cy);let x=fx,y=fy,snapped=false;
+ const pe=Sim.posErr(S,0,i,x,y);if(pe){const s=Sim.snapPlay(S,0,i,x,y);x=s[0];y=s[1];snapped=Math.hypot(x-fx,y-fy)>1.2;}
+ const err=Sim.canPlay(S,0,i,x,y);
+ DR.st.ghost={card:id,x,y,fx:snapped?fx:null,fy:snapped?fy:null,ok:!err,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),err,lane:Sim.laneOf(x),snap:snapped};}
 function cancelSel(){G.sel=null;DR.st.ghost=null;}
-function tryPlay(i,cx,cy,touch){const S=G.S;const[x,y]=worldAt(cx,cy,touch);const err=Sim.canPlay(S,0,i,x,y);
- if(err){toast((err==='Hier nicht erlaubt'?'Hier nicht erlaubt – nur auf deiner Hälfte (rot = gesperrt)':err)+' · abgebrochen');cancelSel();return false;}
- Sim.issue(S,{side:0,a:'play',i,x:Math.round(x),y:Math.round(y)});cancelSel();return true;}
+function tryPlay(i,cx,cy,touch){const S=G.S;const[fx,fy]=worldAt(cx,cy);const[x,y]=Sim.snapPlay(S,0,i,fx,fy);const err=Sim.canPlay(S,0,i,x,y);
+ if(err){toast(err+' · abgebrochen');cancelSel();return false;}
+ Sim.issue(S,{side:0,a:'play',i,x:Math.round(x*10)/10,y:Math.round(y*10)/10});
+ try{if(navigator.vibrate)navigator.vibrate(12);}catch(_){}
+ cancelSel();return true;}
 function cardDown(ev,i){ev.preventDefault();audio();if(!G.S||G.paused||G.S.over)return;G.aim=false;DR.st.aim=null;
  const wasSel=G.sel===i;G.sel=i;G.drag={i,sx:ev.clientX,sy:ev.clientY,moved:false,touch:ev.pointerType!=='mouse',wasSel};ghostAt(i,ev.clientX,ev.clientY,G.drag.touch);DR.st.ghost.x=null;}
 window.addEventListener('pointermove',ev=>{if(!G.S||G.paused)return;const D=G.drag;
@@ -3414,8 +3481,118 @@ function pause(){if(!G.S||G.S.over)return;G.paused=true;const re=()=>{show(`<div
   $('bRes').onclick=resume;$('bGive').onclick=()=>{G.S.over=true;G.S.phase='over';G.S.winner=1;G.S.reason='Aufgegeben';G.endShown=true;endScreen();};};re();}
 function resume(){hide();G.paused=false;G.last=performance.now();}
 G.pause=pause;G.resume=resume;
-function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let extra='';
- if(G.mode==='camp'){const sc=DUELL_SCEN.find(s=>s.id===G.scen);if(win){const fresh=markWon(sc.id);extra=`<p class="story">${esc(sc.win)}</p>`;
+// ---------- 0.9 Emotes ----------
+const EMOTES=[{id:'good',ico:'👍',txt:'Gut gemacht!'},{id:'lol',ico:'😂',txt:'Ha!'},{id:'mad',ico:'😠',txt:'Hey!'},{id:'gg',ico:'🎉',txt:'GG'}];
+const BOSS_LINE={
+ grimm:{lost:'Das war mein Turm, Mensch!',kill:'Ha! Einer weniger!',close:'Noch lange nicht!',win:'Grimmzahn siegt!',lose:'Beim nächsten Mal …',reply:{good:'Grummel.',lol:'Hör auf zu grinsen!',mad:'Komm her!',gg:'Kämpfe weiter!'}},
+ morvath:{lost:'Die Gruft merkt sich das.',kill:'Noch eine Seele …',close:'Der Tod wartet.',win:'Die Gruft nimmt dich auf.',lose:'Unmöglich …',reply:{good:'Höflichkeit nützt dir nichts.',lol:'Lache, solange du kannst.',mad:'Wut macht blind.',gg:'Der Tod sagt kein GG.'}},
+ ugrak:{lost:'Ugrak wird wütend!',kill:'Horde siegt!',close:'Sturm sie!',win:'Ugrak zerquetscht dich!',lose:'Ugrak … fällt?',reply:{good:'Mehr Blut!',lol:'Hahaha!',mad:'Guter Kampfgeist!',gg:'Nächster Sturm!'}},
+ sylvara:{lost:'Der Wald weint.',kill:'Die Wurzeln halten.',close:'Noch nicht, Eindringling.',win:'Der Hain bleibt.',lose:'… der Wald vergisst nicht.',reply:{good:'Höfliche Worte.',lol:'Spott im Hain?',mad:'Deine Wut nährt uns.',gg:'Ein würdiger Abschluss.'}},
+ vyrthax:{lost:'Asche auf meine Türme!',kill:'Alles brennt schön.',close:'Die Glut bleibt.',win:'Der Aschenkönig herrscht.',lose:'Die Glut erlischt …',reply:{good:'Flamme anerkannt.',lol:'Asche lacht nicht.',mad:'Wut nährt das Feuer.',gg:'Verbrannt und vorbei.'}},
+ kargash:{lost:'Das Rudel vergisst das nicht.',kill:'Die Jagd ist gut!',close:'Haltet stand!',win:'Der Stamm siegt!',lose:'Der Mond … sinkt.',reply:{good:'Ein würdiger Gegner.',lol:'Die Wölfe lachen mit.',mad:'Gute Jagd!',gg:'Bis zur nächsten Jagd.'}},
+ zarvok:{lost:'Die Minen zittern.',kill:'Teufelsglut frisst.',close:'Noch ein Imp …',win:'Zarvok bleibt.',lose:'Die Glut erlischt.',reply:{good:'Anerkennung angenommen.',lol:'Lachend in den Riss?',mad:'Wut öffnet Portale.',gg:'Die Mine schließt.'}},
+ aldric:{lost:'Tote Türme stehen wieder auf.',kill:'Eine Krone für den König.',close:'Der bleiche König wartet.',win:'Der König bleibt.',lose:'Auch Könige fallen.',reply:{good:'Höflichkeit im Grab.',lol:'Die Toten lachen leise.',mad:'Zorn der Lebenden.',gg:'Ruhe nun.'}}
+};
+function initEmotes(){const bar=$('emoBar');if(!bar)return;
+ bar.innerHTML=EMOTES.map(e=>`<button data-em="${e.id}" title="${esc(e.txt)}">${e.ico}</button>`).join('');
+ $('bEmo').onclick=ev=>{ev.preventDefault();if(!G.S||G.S.over)return;audio();bar.classList.toggle('on');};
+ bar.querySelectorAll('[data-em]').forEach(b=>b.onclick=ev=>{ev.preventDefault();bar.classList.remove('on');sendEmote(b.dataset.em,0);});}
+function sendEmote(id,side){const E=EMOTES.find(e=>e.id===id);if(!E||!G.S)return;
+ showBubble(side,E.ico,E.txt);if(side===0){snd('emote');const L=BOSS_LINE[G.opp];if(L&&L.reply&&L.reply[id])setTimeout(()=>showBubble(1,'💬',L.reply[id]),700);} }
+function showBubble(side,ico,txt){document.querySelectorAll('.ebub.s'+side).forEach(e=>e.remove());
+ const d=document.createElement('div');d.className='ebub s'+side+(side?' foe':'');d.innerHTML='<span class="ei">'+ico+'</span>'+esc(txt);
+ const st=$('stage');if(side){d.style.right='8px';d.style.top='10px';}else{d.style.left='48px';d.style.bottom='44px';}
+ st.appendChild(d);setTimeout(()=>{d.classList.add('hide');setTimeout(()=>d.remove(),300);},2400);}
+function bossEventEmote(ev,S){const L=BOSS_LINE[G.opp];if(!L)return;
+ for(const e of ev){
+  if(e.k==='tower'&&e.side===1)showBubble(1,'💢',L.lost);
+  if(e.k==='tower'&&e.side===0)showBubble(1,'😈',L.kill);
+  if(e.k==='end'){if(e.winner===1)showBubble(1,'👑',L.win);else if(e.winner===0)showBubble(1,'…',L.lose);}
+ }
+ if(!S.over&&S.p[0].crowns>=2&&S.p[1].crowns<2&&!G._closeEmo){G._closeEmo=1;showBubble(1,'⚠️',L.close);}}
+// ---------- 0.9 Erz abbauen (WoW-Bergbau-Stil, keine Truhen) ----------
+const ORES=[
+ {id:'kupfer',name:'Kupferader',col:'#c86a28',lit:'#e8a050',dark:'#6a3010',rare:'Häufig',hits:3,gold:[16,26]},
+ {id:'zinn',name:'Zinnader',col:'#9aa494',lit:'#d0d8cc',dark:'#4a5048',rare:'Ungewöhnlich',hits:4,gold:[32,48]},
+ {id:'eisen',name:'Eisenader',col:'#5c5858',lit:'#9a9696',dark:'#2a2828',rare:'Ungewöhnlich',hits:5,gold:[52,74]},
+ {id:'mithril',name:'Mithrilader',col:'#6a8aaa',lit:'#c0e0ff',dark:'#243848',rare:'Selten',hits:6,gold:[96,128]},
+ {id:'thorium',name:'Thoriumader',col:'#c8b060',lit:'#fff3c0',dark:'#5a4818',rare:'Episch',hits:7,gold:[160,210]},
+ {id:'arkanit',name:'Arkanitader',col:'#2e8a78',lit:'#80ffe0',dark:'#10382e',rare:'Legendär',hits:8,gold:[280,360]}
+];
+function oreWeight(scenId,fresh){if(!fresh)return[70,20,8,2,0,0];
+ if(scenId<=2)return[55,28,14,3,0,0];if(scenId<=5)return[28,28,26,14,4,0];return[12,18,26,24,15,5];}
+function rollOre(scenId,fresh,seed){let a=((seed|0)^0x9e3779b9)>>>0;const rnd=()=>{a=(Math.imul(a,1664525)+1013904223)>>>0;return a/4294967296;};
+ const w=oreWeight(scenId,fresh);let t=0;for(const x of w)t+=x;let r=rnd()*t,i=0;
+ for(;i<w.length-1;i++){r-=w[i];if(r<=0)break;}
+ const o=ORES[i],g=o.gold[0]+(rnd()*(o.gold[1]-o.gold[0]+1)|0);return{ore:o,gold:g};}
+function oreHTML(R){return `<div class="orebox" id="oreBox"><h3>${esc(R.ore.name)}</h3><div class="orare">${esc(R.ore.rare)}</div><canvas id="oreCv" width="520" height="420" aria-label="Erzader abbauen"></canvas><p class="orehint" id="oreHint">Tippe auf die Ader, um sie mit der Spitzhacke abzubauen.</p><p class="orepay" id="orePay" hidden></p></div>`;}
+function startOre(R,onDone){const cv=$('oreCv');if(!cv||!R){if(onDone)onDone();return;}
+ const g=cv.getContext('2d'),W=520,H=420,o=R.ore;const M={hits:0,need:o.hits,done:false,swing:0,shake:0,parts:[],cracks:[],bits:[],t0:performance.now()};
+ G.ore=M;G.oreResult=R;
+ const seed=(o.id.length*97+R.gold*13)|0;let sd=seed;const rr=()=>{sd=(sd*9301+49297)%233280;return sd/233280;};
+ // vorberechnete Klumpen-Silhouette
+ const blobs=[];for(let i=0;i<7;i++)blobs.push({x:260+(rr()-.5)*80,y:230+(rr()-.5)*50,rx:70+rr()*50,ry:50+rr()*36});
+ function addCrack(){const x=240+(rr()-.5)*140,y=220+(rr()-.5)*90,pts=[[x,y]];let a=rr()*6.28;for(let k=0;k<5;k++){a+=(rr()-.5)*1.4;pts.push([pts[k][0]+Math.cos(a)*(14+rr()*18),pts[k][1]+Math.sin(a)*(10+rr()*14)]);}M.cracks.push(pts);}
+ function spark(x,y,n){for(let i=0;i<n;i++){const a=rr()*6.28,v=80+rr()*180;M.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,z:0,vz:80+rr()*80,life:.35+rr()*.35,c:rr()<.4?o.lit:'#ffe9a0',r:2+rr()*3});}}
+ function shard(x,y,n){for(let i=0;i<n;i++)M.bits.push({x,y,vx:(rr()-.5)*260,vy:-40-rr()*180,rot:rr()*6,vr:(rr()-.5)*8,life:.7+rr()*.5,s:8+rr()*12,c:rr()<.5?o.col:o.dark});}
+ function drawPick(k){// k 0..1 swing
+  const ang=-.9+Math.sin(k*Math.PI)*1.6;g.save();g.translate(390,110);g.rotate(ang);
+  g.fillStyle='#5a3a18';g.strokeStyle='#120b05';g.lineWidth=3;g.beginPath();g.roundRect?g.roundRect(-6,-8,12,110,3):g.rect(-6,-8,12,110);g.fill();g.stroke();
+  g.fillStyle='#8a8a94';g.beginPath();g.moveTo(-28,-18);g.lineTo(4,-28);g.lineTo(36,-8);g.lineTo(8,10);g.lineTo(-16,8);g.closePath();g.fill();g.stroke();
+  g.fillStyle='#d0d0d8';g.beginPath();g.moveTo(-20,-14);g.lineTo(0,-22);g.lineTo(8,-8);g.lineTo(-8,0);g.closePath();g.fill();g.restore();}
+ function drawRock(crackN,broken,k){
+  g.save();if(M.shake>0)g.translate((Math.random()-.5)*M.shake,(Math.random()-.5)*M.shake);
+  if(broken){g.globalAlpha=Math.max(0,1-k*1.4);}
+  // Schatten
+  g.fillStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(260,330,130,28,0,0,7);g.fill();
+  const grd=g.createLinearGradient(180,140,340,320);grd.addColorStop(0,o.lit);grd.addColorStop(.45,o.col);grd.addColorStop(1,o.dark);
+  g.fillStyle=grd;g.strokeStyle='#120b05';g.lineWidth=5;g.beginPath();
+  g.moveTo(140,250);g.quadraticCurveTo(160,140,260,130);g.quadraticCurveTo(370,140,390,250);g.quadraticCurveTo(360,330,260,340);g.quadraticCurveTo(155,325,140,250);g.fill();g.stroke();
+  // Adern
+  g.strokeStyle=o.lit;g.globalAlpha=.75;g.lineWidth=3;g.beginPath();g.moveTo(200,180);g.quadraticCurveTo(250,220,230,300);g.moveTo(300,170);g.quadraticCurveTo(280,240,330,300);g.moveTo(250,150);g.quadraticCurveTo(270,210,310,200);g.stroke();g.globalAlpha=1;
+  // Risse
+  g.strokeStyle='rgba(10,6,2,.9)';g.lineWidth=2.4;g.lineCap='round';
+  for(let i=0;i<Math.min(crackN,M.cracks.length);i++){const pts=M.cracks[i];g.beginPath();pts.forEach((p,j)=>j?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();}
+  // Glanz
+  if(/mithril|thorium|arkanit/.test(o.id)){g.globalAlpha=.25+.25*Math.sin(performance.now()/200);g.strokeStyle=o.lit;g.shadowColor=o.lit;g.shadowBlur=12;g.lineWidth=2;g.stroke();g.shadowBlur=0;g.globalAlpha=1;}
+  g.restore();}
+ function frame(now){const dt=Math.min(.05,(now-(M.last||now))/1000);M.last=now;
+  g.clearRect(0,0,W,H);
+  const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#1c1610');bg.addColorStop(1,'#0c0804');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  if(M.swing>0)M.swing=Math.max(0,M.swing-dt*4.2);
+  if(M.shake>0)M.shake=Math.max(0,M.shake-dt*40);
+  const broken=M.done,bk=broken?(now-M.brokeAt)/1000:0;
+  drawRock(M.hits,broken,bk);
+  if(!broken||bk<.25)drawPick(M.swing>0?1-M.swing:0);
+  // Partikel
+  M.parts=M.parts.filter(p=>{p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=280*dt;if(p.life<=0)return false;
+   g.globalAlpha=Math.max(0,p.life*3);g.fillStyle=p.c;g.beginPath();g.arc(p.x,p.y,p.r,0,7);g.fill();g.globalAlpha=1;return true;});
+  M.bits=M.bits.filter(p=>{p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=420*dt;p.rot+=p.vr*dt;if(p.life<=0)return false;
+   g.save();g.globalAlpha=Math.max(0,Math.min(1,p.life*2));g.translate(p.x,p.y);g.rotate(p.rot);g.fillStyle=p.c;g.strokeStyle='#120b05';g.lineWidth=2;g.beginPath();g.moveTo(-p.s,0);g.lineTo(0,-p.s*.7);g.lineTo(p.s,.2*p.s);g.closePath();g.fill();g.stroke();g.restore();return true;});
+  if(broken&&bk>0.15){// Gold kommt zum Vorschein
+   const yy=240-Math.min(40,bk*60),al=Math.min(1,(bk-.15)*3);
+   g.save();g.globalAlpha=al;g.translate(260,yy);g.fillStyle='#ffd860';g.strokeStyle='#3a2200';g.lineWidth=3;
+   g.beginPath();g.ellipse(0,20,28,10,0,0,7);g.fill();g.stroke();
+   g.beginPath();g.moveTo(-18,-8);g.lineTo(0,-22);g.lineTo(18,-8);g.lineTo(10,12);g.lineTo(-10,12);g.closePath();g.fill();g.stroke();
+   g.fillStyle='#fff3c0';g.beginPath();g.arc(-6,-4,4,0,7);g.fill();g.restore();g.globalAlpha=1;}
+  if(!M.stop)requestAnimationFrame(frame);}
+ function hit(){if(M.done)return false;M.hits++;M.swing=1;M.shake=10+M.hits*2;addCrack();spark(300,210,12+M.hits*2);shard(280,220,3);
+  try{if(window.SFX&&SFX.pick){audio();snd('pick');} }catch(_){}
+  const hint=$('oreHint');
+  if(M.hits>=M.need){M.done=true;M.brokeAt=performance.now();shard(260,220,16);spark(260,200,28);M.shake=18;
+   try{snd('oreBreak');}catch(_){}
+   const P=prog();P.gold=(P.gold||0)+R.gold;P.ores=P.ores||{};P.ores[o.id]=(P.ores[o.id]||0)+1;saveProg(P);
+   if(hint)hint.textContent='Die Ader zerbricht!';
+   const pay=$('orePay');if(pay){pay.hidden=false;pay.textContent='+ '+R.gold+' Gold';}
+   setTimeout(()=>{if(typeof onDone==='function')onDone(R);},1100);
+  }else if(hint)hint.textContent='Schlag '+(M.need-M.hits)+' · Weiter hacken!';
+  return true;}
+ cv.addEventListener('pointerdown',ev=>{ev.preventDefault();hit();});
+ G.mineTap=hit;requestAnimationFrame(frame);}
+G.rollOre=rollOre;G.ORES=ORES;G.sendEmote=sendEmote;G.showBubble=showBubble;
+
+function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let extra='',oreR=null;
+ if(G.mode==='camp'){const sc=DUELL_SCEN.find(s=>s.id===G.scen);if(win){const fresh=markWon(sc.id);oreR=rollOre(sc.id,fresh,(S.rs||1)*17+sc.id*13+(S.p[0].plays||0));extra=oreHTML(oreR)+`<p class="story">${esc(sc.win)}</p>`;
    const nx=DUELL_SCEN.find(s=>s.id===sc.id+1);if(nx&&fresh)extra+=`<p class="unlock">🔓 Szenario ${nx.id} „${esc(nx.title)}“ freigeschaltet!</p>`;
    const nc=fresh?B.playerSet.filter(id=>CARDS[id].unlock===sc.id):[];if(nc.length)extra+=`<p class="unlock">🔓 Neue Karten für deine Sammlung:</p><div class="newc">${nc.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b><span>${esc(CARDS[id].name)}</span></button>`).join('')}</div>`;
    if(!nx&&fresh)extra+=`<p class="unlock">🏆 Du hast die Kampagne abgeschlossen!</p>`;}
@@ -3426,7 +3603,8 @@ function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let
   <div class="crowns"><div><small>Du</small>${[0,1,2].map(i=>`<i class="${i<S.p[0].crowns?'on b':''}">♛</i>`).join('')}</div><div><small>${esc(DUELL_OPP[G.opp].name)}</small>${[0,1,2].map(i=>`<i class="${i<S.p[1].crowns?'on r':''}">♛</i>`).join('')}</div></div>
   <p class="sub">${esc(S.reason||'')} · ${fmt(S.t-3)} gespielt · ${S.p[0].plays} Karten</p>${extra}
   <div class="col">${nx?`<button class="big go" id="bNext">▶ Weiter: ${esc(nx.title)}</button>`:''}<button class="big${nx?'':' go'}" id="bAgain">↻ Revanche</button><button class="big" id="bMenu">☰ Menü</button></div></div>`,'e');
- bindCardTaps(ov);if(nx)$('bNext').onclick=()=>story(nx.id);$('bAgain').onclick=()=>G.mode==='camp'?story(G.scen):start({mode:'free',opp:G.opp});$('bMenu').onclick=()=>{G.S=null;menu();};}
+ bindCardTaps(ov);if(nx)$('bNext').onclick=()=>story(nx.id);$('bAgain').onclick=()=>G.mode==='camp'?story(G.scen):start({mode:'free',opp:G.opp});$('bMenu').onclick=()=>{G.S=null;menu();};
+ if(oreR)startOre(oreR);}
 G.endScreen=endScreen;
 $('bPause').onclick=()=>{audio();G.paused?resume():pause();};
 $('bMus').onclick=()=>{audio();SFX.toggle('music');hudBtns();};$('bSfx').onclick=()=>{audio();SFX.toggle('sfx');hudBtns();};
@@ -3436,7 +3614,7 @@ window.addEventListener('resize',()=>{fit();});
 // Canvas-Größe ändert sich auch ohne Fenster-Resize (Menü ↔ Spiel, Turm-Leiste) → neu einpassen, sonst wird das Bild gestaucht
 if(window.ResizeObserver)new ResizeObserver(()=>fit()).observe($('cv'));
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&G.S&&!G.paused&&!G.S.over)pause();});
-measureArt();DR.init(cv);hudBtns();menu();requestAnimationFrame(t=>{G.last=t;loop(t);});
+measureArt();DR.init(cv);DR.st.dmgNums=!!OPTS.dmgNums;hudBtns();menu();initEmotes();requestAnimationFrame(t=>{G.last=t;loop(t);});
 })();
 
 </script></body></html>

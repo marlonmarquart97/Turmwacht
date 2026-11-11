@@ -12,9 +12,12 @@ function ownSet(){return B.playerSet.filter(cardOpen);}
 function scenOf(oppKey){return DUELL_SCEN.find(s=>s.opp===oppKey);}
 function diffCls(tag){return tag==='schwer'?'hard':tag==='sehr schwer'?'hard2':tag==='Drache'?'dragon':tag==='Rudel'?'pack':tag==='Dämon'?'demon':tag==='Untot'?'undead':'';}
 function saveDeck(d){LS.set('duell_deck',d);}
-function prog(){const p=LS.get('duell_progress',null);return p&&Array.isArray(p.won)?p:{won:[]};}
+function prog(){const p=LS.get('duell_progress',null);const o=p&&Array.isArray(p.won)?p:{won:[]};if(o.gold==null)o.gold=0;if(!o.ores)o.ores={};return o;}
 function unlocked(id){return id===1||prog().won.includes(id-1);}
 function markWon(id){const p=prog();const fresh=!p.won.includes(id);if(fresh)p.won.push(id);LS.set('duell_progress',p);return fresh;}
+function saveProg(p){LS.set('duell_progress',p);}
+const OPTS=Object.assign({dmgNums:true},LS.get('duell_opts',{}));
+function saveOpts(){LS.set('duell_opts',OPTS);if(typeof DR!=='undefined')DR.st.dmgNums=!!OPTS.dmgNums;}
 // ---------- Zustand ----------
 const G={S:null,ai:null,auto:null,mode:null,scen:null,opp:null,paused:true,acc:0,last:0,sel:null,drag:null,aim:false,endShown:false,speed:1,deck:loadDeck(),toastT:0};
 window.DUELL=G;
@@ -44,7 +47,7 @@ function phaseWatch(S,ev){let fell=false;
  for(const e of ev){
   if(e.k==='start')banner('Kampf!',1);
   else if(e.k==='double'){banner('Doppel-Mana!<small>Mana lädt doppelt so schnell · noch 1:00</small>',2);snd('warhorn');}
-  else if(e.k==='sudden'){banner('Sudden Death!<small>Der nächste zerstörte Turm entscheidet · 1:00</small>',2.4);snd('suddenBell');}
+  else if(e.k==='sudden'){banner('Sudden Death!<small>Der nächste Treffer auf einen Turm entscheidet · 1:00</small>',2.4);snd('suddenBell');}
   else if(e.k==='tower'){fell=true;banner(e.side===1?'Turm zerstört! 👑':'Dein Turm ist gefallen!',1.4);snd('towerFall');}
   else if(e.k==='end'){const w=e.winner;banner(w===0?'Sieg! 🏆':w<0?'Unentschieden':'Niederlage',1.6);PW.endSnd=true;snd(w===0?'fanfare':'darkHorn');$('cdown').className='';}}
  // Bergfried erwacht (getroffen oder Wachturm gefallen) – reine Anzeige
@@ -55,7 +58,7 @@ function phaseWatch(S,ev){let fell=false;
  const rem=S.phase==='play'?S.matchT:S.phase==='sudden'?S.suddenT:null;
  if(rem!=null&&rem>0&&rem<=10+1e-9){const sec=Math.ceil(rem-1e-9),key=S.phase+':'+sec;
   if(PW.tick!==key){const first=!PW.tick||PW.tick.split(':')[0]!==S.phase;PW.tick=key;
-   if(first)banner(S.phase==='sudden'?'Letzte 10 Sekunden<small>Sudden Death endet – dann zählen die Turm-Lebenspunkte</small>':'Letzte 10 Sekunden',1.4);
+   if(first)banner(S.phase==='sudden'?'Letzte 10 Sekunden<small>Kein Treffer – dann zählen die Turm-Lebenspunkte</small>':'Letzte 10 Sekunden',1.4);
    snd('tick',sec<=3);const c=$('cdown');c.textContent=sec;c.className='';void c.offsetWidth;c.className='go'+(sec<=3?' hot':'');}}}
 // ---------- Bildschirme ----------
 const ov=$('ov');
@@ -81,7 +84,7 @@ function soundRow(){const tr=SFX.track;return `<div class="row snd"><span>Musik:
 function bindSound(root,re){root.querySelectorAll('[data-trk]').forEach(b=>b.onclick=()=>{audio();SFX.setTrack(b.dataset.trk);re();});
  root.querySelectorAll('[data-tog]').forEach(b=>b.onclick=()=>{audio();SFX.toggle(b.dataset.tog);hudBtns();re();});}
 // ---------- 0.4: Menü, Deck-Editor, Detailkarte, Kampagne ----------
-const VERSION='0.8',I=DUELL_INFO;
+const VERSION='0.9',I=DUELL_INFO;
 const artOf=id=>CARDS[id].art==='fire'?'firerain':CARDS[id].art;
 const TICON={hero:'👑',unit:'⚔️',spell:'✨',bld:'🏰'};
 function deckStrip(deck,o){o=o||{};return `<div class="dstrip${o.cls?' '+o.cls:''}">${deck.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b></button>`).join('')}</div>`;}
@@ -96,12 +99,13 @@ function menu(){G.paused=true;$('app').classList.add('inmenu');closeCard();const
    <button class="tile free" id="bFree"><img src="${DR.icon('chief',72)}" alt=""><b>Freier Kampf</b><small>Üben ohne Fortschritt</small></button>
    <button class="tile deck" id="bDeck"><img src="${DR.icon('blade',72)}" alt=""><b>Deck &amp; Sammlung</b><small>${ownSet().length}/${B.playerSet.length} Karten · Infos zu jeder Kreatur</small></button>
    <button class="tile set" id="bSet"><span class="gear">⚙️</span><b>Einstellungen</b><small>Musik &amp; Effekte</small></button></div>
-  <p class="foot">Turmwacht Duell · Offline-Testversion ${VERSION} · Fortschritt wird im Browser gespeichert</p></div>`,'m');
+  <p class="foot">Turmwacht Duell · Offline-Testversion ${VERSION} · Fortschritt wird im Browser gespeichert <span class="goldn" title="Gold aus abgebauten Erzen">🟡 ${P.gold||0}</span></p></div>`,'m');
  $('bCamp').onclick=()=>{audio();campaign();};$('bFree').onclick=()=>{audio();free();};$('bDeck').onclick=$('bDeckBar').onclick=()=>{audio();deckEditor(menu);};$('bSet').onclick=()=>{audio();settings(menu);};}
 function settings(back){const re=()=>{show(`<div class="box scr"><div class="sh"><button class="bk" id="bBack" aria-label="Zurück">←</button><h2>Einstellungen</h2></div>
   <div class="parch"><h3>Klang</h3>${soundRow()}</div>
-  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand auf deine Hälfte des Feldes – oder tippe sie an und dann aufs Feld. Ein grüner Geist zeigt einen gültigen Platz.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand der Sudden Death.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen bevorzugt Gegner vor sich und wer sie gerade angreift. Wer den Fluss überquert hat, kehrt nicht mehr um; nur ein Feind direkt hinter einer Truppe (auf derselben Flussseite) lockt sie kurz zurück. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Der Goblin-Tunnelbohrer darf fast überall hin – sogar auf die gegnerische Hälfte. Er gräbt sich vom eigenen Bergfried dorthin; die Erdspur verrät ihn.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p><p>Jeder Sieg in der Kampagne ab Kapitel 3 schaltet neue Kreaturen für deine Sammlung frei – Trolle, Baumriesen, Drachen, Wolfsreiter, Hexenmeister und Untote.</p></div>
-  <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);$('bBack').onclick=back;};re();}
+  <div class="parch"><h3>Anzeige</h3><div class="row snd"><button class="sm${OPTS.dmgNums?' on':''}" id="bDmgNum">${OPTS.dmgNums?'🔢 Schadenszahlen an':'🔢 Schadenszahlen aus'}</button></div></div>
+  <div class="parch"><h3>So spielst du</h3><p>Ziehe eine Karte aus deiner Hand aufs Feld – oder tippe sie an und dann aufs Feld. Die Einheit landet genau unter deinem Finger. Ein großer Kreis und ein Geist zeigen den Platz; in der verbotenen Zone rastet die Vorschau auf den nächsten gültigen Punkt ein.</p><p>Zerstöre die gegnerischen Türme: jeder Turm bringt eine Krone, der Bergfried alle drei. Nach 2:00 Minuten (ab 1:00 mit doppeltem Mana) folgt bei Gleichstand eine Minute Sudden Death: der nächste Treffer auf einen Turm gewinnt. Über den Knopf 💬 sendest du Emotes – die Bosse antworten. Nach einem Kampagnensieg kannst du eine Erzader abbauen.</p><p>Kreaturen laufen zum nächsten Turm ihrer Seite, greifen bevorzugt Gegner vor sich und wer sie gerade angreift. Wer den Fluss überquert hat, kehrt nicht mehr um; nur ein Feind direkt hinter einer Truppe (auf derselben Flussseite) lockt sie kurz zurück. Setzt du eine Gruppe (z. B. Fledermäuse, Orks) in die goldene Mitte, teilt sie sich auf beide Spuren auf. Neue Truppen erscheinen eine Sekunde lang als Geist (blauer Balken) – unverwundbar, aber noch untätig. Wer einmal kämpft, bleibt an seinem Ziel, bis es fällt.</p><p>Der Goblin-Tunnelbohrer darf fast überall hin – sogar auf die gegnerische Hälfte. Er gräbt sich vom eigenen Bergfried dorthin; die Erdspur verrät ihn.</p><p>Dein Held hat eine Fähigkeit: Sobald der Ring unten rechts voll ist, antippen.</p><p>Jeder Sieg in der Kampagne ab Kapitel 3 schaltet neue Kreaturen für deine Sammlung frei – Trolle, Baumriesen, Drachen, Wolfsreiter, Hexenmeister und Untote.</p></div>
+  <p class="foot">Version ${VERSION}</p></div>`);bindSound(ov,re);const bn=$('bDmgNum');if(bn)bn.onclick=()=>{OPTS.dmgNums=!OPTS.dmgNums;saveOpts();re();};$('bBack').onclick=back;};re();}
 // ----- Kampagne -----
 function scenCard(sc,P){const O=DUELL_OPP[sc.opp],u=unlocked(sc.id),w=P.won.includes(sc.id);const st=w?'won':u?'open':'locked';
  return `<div class="scen sc2 ${st}${u?'':' locked'}" data-s="${sc.id}" role="button" tabindex="0" ${u?'':'aria-disabled="true"'}>
@@ -264,7 +268,8 @@ function deckEditor(back){let d=G.deck.slice(),swap=null,flash=null;
   $('bOk').onclick=()=>{const e=Sim.validateDeck(d);if(e){toast(e);return;}G.deck=d.slice();saveDeck(G.deck);back();};};
  render();}
 // ---------- Kampf ----------
-function start(o){const seed=(Date.now()%1e9)|0||7;G.mode=o.mode;G.scen=o.scen||null;const oppKey=o.opp||DUELL_SCEN.find(s=>s.id===o.scen).opp,O=DUELL_OPP[oppKey];G.opp=oppKey;
+function start(o){G._closeEmo=0;document.querySelectorAll('.ebub').forEach(e=>e.remove());const eb=document.getElementById('emoBar');if(eb)eb.classList.remove('on');
+ const seed=(Date.now()%1e9)|0||7;G.mode=o.mode;G.scen=o.scen||null;const oppKey=o.opp||DUELL_SCEN.find(s=>s.id===o.scen).opp,O=DUELL_OPP[oppKey];G.opp=oppKey;
  const err=Sim.validateDeck(G.deck);if(err){toast(err);deckEditor(menu);return;}
  G.S=Sim.create({seed:o.seed||seed,decks:[G.deck,O.deck],mods:[{},O.mods]});G.ai=DuellAI.create(O.ai,1,(o.seed||seed)*7+3);G.auto=o.auto?DuellAI.create('bot',0,(o.seed||seed)*3+1):(G.auto?DuellAI.create('bot',0,(o.seed||seed)*3+1):null);
  G.endShown=false;G.sel=null;G.aim=false;G.acc=0;DR.reset();phaseReset();hide();$('app').classList.remove('inmenu');
@@ -288,7 +293,7 @@ G.toast=toast;
 // ---------- HUD ----------
 let lastHand='';
 function buildHand(force){const S=G.S,p=S.p[0],key=p.hand.join(',')+'|'+p.queue[0];if(!force&&key===lastHand)return;lastHand=key;
- $('hand').innerHTML=p.hand.map((id,i)=>cardHTML(id,{i,cls:'h'})).join('');$('nextImg').src=DR.icon(CARDS[p.queue[0]].art==='fire'?'firerain':CARDS[p.queue[0]].art,40);
+ $('hand').innerHTML=p.hand.map((id,i)=>cardHTML(id,{i,cls:'h'})).join('');const nq=p.queue[0],NQ=CARDS[nq];$('nextImg').src=DR.icon(NQ.art==='fire'?'firerain':NQ.art,40);const nc=$('next').querySelector('.ncost');if(nc)nc.textContent=NQ.cost;else{const b=document.createElement('b');b.className='ncost';b.textContent=NQ.cost;$('next').insertBefore(b,$('nextImg'));}
  $('hand').querySelectorAll('.cd').forEach(c=>{c.addEventListener('pointerdown',ev=>cardDown(ev,+c.dataset.i));});G.sel=null;G.aim=false;DR.st.ghost=null;}
 function fmt(t){t=Math.max(0,Math.ceil(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
 function phaseHud(S){const D=Sim.DOUBLE,M=Sim.MATCH;let lab,t,cls='',fill,mark=true;
@@ -322,17 +327,21 @@ function hudBtns(){$('bMus').textContent=SFX.on.music?'🎵':'🔇';$('bSfx').te
 const stage=$('stage'),cv=$('cv');
 function inStage(x,y){const r=cv.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;}
 // Vorschau sitzt bei Touch deutlich über dem Finger, damit er sie nicht verdeckt
-const TOUCH_OFF=48;
-function worldAt(cx,cy,touch){const r=cv.getBoundingClientRect();return DR.toWorld(cx-r.left,cy-r.top-(touch?TOUCH_OFF:0));}
+const TOUCH_OFF=0;// 0.9: exakt unterm Finger, kein vertikaler Versatz
+function worldAt(cx,cy,touch){const r=cv.getBoundingClientRect();return DR.toWorld(cx-r.left,cy-r.top);}
 function overHand(cx,cy){const r=$('panel').getBoundingClientRect();return cy>=r.top&&cx>=r.left&&cx<=r.right;}
 function ghostAt(i,cx,cy,touch){G.ptr={cx,cy,touch};const S=G.S,id=S.p[0].hand[i],C=CARDS[id];
  if(!inStage(cx,cy)||overHand(cx,cy)){DR.st.ghost={card:id,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),x:null,cancel:overHand(cx,cy)};return;}
- const[x,y]=worldAt(cx,cy,touch),[fx,fy]=worldAt(cx,cy,false);const err=Sim.canPlay(S,0,i,x,y);
- DR.st.ghost={card:id,x,y,fx:touch?fx:null,fy:touch?fy:null,ok:!err,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),err,lane:Sim.laneOf(x)};}
+ const[fx,fy]=worldAt(cx,cy);let x=fx,y=fy,snapped=false;
+ const pe=Sim.posErr(S,0,i,x,y);if(pe){const s=Sim.snapPlay(S,0,i,x,y);x=s[0];y=s[1];snapped=Math.hypot(x-fx,y-fy)>1.2;}
+ const err=Sim.canPlay(S,0,i,x,y);
+ DR.st.ghost={card:id,x,y,fx:snapped?fx:null,fy:snapped?fy:null,ok:!err,zone:C.type!=='spell'&&!(C.u&&C.u.tunnel),err,lane:Sim.laneOf(x),snap:snapped};}
 function cancelSel(){G.sel=null;DR.st.ghost=null;}
-function tryPlay(i,cx,cy,touch){const S=G.S;const[x,y]=worldAt(cx,cy,touch);const err=Sim.canPlay(S,0,i,x,y);
- if(err){toast((err==='Hier nicht erlaubt'?'Hier nicht erlaubt – nur auf deiner Hälfte (rot = gesperrt)':err)+' · abgebrochen');cancelSel();return false;}
- Sim.issue(S,{side:0,a:'play',i,x:Math.round(x),y:Math.round(y)});cancelSel();return true;}
+function tryPlay(i,cx,cy,touch){const S=G.S;const[fx,fy]=worldAt(cx,cy);const[x,y]=Sim.snapPlay(S,0,i,fx,fy);const err=Sim.canPlay(S,0,i,x,y);
+ if(err){toast(err+' · abgebrochen');cancelSel();return false;}
+ Sim.issue(S,{side:0,a:'play',i,x:Math.round(x*10)/10,y:Math.round(y*10)/10});
+ try{if(navigator.vibrate)navigator.vibrate(12);}catch(_){}
+ cancelSel();return true;}
 function cardDown(ev,i){ev.preventDefault();audio();if(!G.S||G.paused||G.S.over)return;G.aim=false;DR.st.aim=null;
  const wasSel=G.sel===i;G.sel=i;G.drag={i,sx:ev.clientX,sy:ev.clientY,moved:false,touch:ev.pointerType!=='mouse',wasSel};ghostAt(i,ev.clientX,ev.clientY,G.drag.touch);DR.st.ghost.x=null;}
 window.addEventListener('pointermove',ev=>{if(!G.S||G.paused)return;const D=G.drag;
@@ -364,8 +373,118 @@ function pause(){if(!G.S||G.S.over)return;G.paused=true;const re=()=>{show(`<div
   $('bRes').onclick=resume;$('bGive').onclick=()=>{G.S.over=true;G.S.phase='over';G.S.winner=1;G.S.reason='Aufgegeben';G.endShown=true;endScreen();};};re();}
 function resume(){hide();G.paused=false;G.last=performance.now();}
 G.pause=pause;G.resume=resume;
-function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let extra='';
- if(G.mode==='camp'){const sc=DUELL_SCEN.find(s=>s.id===G.scen);if(win){const fresh=markWon(sc.id);extra=`<p class="story">${esc(sc.win)}</p>`;
+// ---------- 0.9 Emotes ----------
+const EMOTES=[{id:'good',ico:'👍',txt:'Gut gemacht!'},{id:'lol',ico:'😂',txt:'Ha!'},{id:'mad',ico:'😠',txt:'Hey!'},{id:'gg',ico:'🎉',txt:'GG'}];
+const BOSS_LINE={
+ grimm:{lost:'Das war mein Turm, Mensch!',kill:'Ha! Einer weniger!',close:'Noch lange nicht!',win:'Grimmzahn siegt!',lose:'Beim nächsten Mal …',reply:{good:'Grummel.',lol:'Hör auf zu grinsen!',mad:'Komm her!',gg:'Kämpfe weiter!'}},
+ morvath:{lost:'Die Gruft merkt sich das.',kill:'Noch eine Seele …',close:'Der Tod wartet.',win:'Die Gruft nimmt dich auf.',lose:'Unmöglich …',reply:{good:'Höflichkeit nützt dir nichts.',lol:'Lache, solange du kannst.',mad:'Wut macht blind.',gg:'Der Tod sagt kein GG.'}},
+ ugrak:{lost:'Ugrak wird wütend!',kill:'Horde siegt!',close:'Sturm sie!',win:'Ugrak zerquetscht dich!',lose:'Ugrak … fällt?',reply:{good:'Mehr Blut!',lol:'Hahaha!',mad:'Guter Kampfgeist!',gg:'Nächster Sturm!'}},
+ sylvara:{lost:'Der Wald weint.',kill:'Die Wurzeln halten.',close:'Noch nicht, Eindringling.',win:'Der Hain bleibt.',lose:'… der Wald vergisst nicht.',reply:{good:'Höfliche Worte.',lol:'Spott im Hain?',mad:'Deine Wut nährt uns.',gg:'Ein würdiger Abschluss.'}},
+ vyrthax:{lost:'Asche auf meine Türme!',kill:'Alles brennt schön.',close:'Die Glut bleibt.',win:'Der Aschenkönig herrscht.',lose:'Die Glut erlischt …',reply:{good:'Flamme anerkannt.',lol:'Asche lacht nicht.',mad:'Wut nährt das Feuer.',gg:'Verbrannt und vorbei.'}},
+ kargash:{lost:'Das Rudel vergisst das nicht.',kill:'Die Jagd ist gut!',close:'Haltet stand!',win:'Der Stamm siegt!',lose:'Der Mond … sinkt.',reply:{good:'Ein würdiger Gegner.',lol:'Die Wölfe lachen mit.',mad:'Gute Jagd!',gg:'Bis zur nächsten Jagd.'}},
+ zarvok:{lost:'Die Minen zittern.',kill:'Teufelsglut frisst.',close:'Noch ein Imp …',win:'Zarvok bleibt.',lose:'Die Glut erlischt.',reply:{good:'Anerkennung angenommen.',lol:'Lachend in den Riss?',mad:'Wut öffnet Portale.',gg:'Die Mine schließt.'}},
+ aldric:{lost:'Tote Türme stehen wieder auf.',kill:'Eine Krone für den König.',close:'Der bleiche König wartet.',win:'Der König bleibt.',lose:'Auch Könige fallen.',reply:{good:'Höflichkeit im Grab.',lol:'Die Toten lachen leise.',mad:'Zorn der Lebenden.',gg:'Ruhe nun.'}}
+};
+function initEmotes(){const bar=$('emoBar');if(!bar)return;
+ bar.innerHTML=EMOTES.map(e=>`<button data-em="${e.id}" title="${esc(e.txt)}">${e.ico}</button>`).join('');
+ $('bEmo').onclick=ev=>{ev.preventDefault();if(!G.S||G.S.over)return;audio();bar.classList.toggle('on');};
+ bar.querySelectorAll('[data-em]').forEach(b=>b.onclick=ev=>{ev.preventDefault();bar.classList.remove('on');sendEmote(b.dataset.em,0);});}
+function sendEmote(id,side){const E=EMOTES.find(e=>e.id===id);if(!E||!G.S)return;
+ showBubble(side,E.ico,E.txt);if(side===0){snd('emote');const L=BOSS_LINE[G.opp];if(L&&L.reply&&L.reply[id])setTimeout(()=>showBubble(1,'💬',L.reply[id]),700);} }
+function showBubble(side,ico,txt){document.querySelectorAll('.ebub.s'+side).forEach(e=>e.remove());
+ const d=document.createElement('div');d.className='ebub s'+side+(side?' foe':'');d.innerHTML='<span class="ei">'+ico+'</span>'+esc(txt);
+ const st=$('stage');if(side){d.style.right='8px';d.style.top='10px';}else{d.style.left='48px';d.style.bottom='44px';}
+ st.appendChild(d);setTimeout(()=>{d.classList.add('hide');setTimeout(()=>d.remove(),300);},2400);}
+function bossEventEmote(ev,S){const L=BOSS_LINE[G.opp];if(!L)return;
+ for(const e of ev){
+  if(e.k==='tower'&&e.side===1)showBubble(1,'💢',L.lost);
+  if(e.k==='tower'&&e.side===0)showBubble(1,'😈',L.kill);
+  if(e.k==='end'){if(e.winner===1)showBubble(1,'👑',L.win);else if(e.winner===0)showBubble(1,'…',L.lose);}
+ }
+ if(!S.over&&S.p[0].crowns>=2&&S.p[1].crowns<2&&!G._closeEmo){G._closeEmo=1;showBubble(1,'⚠️',L.close);}}
+// ---------- 0.9 Erz abbauen (WoW-Bergbau-Stil, keine Truhen) ----------
+const ORES=[
+ {id:'kupfer',name:'Kupferader',col:'#c86a28',lit:'#e8a050',dark:'#6a3010',rare:'Häufig',hits:3,gold:[16,26]},
+ {id:'zinn',name:'Zinnader',col:'#9aa494',lit:'#d0d8cc',dark:'#4a5048',rare:'Ungewöhnlich',hits:4,gold:[32,48]},
+ {id:'eisen',name:'Eisenader',col:'#5c5858',lit:'#9a9696',dark:'#2a2828',rare:'Ungewöhnlich',hits:5,gold:[52,74]},
+ {id:'mithril',name:'Mithrilader',col:'#6a8aaa',lit:'#c0e0ff',dark:'#243848',rare:'Selten',hits:6,gold:[96,128]},
+ {id:'thorium',name:'Thoriumader',col:'#c8b060',lit:'#fff3c0',dark:'#5a4818',rare:'Episch',hits:7,gold:[160,210]},
+ {id:'arkanit',name:'Arkanitader',col:'#2e8a78',lit:'#80ffe0',dark:'#10382e',rare:'Legendär',hits:8,gold:[280,360]}
+];
+function oreWeight(scenId,fresh){if(!fresh)return[70,20,8,2,0,0];
+ if(scenId<=2)return[55,28,14,3,0,0];if(scenId<=5)return[28,28,26,14,4,0];return[12,18,26,24,15,5];}
+function rollOre(scenId,fresh,seed){let a=((seed|0)^0x9e3779b9)>>>0;const rnd=()=>{a=(Math.imul(a,1664525)+1013904223)>>>0;return a/4294967296;};
+ const w=oreWeight(scenId,fresh);let t=0;for(const x of w)t+=x;let r=rnd()*t,i=0;
+ for(;i<w.length-1;i++){r-=w[i];if(r<=0)break;}
+ const o=ORES[i],g=o.gold[0]+(rnd()*(o.gold[1]-o.gold[0]+1)|0);return{ore:o,gold:g};}
+function oreHTML(R){return `<div class="orebox" id="oreBox"><h3>${esc(R.ore.name)}</h3><div class="orare">${esc(R.ore.rare)}</div><canvas id="oreCv" width="520" height="420" aria-label="Erzader abbauen"></canvas><p class="orehint" id="oreHint">Tippe auf die Ader, um sie mit der Spitzhacke abzubauen.</p><p class="orepay" id="orePay" hidden></p></div>`;}
+function startOre(R,onDone){const cv=$('oreCv');if(!cv||!R){if(onDone)onDone();return;}
+ const g=cv.getContext('2d'),W=520,H=420,o=R.ore;const M={hits:0,need:o.hits,done:false,swing:0,shake:0,parts:[],cracks:[],bits:[],t0:performance.now()};
+ G.ore=M;G.oreResult=R;
+ const seed=(o.id.length*97+R.gold*13)|0;let sd=seed;const rr=()=>{sd=(sd*9301+49297)%233280;return sd/233280;};
+ // vorberechnete Klumpen-Silhouette
+ const blobs=[];for(let i=0;i<7;i++)blobs.push({x:260+(rr()-.5)*80,y:230+(rr()-.5)*50,rx:70+rr()*50,ry:50+rr()*36});
+ function addCrack(){const x=240+(rr()-.5)*140,y=220+(rr()-.5)*90,pts=[[x,y]];let a=rr()*6.28;for(let k=0;k<5;k++){a+=(rr()-.5)*1.4;pts.push([pts[k][0]+Math.cos(a)*(14+rr()*18),pts[k][1]+Math.sin(a)*(10+rr()*14)]);}M.cracks.push(pts);}
+ function spark(x,y,n){for(let i=0;i<n;i++){const a=rr()*6.28,v=80+rr()*180;M.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,z:0,vz:80+rr()*80,life:.35+rr()*.35,c:rr()<.4?o.lit:'#ffe9a0',r:2+rr()*3});}}
+ function shard(x,y,n){for(let i=0;i<n;i++)M.bits.push({x,y,vx:(rr()-.5)*260,vy:-40-rr()*180,rot:rr()*6,vr:(rr()-.5)*8,life:.7+rr()*.5,s:8+rr()*12,c:rr()<.5?o.col:o.dark});}
+ function drawPick(k){// k 0..1 swing
+  const ang=-.9+Math.sin(k*Math.PI)*1.6;g.save();g.translate(390,110);g.rotate(ang);
+  g.fillStyle='#5a3a18';g.strokeStyle='#120b05';g.lineWidth=3;g.beginPath();g.roundRect?g.roundRect(-6,-8,12,110,3):g.rect(-6,-8,12,110);g.fill();g.stroke();
+  g.fillStyle='#8a8a94';g.beginPath();g.moveTo(-28,-18);g.lineTo(4,-28);g.lineTo(36,-8);g.lineTo(8,10);g.lineTo(-16,8);g.closePath();g.fill();g.stroke();
+  g.fillStyle='#d0d0d8';g.beginPath();g.moveTo(-20,-14);g.lineTo(0,-22);g.lineTo(8,-8);g.lineTo(-8,0);g.closePath();g.fill();g.restore();}
+ function drawRock(crackN,broken,k){
+  g.save();if(M.shake>0)g.translate((Math.random()-.5)*M.shake,(Math.random()-.5)*M.shake);
+  if(broken){g.globalAlpha=Math.max(0,1-k*1.4);}
+  // Schatten
+  g.fillStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(260,330,130,28,0,0,7);g.fill();
+  const grd=g.createLinearGradient(180,140,340,320);grd.addColorStop(0,o.lit);grd.addColorStop(.45,o.col);grd.addColorStop(1,o.dark);
+  g.fillStyle=grd;g.strokeStyle='#120b05';g.lineWidth=5;g.beginPath();
+  g.moveTo(140,250);g.quadraticCurveTo(160,140,260,130);g.quadraticCurveTo(370,140,390,250);g.quadraticCurveTo(360,330,260,340);g.quadraticCurveTo(155,325,140,250);g.fill();g.stroke();
+  // Adern
+  g.strokeStyle=o.lit;g.globalAlpha=.75;g.lineWidth=3;g.beginPath();g.moveTo(200,180);g.quadraticCurveTo(250,220,230,300);g.moveTo(300,170);g.quadraticCurveTo(280,240,330,300);g.moveTo(250,150);g.quadraticCurveTo(270,210,310,200);g.stroke();g.globalAlpha=1;
+  // Risse
+  g.strokeStyle='rgba(10,6,2,.9)';g.lineWidth=2.4;g.lineCap='round';
+  for(let i=0;i<Math.min(crackN,M.cracks.length);i++){const pts=M.cracks[i];g.beginPath();pts.forEach((p,j)=>j?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();}
+  // Glanz
+  if(/mithril|thorium|arkanit/.test(o.id)){g.globalAlpha=.25+.25*Math.sin(performance.now()/200);g.strokeStyle=o.lit;g.shadowColor=o.lit;g.shadowBlur=12;g.lineWidth=2;g.stroke();g.shadowBlur=0;g.globalAlpha=1;}
+  g.restore();}
+ function frame(now){const dt=Math.min(.05,(now-(M.last||now))/1000);M.last=now;
+  g.clearRect(0,0,W,H);
+  const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#1c1610');bg.addColorStop(1,'#0c0804');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  if(M.swing>0)M.swing=Math.max(0,M.swing-dt*4.2);
+  if(M.shake>0)M.shake=Math.max(0,M.shake-dt*40);
+  const broken=M.done,bk=broken?(now-M.brokeAt)/1000:0;
+  drawRock(M.hits,broken,bk);
+  if(!broken||bk<.25)drawPick(M.swing>0?1-M.swing:0);
+  // Partikel
+  M.parts=M.parts.filter(p=>{p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=280*dt;if(p.life<=0)return false;
+   g.globalAlpha=Math.max(0,p.life*3);g.fillStyle=p.c;g.beginPath();g.arc(p.x,p.y,p.r,0,7);g.fill();g.globalAlpha=1;return true;});
+  M.bits=M.bits.filter(p=>{p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=420*dt;p.rot+=p.vr*dt;if(p.life<=0)return false;
+   g.save();g.globalAlpha=Math.max(0,Math.min(1,p.life*2));g.translate(p.x,p.y);g.rotate(p.rot);g.fillStyle=p.c;g.strokeStyle='#120b05';g.lineWidth=2;g.beginPath();g.moveTo(-p.s,0);g.lineTo(0,-p.s*.7);g.lineTo(p.s,.2*p.s);g.closePath();g.fill();g.stroke();g.restore();return true;});
+  if(broken&&bk>0.15){// Gold kommt zum Vorschein
+   const yy=240-Math.min(40,bk*60),al=Math.min(1,(bk-.15)*3);
+   g.save();g.globalAlpha=al;g.translate(260,yy);g.fillStyle='#ffd860';g.strokeStyle='#3a2200';g.lineWidth=3;
+   g.beginPath();g.ellipse(0,20,28,10,0,0,7);g.fill();g.stroke();
+   g.beginPath();g.moveTo(-18,-8);g.lineTo(0,-22);g.lineTo(18,-8);g.lineTo(10,12);g.lineTo(-10,12);g.closePath();g.fill();g.stroke();
+   g.fillStyle='#fff3c0';g.beginPath();g.arc(-6,-4,4,0,7);g.fill();g.restore();g.globalAlpha=1;}
+  if(!M.stop)requestAnimationFrame(frame);}
+ function hit(){if(M.done)return false;M.hits++;M.swing=1;M.shake=10+M.hits*2;addCrack();spark(300,210,12+M.hits*2);shard(280,220,3);
+  try{if(window.SFX&&SFX.pick){audio();snd('pick');} }catch(_){}
+  const hint=$('oreHint');
+  if(M.hits>=M.need){M.done=true;M.brokeAt=performance.now();shard(260,220,16);spark(260,200,28);M.shake=18;
+   try{snd('oreBreak');}catch(_){}
+   const P=prog();P.gold=(P.gold||0)+R.gold;P.ores=P.ores||{};P.ores[o.id]=(P.ores[o.id]||0)+1;saveProg(P);
+   if(hint)hint.textContent='Die Ader zerbricht!';
+   const pay=$('orePay');if(pay){pay.hidden=false;pay.textContent='+ '+R.gold+' Gold';}
+   setTimeout(()=>{if(typeof onDone==='function')onDone(R);},1100);
+  }else if(hint)hint.textContent='Schlag '+(M.need-M.hits)+' · Weiter hacken!';
+  return true;}
+ cv.addEventListener('pointerdown',ev=>{ev.preventDefault();hit();});
+ G.mineTap=hit;requestAnimationFrame(frame);}
+G.rollOre=rollOre;G.ORES=ORES;G.sendEmote=sendEmote;G.showBubble=showBubble;
+
+function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let extra='',oreR=null;
+ if(G.mode==='camp'){const sc=DUELL_SCEN.find(s=>s.id===G.scen);if(win){const fresh=markWon(sc.id);oreR=rollOre(sc.id,fresh,(S.rs||1)*17+sc.id*13+(S.p[0].plays||0));extra=oreHTML(oreR)+`<p class="story">${esc(sc.win)}</p>`;
    const nx=DUELL_SCEN.find(s=>s.id===sc.id+1);if(nx&&fresh)extra+=`<p class="unlock">🔓 Szenario ${nx.id} „${esc(nx.title)}“ freigeschaltet!</p>`;
    const nc=fresh?B.playerSet.filter(id=>CARDS[id].unlock===sc.id):[];if(nc.length)extra+=`<p class="unlock">🔓 Neue Karten für deine Sammlung:</p><div class="newc">${nc.map(id=>`<button class="mi t-${CARDS[id].type}" data-card="${id}" aria-label="${esc(CARDS[id].name)}"><img src="${DR.icon(artOf(id),48)}" alt=""><b>${CARDS[id].cost}</b><span>${esc(CARDS[id].name)}</span></button>`).join('')}</div>`;
    if(!nx&&fresh)extra+=`<p class="unlock">🏆 Du hast die Kampagne abgeschlossen!</p>`;}
@@ -376,7 +495,8 @@ function endScreen(){const S=G.S,w=S.winner,win=w===0,draw=w<0;G.paused=true;let
   <div class="crowns"><div><small>Du</small>${[0,1,2].map(i=>`<i class="${i<S.p[0].crowns?'on b':''}">♛</i>`).join('')}</div><div><small>${esc(DUELL_OPP[G.opp].name)}</small>${[0,1,2].map(i=>`<i class="${i<S.p[1].crowns?'on r':''}">♛</i>`).join('')}</div></div>
   <p class="sub">${esc(S.reason||'')} · ${fmt(S.t-3)} gespielt · ${S.p[0].plays} Karten</p>${extra}
   <div class="col">${nx?`<button class="big go" id="bNext">▶ Weiter: ${esc(nx.title)}</button>`:''}<button class="big${nx?'':' go'}" id="bAgain">↻ Revanche</button><button class="big" id="bMenu">☰ Menü</button></div></div>`,'e');
- bindCardTaps(ov);if(nx)$('bNext').onclick=()=>story(nx.id);$('bAgain').onclick=()=>G.mode==='camp'?story(G.scen):start({mode:'free',opp:G.opp});$('bMenu').onclick=()=>{G.S=null;menu();};}
+ bindCardTaps(ov);if(nx)$('bNext').onclick=()=>story(nx.id);$('bAgain').onclick=()=>G.mode==='camp'?story(G.scen):start({mode:'free',opp:G.opp});$('bMenu').onclick=()=>{G.S=null;menu();};
+ if(oreR)startOre(oreR);}
 G.endScreen=endScreen;
 $('bPause').onclick=()=>{audio();G.paused?resume():pause();};
 $('bMus').onclick=()=>{audio();SFX.toggle('music');hudBtns();};$('bSfx').onclick=()=>{audio();SFX.toggle('sfx');hudBtns();};
@@ -386,5 +506,5 @@ window.addEventListener('resize',()=>{fit();});
 // Canvas-Größe ändert sich auch ohne Fenster-Resize (Menü ↔ Spiel, Turm-Leiste) → neu einpassen, sonst wird das Bild gestaucht
 if(window.ResizeObserver)new ResizeObserver(()=>fit()).observe($('cv'));
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&G.S&&!G.paused&&!G.S.over)pause();});
-measureArt();DR.init(cv);hudBtns();menu();requestAnimationFrame(t=>{G.last=t;loop(t);});
+measureArt();DR.init(cv);DR.st.dmgNums=!!OPTS.dmgNums;hudBtns();menu();initEmotes();requestAnimationFrame(t=>{G.last=t;loop(t);});
 })();

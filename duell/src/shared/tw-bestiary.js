@@ -123,7 +123,7 @@ const TW_BESTIARY={version:1,tile:20,
    abil:{key:'summon',name:'Knochenruf',charge:15,reach:120,summon:{card:'skels',n:4}}}
  },
  towers:{guard:{name:'Wachturm',hp:1500,r:20,dmg:62,hit:.8,range:150,tg:'any',proj:'tarrow'},keep:{name:'Bergfried',hp:2600,r:27,dmg:80,hit:1.0,range:140,tg:'any',proj:'tarrow'}},
- projectiles:{arrow:{spd:430},tarrow:{spd:460},fireball:{spd:300},flask:{spd:250,arc:1},frostbolt:{spd:360},poison:{spd:340},bolt:{spd:420},shadow:{spd:300},zap:{spd:900},fel:{spd:330},net:{spd:320,arc:1},flame:{spd:380},icebreath:{spd:340},thorn:{spd:380}},
+ projectiles:{arrow:{spd:430,arc:1},tarrow:{spd:460,arc:1},fireball:{spd:300},flask:{spd:250,arc:1},frostbolt:{spd:360},poison:{spd:340},bolt:{spd:420},shadow:{spd:300},zap:{spd:900},fel:{spd:330},net:{spd:320,arc:1},flame:{spd:380},icebreath:{spd:340},thorn:{spd:380}},
  // Spielerkarten (Startset 16 Karten + 13 freischaltbare aus 0.7 + 15 aus 0.8) und Standarddeck
  playerSet:['orcs','archers','firemage','alch','sling','ranger','well','blade','frosthero','poisonhero','zepp','giant','shaman','bats','firerain','frost',
   'storm','netter','troll','warchant','trollking','banner','burrow','treant','thorn','shade','whelp','frostwyrm','dragonlord',

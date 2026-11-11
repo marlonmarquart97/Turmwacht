@@ -1,4 +1,4 @@
-# Turmwacht Duell (Offline-Testversion 0.8)
+# Turmwacht Duell (Offline-Testversion 0.9)
 
 Kartenduell am Schattenpass – Einzelspieler-Kampagne gegen Computergegner.
 Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfade → später unter `/duell/` im Turmwacht-Repo).
@@ -18,6 +18,15 @@ Spielbar: `index.html` (eine Datei, keine externen Abhängigkeiten, relative Pfa
 - `headless-match.js` – KI-gegen-KI in Node (`node src/headless-match.js 30 morvath`)
 
 Bauen: `python3 src/build.py` → `index.html`.
+
+## Neu in 0.9 – Platzierung unterm Finger, lebendigere Arena, Erz-Belohnungen
+
+- **Setzen genau unterm Finger** (wie in Clash Royale): kein vertikaler Versatz mehr. Großer Platzierungskreis plus halbtransparenter Geist um den Finger. Tippen-dann-Tippen funktioniert gleich. In der verbotenen Zone (rot getönt) rastet die Vorschau auf den nächsten gültigen Punkt ein. Kurzes `navigator.vibrate` beim Setzen.
+- **Lebendigere Kreaturen** (Darstellung, Simulation unverändert außer dem vorhandenen Masse-Schub): Rückstoß-Blitzen, Laufstaub, Spawn-Staubring, Todesanimation (Umkippen/Zerfallen/Verblassen), schwebende Schadenszahlen (in den Einstellungen abschaltbar), Screen-Shake bei großen Treffern, Partikel-Limit fürs Handy.
+- **Türme:** sichtbare Schützen drehen sich zum Ziel; Pfeile fliegen im Bogen; Risse unter 66 %, Feuer/Rauch unter 33 %; Einsturz mit Staub und bleibender Ruine; Königsturm schläft, bis er Schaden nimmt oder ein Wachturm fällt (Aufwach-Effekt + Klang). Leichter Banner-Akzent je nach Held.
+- **Sudden Death:** bei Gleichstand nach 2:00 eine Minute Overtime – der nächste Treffer auf einen Turm gewinnt (Countdown + Glocke). Ohne Treffer entscheiden danach die Turm-Lebenspunkte.
+- **Emotes:** über 💬 vier Sprüche; Bosse antworten und reagieren auf Turmfall, Sieg-Nähe und Endstand.
+- **Belohnung nach Kampagnensieg:** keine Truhen, sondern eine Erzader im WoW-Bergbau-Stil (Kupfer, Zinn, Eisen, Mithril, Thorium, Arkanit). Mehrere Schläge mit Spitzhacke, Funken, Splittern und Rissen; der letzte Schlag zerbricht den Brocken, Gold kommt zum Vorschein. Seltenere Erze bei höheren Kapiteln und Erstsiegen. Gold und Funde werden in `turmwacht_duell_progress` gespeichert (`gold`, `ores`) – alte Spielstände ohne diese Felder bleiben gültig.
 
 ## Neu in 0.8 – Akt II „Die wilden Lande“: 3 neue Bosse, 15 neue Karten, Zielerfassung überarbeitet
 

@@ -37,7 +37,7 @@ function drawChief(g){drawGoblin(g);
  P(g,[[-7,-29],[-8,-37],[-4,-33],[0,-39],[4,-33],[8,-37],[7,-29]]);F(g,LG(g,0,-39,0,-29,'#ffe070','#c08a20'),1.2);
  E(g,0,-31.5,1.4);F(g,'#e02020',.6);
  L(g,-9,-30,-15,-44,OL,2.4);L(g,-9,-30,-15,-44,'#e04020',1.2);}
-function drawKeepTeam(g,team,sleep){
+function drawKeepTeam(g,team,sleep,accent){
  // Bergfried: Burg aus Turmwacht, Dächer/Fahnen in Teamfarbe; sleep = ruht noch (dunkle Fenster, Fallgitter unten)
  const C=team?['#6a1410','#d0402c','#b02a1a']:['#1a3270','#3a68c8','#2a58c0'];
  const sv=g.createLinearGradient;g.createLinearGradient=function(...a){const gr=sv.apply(this,a),ad=gr.addColorStop.bind(gr);
@@ -52,6 +52,7 @@ function drawKeepTeam(g,team,sleep){
  if(team){P(g,[[-4,-33],[4,-25]]);L(g,-4,-33,4,-25,'#ffd860',1.6);L(g,4,-33,-4,-25,'#ffd860',1.6);}else{P(g,[[-4.5,-27],[-5,-33],[-2.5,-30.5],[0,-34],[2.5,-30.5],[5,-33],[4.5,-27]]);F(g,'#ffd860',.8);}
  // Zinnen-Banner an den Seitentürmen
  for(const s of[-1,1]){P(g,[[s*30,-48],[s*38,-48],[s*38,-30],[s*34,-33],[s*30,-30]]);F(g,LG(g,s*30,0,s*38,0,C[0],C[1]),1.1);E(g,s*34,-42,1.6);F(g,'#ffd860',.6);}
+ if(accent){for(const s of[-1,1]){P(g,[[s*31,-46],[s*37,-46],[s*37,-34],[s*34,-36],[s*31,-34]]);F(g,accent,.9);}E(g,0,-38,3.2);F(g,accent,.8);}
  if(sleep){// geschlossene Läden + Ketten am Tor
   for(const s of[-1,1]){P(g,[[s*3.4,-56.6],[s*8.6,-56.6],[s*8.6,-47.4],[s*3.4,-47.4]]);F(g,'#4a3018',1);L(g,s*6,-56.6,s*6,-47.4,'#2a1808',.8);}
   for(const s of[-1,1])L(g,s*10,-20,s*3,-9,'#8a8a94',1.4);}}
@@ -66,8 +67,7 @@ function drawGuardTeam(g,team){
  E(g,0,-h,r+2,ry+1.4);F(g,LG(g,0,-h-ry,0,-h+ry,'#9a9488','#5a564e'),1.6);E(g,0,-h,r-4,ry-2);F(g,'#4a3a2a',1);
  // hintere Zinnen
  for(const a of[3.6,4.2,4.8,5.4,6.0]){const x=Math.cos(a)*(r+1),y=-h+Math.sin(a)*(ry+.6);P(g,[[x-3,y],[x-3,y-6],[x+3,y-6],[x+3,y]]);F(g,LG(g,x-3,0,x+3,0,'#6a665e','#a8a296'),1.1);}
- // Schütze
- g.save();g.translate(0,-h+3);g.scale(.85,.85);if(team){drawElf(g);drawElfBow(g);}else drawElfBack(g);g.restore();
+ // 0.9: Schütze wird in der Darstellung zum Ziel gedreht (nicht mehr fest im Sprite)
  // vordere Zinnen
  for(const a of[.35,.95,1.57,2.19,2.79]){const x=Math.cos(a)*(r+1),y=-h+Math.sin(a)*(ry+.6);P(g,[[x-3.4,y+2],[x-3.4,y-6],[x+3.4,y-6],[x+3.4,y+2]]);F(g,LG(g,x-3.4,0,x+3.4,0,'#7a766c','#c8c2b4'),1.2);}
  // Teambanner vorne

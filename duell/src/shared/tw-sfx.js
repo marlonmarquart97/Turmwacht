@@ -121,6 +121,10 @@ const SFX=(()=>{let A=null,master,mus,fx,noiseBuf,on={music:LS.get('music',true)
   drain(){if(!ok('drain',.6))return;const t=T();osc('sine',900,t,.9,.1,fx,.05,180);osc('triangle',450,t,.9,.08,fx,.05,120);noise(t,.8,.1,fx,'bandpass',1200,4,400);},
   charge(){if(!ok('charge',.3))return;const t=T();fdrum(t,.9);noise(t,.2,.25,fx,'lowpass',900,1,200);osc('square',160,t,.12,.08,fx,.003,70);},
   plague(){if(!ok('plague',.5))return;const t=T();noise(t,1,.18,fx,'bandpass',500,1.5,300,.1);osc('sine',90,t,.9,.1,fx,.1,70);},
-  summon2(){if(!ok('summ2',.5))return;const t=T();osc('sawtooth',120,t,.6,.1,fx,.05,480);osc('sine',240,t+.1,.5,.08,fx,.05,960);noise(t,.5,.1,fx,'highpass',2500,1);}});
+  summon2(){if(!ok('summ2',.5))return;const t=T();osc('sawtooth',120,t,.6,.1,fx,.05,480);osc('sine',240,t+.1,.5,.08,fx,.05,960);noise(t,.5,.1,fx,'highpass',2500,1);},
+  // 0.9
+  pick(){if(!ok('pick',.08))return;const t=T();noise(t,.08,.22,fx,'highpass',1800,1);osc('square',520,t,.07,.08,fx,.002,180);osc('sine',180,t,.1,.12,fx,.002,70);fdrum(t,.35);},
+  oreBreak(){if(!ok('orebr',.3))return;const t=T();noise(t,.45,.4,fx,'lowpass',800,1,140);osc('sine',70,t,.35,.28,fx,.005,40);fdrum(t,.9);for(let i=0;i<5;i++)osc('square',240+Math.random()*280,t+.04+i*.04,.05,.05,fx,.002,90);},
+  emote(){if(!ok('emote',.2))return;const t=T();[523,659,784].forEach((f,i)=>osc('triangle',f,t+i*.05,.25,.07,fx,.008));}});
  return api;})();
 window.SFX=SFX;

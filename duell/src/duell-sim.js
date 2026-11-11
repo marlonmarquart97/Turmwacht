@@ -18,7 +18,7 @@ function validateDeck(deck){
  const h=deck.filter(id=>CARDS[id].type==='hero').length;
  if(h===0)return 'Jedes Deck braucht genau einen Helden.';if(h>1)return 'Nur ein Held pro Deck erlaubt.';return null;}
 function mkPlayer(S,side,deck){const d=deck.slice();for(let i=d.length-1;i>0;i--){const j=Math.floor(rnd(S)*(i+1));[d[i],d[j]]=[d[j],d[i]];}
- return{side,mana:5,regen:1,crowns:0,hand:d.slice(0,4),queue:d.slice(4),heroId:0,heroCharge:0,spent:0,plays:0,leak:0};}
+ return{side,mana:5,regen:1,crowns:0,hand:d.slice(0,4),queue:d.slice(4),heroId:0,heroCharge:0,spent:0,plays:0,leak:0,heroCard:deck.find(id=>CARDS[id]&&CARDS[id].type==='hero')||null};}
 function create(cfg){cfg=cfg||{};const decks=cfg.decks||[B.defaultDeck,B.defaultDeck];
  decks.forEach((d,i)=>{const e=validateDeck(d);if(e)throw new Error('Deck '+(i+1)+': '+e);});
  const S={v:1,tick:0,t:0,phase:'count',countT:COUNT,matchT:MATCH,suddenT:SUDDEN,dbl:false,over:false,winner:-1,reason:'',rs:(cfg.seed|0)||1,nid:1,
@@ -40,15 +40,27 @@ function zoneOK(S,side,x,y){if(x<8||x>FW-8||y<10||y>FH-10)return false;if(inRive
  if(side===0?y>=RY1+4:y<=RY0-4)return true;
  const lane=x<FW/2?0:1,g=tower(S,1-side,'guard',lane);if(alive(g))return false;
  return side===0?y>=160:y<=FH-160;}
-function canPlay(S,side,i,x,y){if(S.over||S.phase==='count')return 'Noch nicht bereit';const p=S.p[side],id=p.hand[i],C=CARDS[id];if(!C)return 'Keine Karte';
- if(p.mana+1e-9<C.cost)return 'Nicht genug Mana';
- if(C.type==='hero'&&p.heroId&&byId(S,p.heroId))return 'Dein Held kämpft bereits';
+function posErr(S,side,i,x,y){const p=S.p[side],id=p.hand[i],C=CARDS[id];if(!C)return 'Keine Karte';
  if(C.type==='spell')return(x>=0&&x<=FW&&y>=0&&y<=FH)?null:'Außerhalb des Feldes';
  if(C.u&&C.u.tunnel){if(x<12||x>FW-12||y<24||y>FH-24||inRiver(x,y))return 'Hier nicht erlaubt';// 0.8 Tunnelbohrer: ganzes Feld, aber nicht direkt an gegnerischen Türmen
   for(const o of S.ents)if(o.cls==='tower'&&o.side!==side&&o.hp>0&&d2(o.x,o.y,x,y)<o.r+34)return 'Zu nah am Turm';return null;}
  if(!zoneOK(S,side,x,y))return 'Hier nicht erlaubt';
  if(C.type==='bld'){for(const o of S.ents)if((o.cls==='tower'||o.cls==='bld')&&d2(o.x,o.y,x,y)<o.r+C.b.r+2)return 'Zu nah an einem Gebäude';}
  return null;}
+function canPlay(S,side,i,x,y){if(S.over||S.phase==='count')return 'Noch nicht bereit';const p=S.p[side],id=p.hand[i],C=CARDS[id];if(!C)return 'Keine Karte';
+ if(p.mana+1e-9<C.cost)return 'Nicht genug Mana';
+ if(C.type==='hero'&&p.heroId&&byId(S,p.heroId))return 'Dein Held kämpft bereits';
+ return posErr(S,side,i,x,y);}
+// 0.9: nächster gültiger Punkt (deterministisch, für Vorschau und Loslassen in verbotener Zone)
+function snapPlay(S,side,i,x0,y0){const id=S.p[side].hand[i],C=CARDS[id];if(!C)return[x0,y0];
+ if(C.type==='spell')return[clamp(x0,0,FW),clamp(y0,0,FH)];
+ let x=clamp(x0,8,FW-8),y=clamp(y0,10,FH-10);if(!posErr(S,side,i,x,y))return[x,y];
+ let best=null,bd=1e9;
+ for(let r=3;r<=240;r+=3){const n=Math.max(8,Math.min(32,(r/3|0)*4));
+  for(let k=0;k<n;k++){const a=k/n*Math.PI*2,px=clamp(x0+Math.cos(a)*r,8,FW-8),py=clamp(y0+Math.sin(a)*r,10,FH-10);
+   if(posErr(S,side,i,px,py))continue;const d=(px-x0)*(px-x0)+(py-y0)*(py-y0);if(d<bd){bd=d;best=[px,py];}}
+  if(best&&r*r>=bd)break;}
+ return best||[x,y];}
 function issue(S,cmd,delay){cmd=Object.assign({},cmd);cmd.tick=S.tick+(delay==null?1:delay);if(cmd.a==='play')cmd.card=S.p[cmd.side].hand[cmd.i];S.queue.push(cmd);return cmd;}
 function exec(S,c){const p=S.p[c.side];
  if(c.a==='play'){if(p.hand[c.i]!==c.card||canPlay(S,c.side,c.i,c.x,c.y))return;const C=CARDS[c.card];p.mana-=C.cost;p.spent+=C.cost;p.plays++;
@@ -130,7 +142,7 @@ function hurt(S,e,amt,srcSide,fire){if(!e||e.hp<=0||amt<=0||ghost(e))return;
  if(e.drT>S.tick)amt*=1-e.drF;// 0.8 Wutgebrüll (Bär): weniger Schaden
  if(e.ward>0){if(e.wardT>S.tick){const a=Math.min(e.ward,amt);e.ward-=a;amt-=a;if(e.ward<=0){e.ward=0;ev(S,'wardbreak',{x:e.x,y:e.y,id:e.id});}if(amt<=0){e.hurtT=S.tick;return;}}else e.ward=0;}// 0.8 Ahnenschild
  e.hp-=amt;e.hurtT=S.tick;
- if(e.cls==='tower'){S.stats[srcSide===0?0:1].dmgTower+=amt;if(e.sub==='keep')e.active=true;}
+ if(e.cls==='tower'){S.stats[srcSide===0?0:1].dmgTower+=amt;if(e.sub==='keep')e.active=true;if(S.phase==='sudden'&&srcSide!=null&&srcSide!==e.side&&!S.over)end(S,srcSide,'Sudden Death');}// 0.9 Overtime: nächster Turmtreffer entscheidet
  if(e.hp<=0){e.hp=0;}}
 function splashAt(S,side,x,y,r,dmg,o){o=o||{};let n=0;for(const e of S.ents){if(e.side===side||e.hp<=0||e.thrown||e.leap||ghost(e))continue;if(o.air===false&&e.air)continue;if(o.air===true&&!e.air)continue;
   if(d2(e.x,e.y,x,y)<=r+e.r*.6){hurt(S,e,e.cls==='unit'?dmg:dmg*(o.tower==null?1:o.tower),side,o.fire);n++;if(o.each)o.each(e);
@@ -363,6 +375,6 @@ function step(S){if(S.over)return;S.ev.length=0;
  updProj(S);updZones(S);updBombs(S);separate(S);cleanup(S);
  S.tick++;S.t+=TICK;}
 function hash(S){let h=2166136261;const mix=v=>{h^=(v|0);h=Math.imul(h,16777619);};mix(S.tick);for(const e of S.ents){mix(e.id);mix(Math.round(e.x*100));mix(Math.round(e.y*100));mix(Math.round(e.hp*10));}for(const p of S.p){mix(Math.round(p.mana*1000));mix(p.crowns);}return(h>>>0).toString(16);}
-return{acquire,spawnUnit,deploy,edge,needCross,isBehind,DEP,CONTACT,MELEE,SWING,laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,dmul,issue,canPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
+return{acquire,spawnUnit,deploy,edge,needCross,isBehind,DEP,CONTACT,MELEE,SWING,laneOf,LANE_X,MIDW,inMid,splitCount,midLane,TICK,FW,FH,RY0,RY1,MIDY,BRIDGES,BW,MATCH,DOUBLE,SUDDEN,CARDS,B,create,step,dmul,issue,canPlay,posErr,snapPlay,validateDeck,zoneOK,hash,byId,tower,inRiver,onBridge,d2,clamp,rnd};
 })();
 if(typeof module!=='undefined')module.exports=DuellSim;
